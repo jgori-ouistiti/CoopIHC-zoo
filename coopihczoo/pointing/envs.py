@@ -1,7 +1,6 @@
 import numpy
 import matplotlib.pyplot as plt
 from collections import OrderedDict
-import gym
 import coopihc
 from coopihc.interactiontask import InteractionTask, PipeTaskWrapper
 from coopihc.space import StateElement, Space

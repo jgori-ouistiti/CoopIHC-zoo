@@ -9,19 +9,22 @@ from coopihc.space import StateElement, Space
 
 
 class ChenEyePointingTask(InteractionTask):
-    """A pointing task performed by the Eye, adapted from Chen, Xiuli, et al.
-    "An Adaptive Model of Gaze-based Selection" Proceedings of the 2021 CHI
-    Conference on Human Factors in Computing Systems. 2021. This tasks only requires
-    an user (human perception task).
+    """An environment to simulate eye fixations.
 
+    This task is a simple box with a target randomly positioned. The goal of the environment is to steer the focal point of the eye on top of the target. It can be associated with a user model only, whose actions are the fixations --- which determines the new focal point of the eye.
 
+    This environment is adapted from Chen, Xiuli, et al. : "An Adaptive Model of Gaze-based Selection" Proceedings of the 2021 CHI Conference on Human Factors in Computing Systems. 2021."
 
-        :param fitts_W: (float) size of the target aimed at
-        :param fitts_D: (float) distance of the target aimed at
-        :param threshold: (float) The distance between target and fixation is compared to threshold to determine if the task is done. The default value is based on a calculation where the foval vision has a 5° angle opening and the eye is half a meter away from the screen.
-        :param dimension: (int) Whether the task is one or two dimensional.
+    Changes to the original environment include the ability to have a 1 or 2 D environment, as well as a different stopping condition: the target is considered reached as soon as the fixation is within a distance <= threshold to the target.
 
-        :meta public:
+    :param fitts_W: width of the target
+    :type fitts_W: float
+    :param fitts_D: distance between the initial fixation and the target
+    :type fitts_D: float
+    :param threshold: characteristic size of the focal area, defaults to 0.04
+    :type threshold: float, optional
+    :param dimension: dimension of the task (1 or 2), defaults to 2
+    :type dimension: int, optional
     """
 
     # threshold => d = L alpha with L = 0.5m and alpha = 5°
@@ -57,16 +60,7 @@ class ChenEyePointingTask(InteractionTask):
         )
 
     def get_new_target(self, D):
-        """Generates a target, D/2 away from the center.
 
-        If the task is two dimensional, the angle is uniformly chosen in [0, 2Pi]. If the task is one dimensional, the angle is uniformly chosen in {0, Pi}.
-
-        :param D: distance of the target
-
-        :return: (numpy.ndarray) the target that the eye is going to localize.
-
-        :meta public:
-        """
         if self.dimension == 2:
             angle = numpy.random.uniform(0, math.pi * 2)
             # d = numpy.random.uniform(-D/2,D/2)
@@ -85,11 +79,12 @@ class ChenEyePointingTask(InteractionTask):
             raise NotImplementedError
 
     def reset(self, dic=None):
-        """Reset the task.
+        """Resets the task
 
-        Pick out a new target at random orientation.
+        Resets the fixation at the center of the box, and selects a random new target.
 
-        :meta public:
+        :param dic: reset_dic (see the documentation of the reset mechanism in CoopIHC), defaults to None
+        :type dic: dictionnary, optional
         """
 
         self.state["targets"]["values"] = numpy.array(
@@ -119,15 +114,14 @@ class ChenEyePointingTask(InteractionTask):
         return is_done
 
     def user_step(self, user_action):
-        """Use the difference between the old and new fixation to generate a covariance matrix for noise. Then, sample a 2D Gaussian with the corresponding covariance matrix.
+        """Task transition function on user action
 
-        If the new fixation is inside the target, then stop.
+        Move the focal point of the eye to the received action.
 
-        :param user_action: the new fixation
-
-        :return: new task state, reward, is_done, {}
-
-        :meta public:
+        :param user_action: new position of the focal point of the eye
+        :type user_action: coopihc.space.StateElement object
+        :return: tuple(task state, reward, isdone_flag, empty dictionnary)
+        :rtype: tuple(coopihc.space.state, float, boolean)
         """
         self.state["fixation"]["values"] = copy.copy(user_action["values"])
 
@@ -136,16 +130,19 @@ class ChenEyePointingTask(InteractionTask):
         return self.state, reward, self._is_done_user(), {}
 
     def assistant_step(self, assistant_action):
-
         return self.state, 0, False, {}
 
     def render(self, *args, mode="text", **kwargs):
-        """Render the task.
+        """Renders the task.
 
-        In plot mode plots the fixations on axtask. In text mode prints turns and goal.
+        If 'text' is in mode, then simply print out target and fixation positions.
 
-        :meta public:
+        If 'plot' is in mode, it plots the fixations and the goals in the Box. If this mode is provided, you should pass (in that order) ``axtask, axuser, axassistant`` as args.
+
+        :param mode: how to render, defaults to "text"
+        :type mode: str, optional
         """
+
         goal = self.state["targets"]["values"][0].squeeze().tolist()
         fx = self.state["fixation"]["values"][0].squeeze().tolist()
 
