@@ -94,9 +94,6 @@ jobs:
           find _gh-pages/ -mindepth 1 ! -path '_gh-pages/branch*' -delete
           # rsync -a _build/dirhtml/ _gh-pages/
           # try this out below
-          ls
-          cd ..
-          ls
           rsync -a docs/_build/html/ _gh-pages/
 
       # If a push and not on default branch, then copy the build to
@@ -112,7 +109,7 @@ jobs:
           brname="${brname##refs/heads/}"
           brdir=${brname//\//--}   # replace '/' with '--'
           rm -rf   _gh-pages/branch/${brdir}
-          rsync -a _build/dirhtml/ _gh-pages/branch/${brdir}
+          rsync -a docs/_build/dirhtml/ _gh-pages/branch/${brdir}
       # Go through each branch in _gh-pages/branch/, if it's not a
       # ref, then delete it.
       - name: Delete old feature branches
