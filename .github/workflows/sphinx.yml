@@ -52,7 +52,7 @@ jobs:
           python -V
           pip list --not-required
           pip list
-      Build
+      # Build
       - uses: ammaraskar/sphinx-problem-matcher@master
       - name: Build Sphinx docs
         run: |
