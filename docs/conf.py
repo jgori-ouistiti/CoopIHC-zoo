@@ -35,6 +35,7 @@ extensions = [
     "sphinx.ext.autodoc",  # Core Sphinx library for auto html doc generation from docstrings
     "sphinx.ext.autosummary",  # Create neat summary tables for modules/classes/methods etc,
     "sphinx.ext.viewcode",  # finds the source where objects are contained
+    "sphinx.ext.githubpages",
 ]
 
 autosummary_generate = True  # Turn on sphinx.ext.autosummary
