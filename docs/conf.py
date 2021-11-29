@@ -12,6 +12,8 @@
 #
 import os
 import sys
+import sphinx_rtd_theme
+
 
 sys.path.insert(0, os.path.abspath(".."))
 
@@ -43,7 +45,7 @@ autosummary_generate = True  # Turn on sphinx.ext.autosummary
 #     True  # Remove 'view source code' from top of page (for html, not python)
 # )
 autodoc_inherit_docstrings = True  # If no docstring, inherit from base class
-add_module_names = False  # Remove namespaces from class/method signatures
+add_module_names = True  # Remove namespaces from class/method signatures
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ["_templates"]

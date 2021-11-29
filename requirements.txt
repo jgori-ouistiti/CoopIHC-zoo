@@ -40,6 +40,7 @@ setuptools-scm==6.3.2
 six==1.16.0
 snowballstemmer==2.2.0
 Sphinx==4.3.1
+sphinx-rtd-theme==1.0.0
 sphinxcontrib-applehelp==1.0.2
 sphinxcontrib-devhelp==1.0.2
 sphinxcontrib-htmlhelp==2.0.0
