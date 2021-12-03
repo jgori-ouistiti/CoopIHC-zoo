@@ -1,0 +1,27 @@
+[tool.poetry]
+name = "coopihczoo"
+version = "0.0.3"
+description = "CoopIHC-zoo: Collection of tasks and agents for CoopIHC"
+authors = ["Your Name <you@example.com>"]
+license = "MIT"
+
+[tool.poetry.dependencies]
+python = ">=3.8,<3.11"
+numpy = "^1.21.4"
+websockets = "^10.1"
+coopihc = '*'
+
+[tool.poetry.dev-dependencies]
+Sphinx = "^4.3.1"
+sphinx-rtd-theme = "^1.0.0"
+twine = "^3.7.0"
+
+[[tool.poetry.source]]
+name = "testpypi"
+url = "https://test.pypi.org/simple/"
+secondary = true
+
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
