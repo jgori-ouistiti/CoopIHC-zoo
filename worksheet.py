@@ -53,17 +53,6 @@ import sys
 
 _str = sys.argv[1]
 
-
-if _str == "basic-plot":
-    task = SimplePointingTask(gridsize=31, number_of_targets=8)
-    user = CarefulPointer()
-    assistant = ConstantCDGain(1)
-
-    bundle = Bundle(task=task, user=user, assistant=assistant)
-
-    game_state = bundle.reset()
-    bundle.render("plotext")
-
 if _str == "basic-eval" or _str == "all":
 
     task = SimplePointingTask(gridsize=31, number_of_targets=8)

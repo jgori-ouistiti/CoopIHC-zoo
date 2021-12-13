@@ -2,8 +2,12 @@ import numpy
 import matplotlib.pyplot as plt
 from collections import OrderedDict
 import coopihc
-from coopihc.interactiontask import InteractionTask, PipeTaskWrapper
-from coopihc.space import StateElement, Space
+from coopihc.interactiontask.InteractionTask import InteractionTask
+from coopihc.interactiontask.PipeTaskWrapper import PipeTaskWrapper
+
+PipeTaskWrapper
+from coopihc.space.Space import Space
+from coopihc.space.StateElement import StateElement
 from coopihc.helpers import sort_two_lists
 import functools
 

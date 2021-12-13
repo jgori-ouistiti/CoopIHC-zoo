@@ -1,10 +1,23 @@
 import coopihc
-from coopihc.agents import BaseAgent, IHCT_LQGController
-from coopihc.observation import RuleObservationEngine, base_user_engine_specification
-from coopihc.bundle import SinglePlayUserAuto
-from coopihc.space import State, StateElement, Space
-from coopihc.policy import ELLDiscretePolicy, WrapAsPolicy, BadlyDefinedLikelihoodError
-from coopihc.interactiontask import ClassicControlTask
+from coopihc.agents.BaseAgent import BaseAgent
+from coopihc.agents.lqrcontrollers.IHCT_LQGController import IHCT_LQGController
+
+from coopihc.observation.RuleObservationEngine import RuleObservationEngine
+from coopihc.observation.utils import base_user_engine_specification
+
+from coopihc.bundle.Bundle import Bundle
+
+from coopihc.space.Space import Space
+from coopihc.space.State import State
+from coopihc.space.StateElement import StateElement
+
+from coopihc.policy.ELLDiscretePolicy import ELLDiscretePolicy
+from coopihc.policy.WrapAsPolicy import WrapAsPolicy
+from coopihc.policy.ELLDiscretePolicy import BadlyDefinedLikelihoodError
+
+from coopihc.interactiontask.ClassicControlTask import ClassicControlTask
+
+
 import gym
 import numpy
 import copy
@@ -179,94 +192,81 @@ class TwoDCarefulPointer(BaseAgent):
 
 
 class CarefulPointer(BaseAgent):
-    """A user that only indicates the right direction, with a fixed amplitude.
+    """A user that only indicates the right direction, with a fixed amplitude, and with some error rate.
+
+    .. warning ::
+
+        This agent only works with a task that has a 'targets' substate.
 
 
-    Works with a task that has a 'targets' substate. At each reset, it selects a new goal from the possible 'targets'. When sampled, the user will issue an action that is either +1 or -1 in the direction of the target.
-    The user observes everything perfectly except for the assistant state.
+    * Reset: At each reset, it selects a new goal from the possible 'targets'.
+    * Inference: None
+    * State: None
+    * Policy: When sampled, the user will issue an action that is either +1 or -1 in the direction of the target.
+    * Observation: The user observes everything perfectly except for the assistant state.
 
 
-    :meta public:
+
+
+    :param error_rate: rate at which users makes errors, defaults to 0.05
+    :type error_rate: float, optional
     """
 
-    def __init__(self, **kwargs):
-
-        # --------- Defining the agent's policy ----------
-        # Here we consider a simulated user, which will only indicate left or right (assumed to be in the right direction of the target 99% of the time)
+    def __init__(self, *args, error_rate=0.05, **kwargs):
 
         self._target_values = None
 
-        agent_policy = kwargs.get("agent_policy")
-        if agent_policy is None:
-            policy_args = kwargs.get("policy_args")
-            if policy_args:
-                error_rate = policy_args.get("error_rate")
-                if error_rate is None:
-                    error_rate = 0.01
+        action_state = State()
+        action_state["action"] = StateElement(
+            values=None, spaces=Space([numpy.array([-1, 0, 1], dtype=numpy.int16)])
+        )
+
+        ELLD_dic = {"compute_likelihood_args": {"error_rate": error_rate}}
+        ELLD_dic.update(kwargs.get("policy_kwargs", {}))
+
+        agent_policy = ELLDiscretePolicy(
+            action_state=action_state,
+            **ELLD_dic,
+        )
+
+        def compute_likelihood(self, action, observation, *args, **kwargs):
+            error_rate = kwargs.get("error_rate", 0)
+            # convert actions and observations
+            action = action["values"][0]
+            goal = observation["user_state"]["goal"]["values"][0]
+            position = observation["task_state"]["position"]["values"][0]
+            # Write down all possible cases (5)
+            # (1) Goal to the right, positive action
+            if goal > position and action > 0:
+                return 1 - error_rate
+            # (2) Goal to the right, negative action
+            elif goal > position and action < 0:
+                return error_rate
+            # (3) Goal to the left, positive action
+            if goal < position and action > 0:
+                return error_rate
+            # (4) Goal to the left, negative action
+            elif goal < position and action < 0:
+                return 1 - error_rate
+            elif goal == position and action == 0:
+                return 1
+            elif goal == position and action != 0:
+                return 0
+            elif goal != position and action == 0:
+                return 0
             else:
-                error_rate = 0.01
-
-            action_state = State()
-            action_state["action"] = StateElement(
-                values=None, spaces=Space([numpy.array([-1, 0, 1], dtype=numpy.int16)])
-            )
-            agent_policy = ELLDiscretePolicy(action_state=action_state)
-
-            # Actions are in human values, i.e. they are not necessarily in range(0,N)
-            def compute_likelihood(self, action, observation):
-                # convert actions and observations
-                action = action["values"][0]
-                goal = observation["user_state"]["goal"]["values"][0]
-                position = observation["task_state"]["position"]["values"][0]
-
-                # Write down all possible cases (5)
-                # (1) Goal to the right, positive action
-                if goal > position and action > 0:
-                    return 1 - error_rate
-                # (2) Goal to the right, negative action
-                elif goal > position and action < 0:
-                    return error_rate
-                # (3) Goal to the left, positive action
-                if goal < position and action > 0:
-                    return error_rate
-                # (4) Goal to the left, negative action
-                elif goal < position and action < 0:
-                    return 1 - error_rate
-                elif goal == position and action == 0:
-                    return 1
-                elif goal == position and action != 0:
-                    return 0
-                elif goal != position and action == 0:
-                    return 0
-                else:
-                    raise RunTimeError(
-                        "warning, unable to compute likelihood. You may have not covered all cases in the likelihood definition"
-                    )
+                raise RunTimeError(
+                    "warning, unable to compute likelihood. You may have not covered all cases in the likelihood definition"
+                )
 
             # Attach likelihood function to the policy
-            agent_policy.attach_likelihood_function(compute_likelihood)
+
+        agent_policy.attach_likelihood_function(compute_likelihood)
 
         # ---------- Observation engine ------------
-        # High-level specification
-        observation_engine = kwargs.get("observation_engine")
-
-        if observation_engine is None:
-            base_user_engine_specification = [
-                ("turn_index", "all"),
-                ("task_state", "all"),
-                ("user_state", "all"),
-                ("assistant_state", None),
-                ("user_action", "all"),
-                ("assistant_action", "all"),
-            ]
-            # Additional deterministic and probabilistic 'rules' that can be added to the engine: for example, to add noise to a component, or to target one component in particular
-            extradeterministicrules = {}
-            extraprobabilisticrules = {}
-            observation_engine = RuleObservationEngine(
-                deterministic_specification=base_user_engine_specification,
-                extradeterministicrules=extradeterministicrules,
-                extraprobabilisticrules=extraprobabilisticrules,
-            )
+        observation_engine = RuleObservationEngine(
+            deterministic_specification=base_user_engine_specification,
+        )
 
         # ---------- Calling BaseAgent class -----------
         # Calling an agent, set as an user, which uses our previously defined observation engine and without an inference engine.
@@ -275,6 +275,7 @@ class CarefulPointer(BaseAgent):
             "user",
             agent_policy=agent_policy,
             agent_observation_engine=observation_engine,
+            **kwargs,
         )
 
     @property
@@ -346,7 +347,9 @@ class LQGPointer(BaseAgent):
         action_user = IHCT_LQGController(
             "user", timestep, Q, R, U, C, Gamma, D, noise="on"
         )
-        action_bundle = SinglePlayUserAuto(
+        # Used to be this, below not tested
+        # action_bundle = SinglePlayUserAuto(
+        action_bundle = Bundle(
             action_task,
             action_user,
             onreset_deterministic_first_half_step=True,

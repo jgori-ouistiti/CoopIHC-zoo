@@ -1,12 +1,19 @@
-from coopihc.agents import BaseAgent
-from coopihc.observation import RuleObservationEngine, base_user_engine_specification
-from coopihc.policy import LinearFeedback
-from coopihc.space import State, StateElement, Space
-from coopihc.inference import LinearGaussianContinuous
-import eye.noise
-from scipy.linalg import toeplitz
+from coopihc.agents.BaseAgent import BaseAgent
 
-import gym
+from coopihc.observation.RuleObservationEngine import RuleObservationEngine
+from coopihc.observation.utils import base_user_engine_specification
+
+from coopihc.policy.LinearFeedback import LinearFeedback
+
+from coopihc.space.State import State
+from coopihc.space.StateElement import StateElement
+from coopihc.space.Space import Space
+
+from coopihc.inference.LinearGaussianContinuous import LinearGaussianContinuous
+
+from .noise import eccentric_noise
+
+from scipy.linalg import toeplitz
 import numpy
 
 
@@ -175,7 +182,7 @@ class ChenEye(BaseAgent):
 
         target = observation["task_state"]["targets"]
         position = observation["task_state"]["fixation"]
-        Sigma = eye.noise.eccentric_noise(target, position, noise_std)
+        Sigma = eccentric_noise(target, position, noise_std)
         noise = numpy.random.multivariate_normal(
             numpy.zeros(shape=(self.dimension,)), Sigma
         )

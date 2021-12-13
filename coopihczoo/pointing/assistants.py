@@ -1,8 +1,9 @@
 import coopihc
-from coopihc.agents import BaseAgent
-from coopihc.policy import BasePolicy, BIGDiscretePolicy
-from coopihc.inference import GoalInferenceWithUserPolicyGiven
-from coopihc.space import State, StateElement, Space
+from coopihc.agents.BaseAgent import BaseAgent
+from coopihc.policy.BIGDiscretePolicy import BIGDiscretePolicy
+from coopihc.inference.GoalInferenceWithUserPolicyGiven import GoalInferenceWithUserPolicyGiven
+from coopihc.space.Space import Space
+from coopihc.space.StateElement import StateElement
 
 import numpy
 import copy
