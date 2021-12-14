@@ -48,47 +48,6 @@ import copy
 import asyncio
 
 
-
-import sys
-
-_str = sys.argv[1]
-
-if _str == "basic-eval" or _str == "all":
-
-    task = SimplePointingTask(gridsize=31, number_of_targets=8)
-    binary_user = CarefulPointer(agent_policy=policy)
-    unitcdgain = ConstantCDGain(1)
-    bundle = Bundle(task=task, user=binary_user, assistant=unitcdgain)
-    game_state = bundle.reset()
-    bundle.render("plotext")
-    k = 0
-    while True:
-        k += 1
-        game_state, rewards_dic, is_done = bundle.step()
-        bundle.render("plotext")
-        # bundle.fig.savefig("/home/jgori/Documents/img_tmp/{}.pdf".format(k))
-        if is_done:
-            bundle.close()
-            break
-
-if _str == "basic-play-user" or _str == "all":
-
-    task = SimplePointingTask(gridsize=31, number_of_targets=8)
-    binary_user = CarefulPointer()
-    unitcdgain = ConstantCDGain(1)
-    bundle = Bundle(task=task, user=binary_user, assistant=unitcdgain)
-    game_state = bundle.reset(turn=1)
-    bundle.render("plotext")
-    k = 0
-    while True:
-        k += 1
-        game_state, rewards, is_done = bundle.step(binary_user._take_action()[0], None)
-        bundle.render("plotext")
-        # bundle.fig.savefig("/home/jgori/Documents/img_tmp/{}.pdf".format(k))
-        if is_done:
-            bundle.close()
-            break
-
 if _str == "biggain-eval" or _str == "all":
     task = SimplePointingTask(gridsize=31, number_of_targets=8, mode="position")
     binary_user = CarefulPointer()

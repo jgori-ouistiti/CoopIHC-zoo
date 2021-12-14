@@ -273,6 +273,7 @@ class CarefulPointer(BaseAgent):
 
         super().__init__(
             "user",
+            *args,
             agent_policy=agent_policy,
             agent_observation_engine=observation_engine,
             **kwargs,

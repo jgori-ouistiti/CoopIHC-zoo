@@ -5,6 +5,7 @@ packages = \
 ['coopihczoo',
  'coopihczoo.examples',
  'coopihczoo.examples.basic',
+ 'coopihczoo.examples.rl',
  'coopihczoo.eye',
  'coopihczoo.pointing',
  'coopihczoo.pointing.test']
@@ -13,7 +14,11 @@ package_data = \
 {'': ['*']}
 
 install_requires = \
-['coopihc', 'numpy>=1.21.4,<2.0.0', 'websockets>=10.1,<11.0']
+['PyYAML>=6.0,<7.0',
+ 'numpy>=1.21.4,<2.0.0',
+ 'stable-baselines3>=1.3.0,<2.0.0',
+ 'torch>=1.10.0,<2.0.0',
+ 'websockets>=10.1,<11.0']
 
 setup_kwargs = {
     'name': 'coopihczoo',
