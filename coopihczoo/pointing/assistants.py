@@ -1,9 +1,12 @@
 import coopihc
 from coopihc.agents.BaseAgent import BaseAgent
 from coopihc.policy.BIGDiscretePolicy import BIGDiscretePolicy
-from coopihc.inference.GoalInferenceWithUserPolicyGiven import GoalInferenceWithUserPolicyGiven
+from coopihc.inference.GoalInferenceWithUserPolicyGiven import (
+    GoalInferenceWithUserPolicyGiven,
+)
 from coopihc.space.Space import Space
 from coopihc.space.StateElement import StateElement
+from coopihc.space.utils import autospace, discrete_space
 
 import numpy
 import copy
@@ -25,20 +28,17 @@ class ConstantCDGain(BaseAgent):
         super().__init__("assistant")
 
     def finit(self):
-        action_space = Space(
-            [
-                numpy.array(
-                    [self.gain for i in range(self.bundle.task.dim)],
-                    dtype=numpy.float32,
-                ),
-                numpy.array(
-                    [self.gain for i in range(self.bundle.task.dim)],
-                    dtype=numpy.float32,
-                ),
-            ]
+
+        action_space = autospace(
+            numpy.full((1, self.bundle.task.dim), self.gain),
+            numpy.full((1, self.bundle.task.dim), self.gain),
         )
         self.policy.action_state["action"] = StateElement(
-            values=None, spaces=action_space, clipping_mode="clip"
+            numpy.array([self.gain for i in range(self.bundle.task.dim)]).reshape(
+                1, -1
+            ),
+            action_space,
+            out_of_bonuds_mode="warning",
         )
 
 
@@ -52,68 +52,50 @@ class BIGGain(BaseAgent):
     def finit(self):
         action_state = self.bundle.game_state["assistant_action"]
         action_state["action"] = StateElement(
-            values=None,
-            spaces=Space(
-                [
-                    numpy.array(
-                        [i for i in range(self.bundle.task.gridsize)], dtype=numpy.int16
-                    )
-                ]
-            ),
-            clipping_mode="error",
+            0,
+            autospace([i for i in range(self.bundle.task.gridsize)]),
+            out_of_bounds_mode="error",
         )
         user_policy_model = copy.deepcopy(self.bundle.user.policy)
-
         agent_policy = BIGDiscretePolicy(action_state, user_policy_model)
-
         self.attach_policy(agent_policy)
-        # self.inference_engine.attach_policy(agent_policy.user_policy_model)
         self.inference_engine.attach_policy(user_policy_model)
 
-    def reset(self, dic=None):
-        if dic is None:
-            super().reset()
-
         self.state["beliefs"] = StateElement(
-            values=numpy.array(
+            numpy.array(
                 [
                     1 / self.bundle.task.number_of_targets
                     for i in range(self.bundle.task.number_of_targets)
                 ]
+            ).reshape(-1, 1),
+            autospace(
+                numpy.zeros((1, self.bundle.task.number_of_targets)),
+                numpy.ones((1, self.bundle.task.number_of_targets)),
             ),
-            spaces=Space(
-                [
-                    numpy.zeros((1, self.bundle.task.number_of_targets)),
-                    numpy.ones((1, self.bundle.task.number_of_targets)),
-                ]
-            ),
-            clipping_mode="error",
+            out_of_bounds_mode="error",
         )
 
-        # change theta for inference engine
+    def reset(self, dic=None):
+        self.state["beliefs"][:] = numpy.array(
+            [
+                1 / self.bundle.task.number_of_targets
+                for i in range(self.bundle.task.number_of_targets)
+            ]
+        ).reshape(1, -1)
 
+        # change theta for inference engine
         set_theta = [
             {
                 ("user_state", "goal"): StateElement(
-                    values=[t],
-                    spaces=Space(
-                        [
-                            numpy.array(
-                                [list(range(self.bundle.task.gridsize))],
-                                dtype=numpy.int16,
-                            )
-                        ]
-                    ),
+                    t,
+                    discrete_space(numpy.array(list(range(self.bundle.task.gridsize)))),
                 )
             }
-            for t in self.bundle.task.state["targets"]["values"]
+            for t in self.bundle.task.state["targets"]
         ]
 
         self.inference_engine.attach_set_theta(set_theta)
         self.policy.attach_set_theta(set_theta)
-
-        if dic is not None:
-            super().reset(dic=dic)
 
         def transition_function(assistant_action, observation):
             """What future observation will the user see due to assistant action"""

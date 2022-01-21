@@ -39,26 +39,28 @@ class ChenEyePointingTask(InteractionTask):
         self.dimension = dimension
         self.parity = 1
 
-        self.state["targets"] = StateElement(
-            values=[numpy.array([0 for i in range(dimension)])],
-            spaces=Space(
+        self.state["target"] = StateElement(
+            numpy.array([0 for i in range(dimension)]).reshape(-1, 1),
+            Space(
                 [
-                    -numpy.ones((dimension,), dtype=numpy.float32),
-                    numpy.ones((dimension,), dtype=numpy.float32),
-                ]
+                    -numpy.ones((dimension, 1), dtype=numpy.float32),
+                    numpy.ones((dimension, 1), dtype=numpy.float32),
+                ],
+                "continuous",
             ),
-            clipping_mode="error",
+            out_of_bounds_mode="clip",
         )
 
         self.state["fixation"] = StateElement(
-            values=[numpy.array([0 for i in range(dimension)])],
-            spaces=Space(
+            numpy.array([0 for i in range(dimension)]),
+            Space(
                 [
-                    -numpy.ones((dimension,), dtype=numpy.float32),
-                    numpy.ones((dimension,), dtype=numpy.float32),
-                ]
+                    -numpy.ones((dimension, 1), dtype=numpy.float32),
+                    numpy.ones((dimension, 1), dtype=numpy.float32),
+                ],
+                "continuous",
             ),
-            clipping_mode="clip",
+            out_of_bounds_mode="clip",
         )
 
     def get_new_target(self, D):
@@ -88,25 +90,12 @@ class ChenEyePointingTask(InteractionTask):
         :param dic: reset_dic (see the documentation of the reset mechanism in CoopIHC), defaults to None
         :type dic: dictionnary, optional
         """
-
-        self.state["targets"]["values"] = numpy.array(
-            [self.get_new_target(self.fitts_D)]
-        )
-        self.state["fixation"]["values"] = numpy.array(
-            [0 for i in range(self.dimension)]
-        )
+        self.state["target"][:] = numpy.array([self.get_new_target(self.fitts_D)])
+        self.state["fixation"][:] = numpy.array([0 for i in range(self.dimension)])
 
     def _is_done_user(self):
         if (
-            numpy.sqrt(
-                numpy.sum(
-                    (
-                        self.state["fixation"]["values"]
-                        - self.state["targets"]["values"][0]
-                    )
-                    ** 2
-                )
-            )
+            numpy.sqrt(numpy.sum((self.state["fixation"] - self.state["target"]) ** 2))
             - self.fitts_W / 2
             < self.threshold
         ):
@@ -125,14 +114,14 @@ class ChenEyePointingTask(InteractionTask):
         :return: tuple(task state, reward, isdone_flag, empty dictionnary)
         :rtype: tuple(coopihc.space.state, float, boolean)
         """
-        self.state["fixation"]["values"] = copy.copy(user_action["values"])
+        self.state["fixation"][:] = user_action[:]
 
         reward = -1
 
-        return self.state, reward, self._is_done_user(), {}
+        return self.state, reward, self._is_done_user()
 
     def assistant_step(self, assistant_action):
-        return self.state, 0, False, {}
+        return self.state, 0, False
 
     def render(self, *args, mode="text", **kwargs):
         """Renders the task.
@@ -145,12 +134,10 @@ class ChenEyePointingTask(InteractionTask):
         :type mode: str, optional
         """
 
-        goal = self.state["targets"]["values"][0].squeeze().tolist()
-        fx = self.state["fixation"]["values"][0].squeeze().tolist()
+        goal = self.state["target"].squeeze().tolist()
+        fx = self.state["fixation"].squeeze().tolist()
 
         if "text" in mode:
-            print("\n")
-            print("Turn number {:f}".format(self.bundle.round_number))
             print("Target:")
             print(goal)
             print("fixation:")

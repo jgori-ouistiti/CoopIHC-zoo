@@ -1,4 +1,31 @@
 import numpy
+from coopihc.inference.BaseInferenceEngine import BaseInferenceEngine
+
+from matplotlib.patches import Ellipse
+import matplotlib.transforms as transforms
+
+
+class ProvideLikelihoodInferenceEngine(BaseInferenceEngine):
+    def __init__(self, noise_level, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.noise_level = noise_level
+        self.render_tag = []
+
+    def infer(self, user_state=None):
+        if user_state is None:
+            if self.host.role == "user":
+                user_state = self.observation["user_state"]
+            else:
+                user_state = self.observation["assistant_state"]
+
+        target, position = (
+            self.observation["task_state"]["target"],
+            self.observation["task_state"]["fixation"],
+        )
+
+        user_state["y"][:] = self.observation["task_state"]["target"][:]
+        user_state["Sigma_0"][:] = eccentric_noise(target, position, self.noise_level)
+        return user_state, 0
 
 
 def eccentric_noise(target, position, sdn_level):
@@ -17,16 +44,11 @@ def eccentric_noise(target, position, sdn_level):
 
     :meta public:
     """
-    # Quick hack to fix what is likely broken in the observation engine
-    if isinstance(target, (numpy.number, list, int, float)):
-        target = numpy.array([target])
-    if isinstance(position, (numpy.number, list, int, float)):
-        position = numpy.array([position])
+    target, position = (
+        target.view(numpy.ndarray).squeeze(),
+        position.view(numpy.ndarray).squeeze(),
+    )
 
-    target, position = target.squeeze(), position.squeeze()
-
-    # if target.shape == (2,) or target.shape == (1, 2) or target.shape == (2,
-    # 1):
     if target.shape == (2,):
         eccentricity = numpy.sqrt(numpy.sum((target - position) ** 2))
         cosalpha = (target - position)[0] / eccentricity

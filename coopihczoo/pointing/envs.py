@@ -8,6 +8,8 @@ from coopihc.interactiontask.PipeTaskWrapper import PipeTaskWrapper
 PipeTaskWrapper
 from coopihc.space.Space import Space
 from coopihc.space.StateElement import StateElement
+from coopihc.space.utils import autospace
+from coopihc.helpers import flatten
 from coopihc.helpers import sort_two_lists
 import functools
 
@@ -243,19 +245,21 @@ class SimplePointingTask(InteractionTask):
         self.dim = 1
 
         self.state["position"] = StateElement(
-            values=None,
-            spaces=Space(
-                [numpy.array([i for i in range(gridsize)], dtype=numpy.int16)]
-            ),
-            clipping_mode="clip",
+            [0 for i in range(self.dim)],
+            autospace(numpy.array([i for i in range(gridsize)])),
+            out_of_bounds_mode="clip",
         )
 
         self.state["targets"] = StateElement(
-            values=None,
-            spaces=[
-                Space([numpy.array([i for i in range(gridsize)], dtype=numpy.int16)])
-                for j in range(number_of_targets)
-            ],
+            numpy.array([j for j in range(number_of_targets)]),
+            autospace(
+                flatten(
+                    [
+                        numpy.array([i for i in range(gridsize)])
+                        for j in range(number_of_targets)
+                    ]
+                )
+            ),
         )
 
     def reset(self, dic=None):
@@ -280,23 +284,18 @@ class SimplePointingTask(InteractionTask):
         for i in targets:
             copy.remove(i)
         position = int(numpy.random.choice(copy))
-        self.state["position"]["values"] = position
-        self.state["targets"]["values"] = targets
+        self.state["position"][:] = position
+        self.state["targets"][:] = targets
 
     def user_step(self, *args, **kwargs):
         """Do nothing, increment turns, return half a timestep
 
         :meta public:
         """
-        super().user_step()
         is_done = False
-        if int(self.user_action["values"][0].squeeze()) == 0:
+        if self.user_action.squeeze().tolist() == 0:
             is_done = True
-        return self.state, -1 / 2, is_done, {}
-
-    def is_done_assistant(self):
-        is_done = False
-        return is_done
+        return self.state, -1 / 2, is_done
 
     def assistant_step(self, *args, **kwargs):
         """Modulate the user's action.
@@ -310,29 +309,26 @@ class SimplePointingTask(InteractionTask):
 
         :meta public:
         """
-        super().assistant_step()
         is_done = False
 
         # Stopping condition if too many turns
-        if int(self.bundle.round_number) >= 30:
+        if int(self.round_number) >= 30:
             return self.state, -1 / 2, True, {}
 
         if self.mode == "position":
-            self.state["position"]["values"] = self.bundle.game_state[
-                "assistant_action"
-            ]["action"]["values"]
+            self.state["position"][:] = self.bundle.game_state["assistant_action"][
+                "action"
+            ]
         elif self.mode == "gain":
-            assistant_action = self.bundle.game_state["assistant_action"]["action"][
-                "values"
-            ][0]
-            user_action = self.bundle.game_state["user_action"]["action"]["values"][0]
-            position = self.state["position"]["values"][0]
+            assistant_action = self.bundle.game_state["assistant_action"]["action"]
+            user_action = self.bundle.game_state["user_action"]["action"]
+            position = self.state["position"]
 
-            self.state["position"]["values"] = int(
-                numpy.round(position + user_action * assistant_action)
+            self.state["position"][:] = numpy.round(
+                position + user_action * assistant_action
             )
 
-        return self.state, -1 / 2, self.is_done_assistant(), {}
+        return self.state, -1 / 2, False
 
     def render(self, *args, mode="text"):
         """Render the task.
@@ -349,20 +345,18 @@ class SimplePointingTask(InteractionTask):
 
         :meta public:
         """
-        goal = int(self.bundle.game_state["user_state"]["goal"]["values"][0])
+        goal = self.bundle.game_state["user_state"]["goal"].squeeze().tolist()
         self.grid[goal] = "G"
         if "text" in mode:
             tmp = self.grid.copy()
-            tmp[int(self.state["position"]["values"][0])] = "P"
+            tmp[int(self.state["position"].squeeze().tolist())] = "P"
             _str = "|"
             for t in tmp:
                 _str += t + "|"
 
-            print("\n")
-            print("Turn number {}".format(self.bundle.round_number))
             print(_str)
 
-            targets = sorted(self.state["targets"]["values"])
+            targets = sorted(self.state["targets"])
             print("Targets:")
             print([t.squeeze().tolist() for t in targets])
             print("\n")
@@ -445,7 +439,7 @@ class SimplePointingTask(InteractionTask):
             self.draws.append(draw)
             self.fills.append(fill)
             self.symbols.append(symbol)
-        for t_array in self.state["targets"]["values"]:
+        for t_array in self.state["targets"]:
             t = int(t_array)
             self.fills[t].remove()
             self.draws[t].remove()
@@ -455,7 +449,7 @@ class SimplePointingTask(InteractionTask):
             self.draws[t] = draw
             self.fills[t] = fill
             self.symbols[t] = symbol
-        t = int(self.bundle.game_state["user_state"]["goal"]["values"][0])
+        t = int(self.bundle.game_state["user_state"]["goal"].squeeze().tolist())
         self.fills[t].remove()
         self.draws[t].remove()
         if self.symbols[t]:
@@ -465,7 +459,7 @@ class SimplePointingTask(InteractionTask):
         self.fills[t] = fill
         self.symbols[t] = symbol
 
-        self.draw_pos = self.state["position"]["values"][0]
+        self.draw_pos = self.state["position"].squeeze().tolist()
         self.update_position()
 
         self.ax.set_yticks([])
@@ -489,9 +483,9 @@ class SimplePointingTask(InteractionTask):
                 self.symbols[t].remove()
             except TypeError:
                 self.symbols[t][0].remove()
-        if t == self.bundle.game_state["user_state"]["goal"]["values"][0]:
+        if t == self.bundle.game_state["user_state"]["goal"]:
             shortcut = "goal"
-        elif t in self.state["targets"]["values"]:
+        elif t in self.state["targets"]:  # maybe squeeze().tolist()
             shortcut = "target"
         else:
             shortcut = "void"
@@ -500,7 +494,7 @@ class SimplePointingTask(InteractionTask):
         self.fills[t] = fill
         self.symbols[t] = symbol
 
-        t = int(self.state["position"]["values"][0])
+        t = int(self.state["position"])
         draw, fill, symbol = self.set_box(self.ax, t, shortcut="position")
         self.draws[t] = draw
         self.fills[t] = fill

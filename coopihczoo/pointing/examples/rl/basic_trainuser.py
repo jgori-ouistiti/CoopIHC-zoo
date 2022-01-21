@@ -1,3 +1,5 @@
+from stable_baselines3.common.env_checker import check_env
+
 from coopihczoo.pointing.envs import SimplePointingTask
 from coopihczoo.pointing.assistants import ConstantCDGain
 from coopihczoo.pointing.users import CarefulPointer
@@ -30,7 +32,13 @@ action_state = State(
 policy = BasePolicy(action_state)
 user = CarefulPointer(override_agent_policy=policy)
 bundle = Bundle(task=task, user=user, assistant=unitcdgain)
-env = Train(bundle)
+env = Train(bundle, train_user=True, train_assistant=False, force=True)
+# Check env is compatible
+check_env(env, warn=True, skip_render_check=True)
+
+
+# With Wrapper provided from
+wrapper = env.action_wrappers(env)
 
 
 # observation_dict = OrderedDict(

@@ -10,6 +10,7 @@ from coopihc.bundle.Bundle import Bundle
 from coopihc.space.Space import Space
 from coopihc.space.State import State
 from coopihc.space.StateElement import StateElement
+from coopihc.space.utils import autospace
 
 from coopihc.policy.ELLDiscretePolicy import ELLDiscretePolicy
 from coopihc.policy.WrapAsPolicy import WrapAsPolicy
@@ -214,11 +215,11 @@ class CarefulPointer(BaseAgent):
 
     def __init__(self, *args, error_rate=0.05, **kwargs):
 
-        self._target_values = None
+        self._targets = None
 
         action_state = State()
         action_state["action"] = StateElement(
-            values=None, spaces=Space([numpy.array([-1, 0, 1], dtype=numpy.int16)])
+            0, autospace(numpy.array([-1, 0, 1])), out_of_bounds_mode="warning"
         )
 
         ELLD_dic = {"compute_likelihood_args": {"error_rate": error_rate}}
@@ -232,9 +233,8 @@ class CarefulPointer(BaseAgent):
         def compute_likelihood(self, action, observation, *args, **kwargs):
             error_rate = kwargs.get("error_rate", 0)
             # convert actions and observations
-            action = action["values"][0]
-            goal = observation["user_state"]["goal"]["values"][0]
-            position = observation["task_state"]["position"]["values"][0]
+            goal = observation["user_state"]["goal"]
+            position = observation["task_state"]["position"]
             # Write down all possible cases (5)
             # (1) Goal to the right, positive action
             if goal > position and action > 0:
@@ -255,7 +255,7 @@ class CarefulPointer(BaseAgent):
             elif goal != position and action == 0:
                 return 0
             else:
-                raise RunTimeError(
+                raise RuntimeError(
                     "warning, unable to compute likelihood. You may have not covered all cases in the likelihood definition"
                 )
 
@@ -280,24 +280,27 @@ class CarefulPointer(BaseAgent):
         )
 
     @property
-    def target_values(self):
-        return self.bundle.task.state["targets"]["values"]
+    def targets(self):
+        return self.bundle.task.state["targets"]
 
-    def finit(self):
-        target_space = self.bundle.task.state["targets"]["spaces"][0]
+    # def finit(self):
+    #     target_space = self.targets.spaces
+    #     print(target_space)
 
-        self.state["goal"] = StateElement(values=None, spaces=copy.copy(target_space))
+    #     self.state["goal"] = StateElement(
+    #         0, autospace(copy.copy(target_space)), out_of_bounds_mode="warning"
+    #     )
 
     def reset(self, dic=None):
-        if dic is None:
-            super().reset()
-
-        self.state["goal"]["values"] = numpy.random.choice(
-            [tv.squeeze() for tv in self.target_values]
+        index = numpy.random.randint(0, self.targets.size)
+        self.state["goal"] = StateElement(
+            self.targets[index],
+            self.targets.spaces[index],
+            out_of_bounds_mode="warning",
         )
-
-        if dic is not None:
-            super().reset(dic=dic)
+        # self.state["goal"] = numpy.random.choice(
+        #     [tv.squeeze() for tv in self.targets]
+        # )
 
 
 class LQGPointer(BaseAgent):
