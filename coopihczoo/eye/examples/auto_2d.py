@@ -18,8 +18,13 @@ user = ChenEye(swapping_std, ocular_std)
 bundle = Bundle(task=task, user=user)
 bundle.reset()
 bundle.render("plot")
+plt.tight_layout()
+k = 0
+plt.savefig("/home/juliengori/Pictures/img_tmp/cheneye2d_{}.png".format(k))
 while True:
     obs, rewards, is_done = bundle.step()
     bundle.render("plot")
+    k += 1
+    plt.savefig("/home/juliengori/Pictures/img_tmp/cheneye2d_{}.png".format(k))
     if is_done:
         break

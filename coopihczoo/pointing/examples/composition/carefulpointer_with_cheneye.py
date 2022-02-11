@@ -45,7 +45,6 @@ perceptualnoise = 0.2
 oculomotornoise = 0.2
 task = ChenEyePointingTask(fitts_W, fitts_D, dimension=1)
 user = ChenEye(perceptualnoise, oculomotornoise, dimension=1)
-# obs_bundle = SinglePlayUserAuto(task, user, start_at_action=True)
 obs_bundle = Bundle(task=task, user=user)
 
 

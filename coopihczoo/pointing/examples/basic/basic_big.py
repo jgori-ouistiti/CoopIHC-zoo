@@ -13,17 +13,14 @@ bundle = Bundle(task=task, user=binary_user, assistant=BIGpointer)
 game_state = bundle.reset()
 bundle.render("plotext")
 plt.tight_layout()
-# k = 0
-# plt.savefig('/home/jgori/Documents/img_tmp/biggain_{}.png'.format(k))
-#
+k = 0
+plt.savefig("/home/juliengori/Pictures/img_tmp/biggain_{}.png".format(k))
+
 while True:
     game_state, rewards, is_done = bundle.step(user_action=None, assistant_action=None)
-    print(game_state)
-    print(dict.__repr__(game_state))
-    exit()
     bundle.render("plotext")
-    # k+=1
-    # plt.savefig('/home/jgori/Documents/img_tmp/biggain_{}.png'.format(k))
+    k += 1
+    plt.savefig("/home/juliengori/Pictures/img_tmp/biggain_{}.png".format(k))
     if is_done:
         bundle.close()
         break

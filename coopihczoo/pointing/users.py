@@ -283,14 +283,6 @@ class CarefulPointer(BaseAgent):
     def targets(self):
         return self.bundle.task.state["targets"]
 
-    # def finit(self):
-    #     target_space = self.targets.spaces
-    #     print(target_space)
-
-    #     self.state["goal"] = StateElement(
-    #         0, autospace(copy.copy(target_space)), out_of_bounds_mode="warning"
-    #     )
-
     def reset(self, dic=None):
         index = numpy.random.randint(0, self.targets.size)
         self.state["goal"] = StateElement(
@@ -298,9 +290,6 @@ class CarefulPointer(BaseAgent):
             self.targets.spaces[index],
             out_of_bounds_mode="warning",
         )
-        # self.state["goal"] = numpy.random.choice(
-        #     [tv.squeeze() for tv in self.targets]
-        # )
 
 
 class LQGPointer(BaseAgent):

@@ -293,9 +293,14 @@ class SimplePointingTask(InteractionTask):
         :meta public:
         """
         is_done = False
-        if self.user_action.squeeze().tolist() == 0:
+        if (
+            # self.user_action == 0
+            # and self.state["position"] == self.bundle.user.state["goal"]
+            self.state["position"]
+            == self.bundle.user.state["goal"]
+        ):
             is_done = True
-        return self.state, -1 / 2, is_done
+        return self.state, -1, is_done
 
     def assistant_step(self, *args, **kwargs):
         """Modulate the user's action.
@@ -312,23 +317,20 @@ class SimplePointingTask(InteractionTask):
         is_done = False
 
         # Stopping condition if too many turns
-        if int(self.round_number) >= 30:
-            return self.state, -1 / 2, True, {}
+        if int(self.round_number) >= 50:
+            return self.state, 0, True
 
         if self.mode == "position":
-            self.state["position"][:] = self.bundle.game_state["assistant_action"][
-                "action"
-            ]
+            self.state["position"][:] = self.assistant_action
         elif self.mode == "gain":
-            assistant_action = self.bundle.game_state["assistant_action"]["action"]
-            user_action = self.bundle.game_state["user_action"]["action"]
+
             position = self.state["position"]
 
             self.state["position"][:] = numpy.round(
-                position + user_action * assistant_action
+                position + self.user_action * self.assistant_action
             )
 
-        return self.state, -1 / 2, False
+        return self.state, 0, False
 
     def render(self, *args, mode="text"):
         """Render the task.
