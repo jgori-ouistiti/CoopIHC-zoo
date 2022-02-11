@@ -137,3 +137,6 @@ dmypy.json
 # Pipfile (use requirements.txt instead)
 Pipfile
 Pipfile.lock
+
+# Pycharm
+.idea
