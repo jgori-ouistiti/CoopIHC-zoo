@@ -1,10 +1,18 @@
-from coopihc import BaseAgent, State, StateElement, Space, BasePolicy, autospace, RuleObservationEngine, BaseInferenceEngine
+from coopihc import (
+    BaseAgent,
+    State,
+    StateElement,
+    Space,
+    BasePolicy,
+    autospace,
+    RuleObservationEngine,
+    BaseInferenceEngine,
+)
 from coopihc.observation.utils import base_user_engine_specification
 import numpy as np
 
 
 class UpdateMemory(BaseInferenceEngine):
-
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
@@ -13,13 +21,7 @@ class UpdateMemory(BaseInferenceEngine):
         item = int(self.observation["task_state"]["item"])
         timestamp = self.observation["task_state"]["timestamp"]
 
-        print(self.state["last_pres"].shape)
-        print(item)
-        print("yo")
-        print(type(self.state["last_pres"][0, 0]))
-
-        self.state["last_pres"][0, 0] = timestamp
-        print("done")
+        self.state["last_pres"][item, 0] = timestamp
         self.state["n_pres"][item, 0] += 1
 
         reward = 0
@@ -50,7 +52,7 @@ class ResponseGenerator(BasePolicy):
         :rtype: tuple(`StateElement<coopihc.space.StateElement.StateElement>`, float)
         """
 
-        item = self.observation["task_state"]["item"]
+        item = int(self.observation["task_state"]["item"])
         timestamp = self.observation["task_state"]["timestamp"]
 
         param = self.param
@@ -60,7 +62,7 @@ class ResponseGenerator(BasePolicy):
         reward = 0
         _action_value = 0
 
-        if n_pres[item] > 0:
+        if n_pres[item, 0] > 0:
 
             if self.is_item_specific:
                 init_forget = param[item, 0]
@@ -68,12 +70,12 @@ class ResponseGenerator(BasePolicy):
             else:
                 init_forget, rep_effect = param
 
-            fr = init_forget * (1 - rep_effect) ** (n_pres[item] - 1)
-    #
-            delta = timestamp - last_pres[item]
+            fr = init_forget * (1 - rep_effect) ** (n_pres[item, 0] - 1)
+            #
+            delta = timestamp - last_pres[item, 0]
 
             with np.errstate(divide="ignore", invalid="ignore", over="ignore"):
-                p = np.exp(- fr * delta)
+                p = np.exp(-fr * delta)
 
             _action_value = p > np.random.random()
 
@@ -84,11 +86,9 @@ class ResponseGenerator(BasePolicy):
 
 
 class User(BaseAgent):
-    """
-    """
+    """ """
 
-    def __init__(self, n_item, is_item_specific, param,
-                 *args, **kwargs):
+    def __init__(self, n_item, is_item_specific, param, *args, **kwargs):
 
         self.n_item = n_item
 
@@ -98,36 +98,38 @@ class User(BaseAgent):
         #         self.n_pres = np.zeros(n_item, dtype=int)
         #         self.last_pres = np.zeros(n_item, dtype=float)
 
-        n_pres_init = np.atleast_2d(np.zeros(n_item))
+        n_pres_init = np.atleast_2d(np.zeros(n_item)).reshape(-1, 1)
         state["n_pres"] = StateElement(
             np.zeros_like(n_pres_init),
-            autospace(np.zeros_like(n_pres_init),
-                      np.full(n_pres_init.shape, np.inf),
-                      dtype=np.float32),
+            autospace(
+                np.zeros_like(n_pres_init),
+                np.full(n_pres_init.shape, np.inf),
+                dtype=np.float32,
+            ),
         )
 
         state["last_pres"] = StateElement(
             np.zeros_like(n_pres_init),
-            autospace(np.zeros_like(n_pres_init),
-                      np.full(n_pres_init.shape, np.inf),
-                      dtype=np.float32),
+            autospace(
+                np.zeros_like(n_pres_init),
+                np.full(n_pres_init.shape, np.inf),
+                dtype=np.float32,
+            ),
         )
 
         # Call the policy defined above
         action_state = State()
-        action_state["action"] = StateElement(
-            0,
-            autospace([0, 1])
-        )
+        action_state["action"] = StateElement(0, autospace([0, 1]))
         # agent_policy = ExamplePolicy(action_state=action_state)
 
         # Use default observation and inference engines
         observation_engine = RuleObservationEngine(
-            deterministic_specification=base_user_engine_specification)
+            deterministic_specification=base_user_engine_specification
+        )
         inference_engine = UpdateMemory()
-        policy = ResponseGenerator(action_state=action_state,
-                                   is_item_specific=is_item_specific,
-                                   param=param)
+        policy = ResponseGenerator(
+            action_state=action_state, is_item_specific=is_item_specific, param=param
+        )
 
         super().__init__(
             "user",
@@ -149,6 +151,7 @@ class User(BaseAgent):
         """
         self.state["n_pres"][:] = np.zeros(self.n_item)
         self.state["last_pres"][:] = np.zeros(self.n_item)
+
 
 # class Exponential:
 #
@@ -265,4 +268,3 @@ class User(BaseAgent):
 #         self.n_seen = np.sum(self.seen)
 #
 #         self.i += 1
-

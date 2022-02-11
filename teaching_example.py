@@ -27,12 +27,15 @@ print(bundle.game_state)
 # Reset the bundle (i.e. initialize it to a random or prescribed states)
 print("reset bundle")
 bundle.reset(
-    turn=0
+    turn=3
 )  # Reset in a state where the user has already produced an observation and made an inference.
 
 # Step through the bundle (i.e. play full rounds)
 print("start task")
+k = 0
 while 1:
+    k += 1
+    print(k)
     state, rewards, is_done = bundle.step(user_action=1, assistant_action=None)
     # Do something with the state or the rewards
     if is_done:

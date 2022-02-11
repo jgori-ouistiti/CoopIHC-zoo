@@ -3,8 +3,7 @@ import numpy as np
 
 
 class Task(InteractionTask):
-    """
-    """
+    """ """
 
     def __init__(self, n_item, max_iter=10, *args, **kwargs):
 
@@ -16,24 +15,15 @@ class Task(InteractionTask):
 
         # Describe the state. Here it is a single item which takes value in [-4, -3, ..., 3, 4]. The StateElement has out_of_bounds_mode = clip, which means that values outside the range will automatically be clipped to fit the space.
         self.state["iteration"] = StateElement(
-            0,
-            autospace(np.zeros((1, 1)),
-                      np.full((1, 1), np.inf)
-                      )
+            0, autospace(np.zeros((1, 1)), np.full((1, 1), np.inf))
         )
 
         self.state["item"] = StateElement(
-            0,
-            autospace(np.zeros((1, 1)),
-                      np.full((1, 1), n_item)
-                      )
+            0, autospace(np.zeros((1, 1)), np.full((1, 1), n_item))
         )
 
         self.state["timestamp"] = StateElement(
-            0,
-            autospace(np.zeros((1, 1)),
-                      np.full((1, 1), np.inf)
-                      )
+            0, autospace(np.zeros((1, 1)), np.full((1, 1), np.inf))
         )
 
     def reset(self, dic=None):
@@ -47,6 +37,7 @@ class Task(InteractionTask):
         # Modify the state in place, adding the user action
         is_done = False
         reward = 0
+        self.state["iteration"][:] += 1
         if self.state["iteration"] == self.max_iter:
             is_done = True
         return self.state, reward, is_done
