@@ -37,6 +37,7 @@ while 1:
     k += 1
     print(k)
     state, rewards, is_done = bundle.step(user_action=1, assistant_action=None)
+    print(state)
     # Do something with the state or the rewards
     if is_done:
         break
