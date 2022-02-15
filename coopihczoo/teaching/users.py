@@ -59,14 +59,14 @@ class UserPolicy(BasePolicy):
         timestamp = self.observation["task_state"]["timestamp"]
 
         param = self.param
-        n_pres = self.observation["user_state"]["n_pres_before_obs"].view(np.ndarray)  # old!!
-        last_pres = self.observation["user_state"]["last_pres_before_obs"].view(np.ndarray)  # old!!
+        n_pres = self.observation["user_state"]["n_pres_before_obs"].view(np.ndarray)[0, 0]  # old and unique!!
+        last_pres = self.observation["user_state"]["last_pres_before_obs"].view(np.ndarray)[0, 0]  # old and unique!!
 
         reward = 0
         _action_value = 0
         p = 0
 
-        if n_pres[item, 0] > 0:
+        if n_pres > 0:
 
             if self.is_item_specific:
                 init_forget = param[item, 0]
@@ -74,9 +74,9 @@ class UserPolicy(BasePolicy):
             else:
                 init_forget, rep_effect = param
 
-            fr = init_forget * (1 - rep_effect) ** (n_pres[item, 0] - 1)
+            fr = init_forget * (1 - rep_effect) ** (n_pres - 1)
 
-            delta = timestamp - last_pres[item, 0]
+            delta = timestamp - last_pres
 
             with np.errstate(divide="ignore", invalid="ignore", over="ignore"):
                 p = np.exp(-fr * delta)
