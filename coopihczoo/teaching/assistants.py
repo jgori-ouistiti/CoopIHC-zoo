@@ -1,5 +1,100 @@
-from coopihc import BaseAgent, State, StateElement, Space, ExamplePolicy, BasePolicy, autospace
+from coopihc import BaseAgent, State, StateElement, Space, ExamplePolicy, \
+    BasePolicy, autospace, BaseInferenceEngine
 import numpy as np
+
+
+# class Leitner:
+#
+#     def __init__(self, n_item, delay_factor, delay_min):
+#
+#         box = np.full(n_item, -1)
+#         due = np.full(n_item, -1)
+#
+#         self.n_item = n_item
+#
+#         self.delay_factor = delay_factor
+#         self.delay_min = delay_min
+#
+#         self.box = box
+#         self.due = due
+#
+#     def update_box_and_due_time(self, last_idx,
+#                                 last_was_success, last_time_reply):
+#
+#         if last_was_success:
+#             self.box[last_idx] += 1
+#         else:
+#             self.box[last_idx] = \
+#                 max(0, self.box[last_idx] - 1)
+#
+#         delay = self.delay_factor ** self.box[last_idx]
+#         # Delay is 1, 2, 4, 8, 16, 32, 64, 128, 256, 512 ...
+#         self.due[last_idx] = \
+#             last_time_reply + self.delay_min * delay
+
+    # def _pickup_item(self, now):
+    #
+    #     seen = np.argwhere(np.asarray(self.box) >= 0).flatten()
+    #     n_seen = len(seen)
+    #
+    #     if n_seen == self.n_item:
+    #         return np.argmin(self.due)
+    #
+    #     else:
+    #         seen__due = np.asarray(self.due)[seen]
+    #         seen__is_due = np.asarray(seen__due) <= now
+    #         if np.sum(seen__is_due):
+    #             seen_and_is_due__due = seen__due[seen__is_due]
+    #
+    #             return seen[seen__is_due][np.argmin(seen_and_is_due__due)]
+    #         else:
+    #             return self._pickup_new()
+    #
+    # def _pickup_new(self):
+    #     return np.argmin(self.box)
+    #
+    # def ask(self, now, last_was_success, last_time_reply, idx_last_q):
+    #
+    #     if idx_last_q is None:
+    #         item_idx = self._pickup_new()
+    #
+    #     else:
+    #
+    #         self.update_box_and_due_time(
+    #             last_idx=idx_last_q,
+    #             last_was_success=last_was_success,
+    #             last_time_reply=last_time_reply)
+    #         item_idx = self._pickup_item(now)
+    #
+    #     return item_idx
+    
+
+class AssistantInferenceEngine(BaseInferenceEngine):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+    def infer(self, user_state=None):
+
+        item = int(self.observation["task_state"]["item"])
+        timestamp = self.observation["task_state"]["timestamp"]
+        
+        last_was_success = self.observation["user_action"]["action"][0]
+        print(type(last_was_success))
+        
+        if last_was_success:
+            self.state["box"][last_idx, 0] += 1
+        else:
+            self.state["box"][last_idx] = \
+                max(0, self.box[last_idx] - 1)
+
+        delay = self.delay_factor ** self.state["box"][last_idx]
+        # Delay is 1, 2, 4, 8, 16, 32, 64, 128, 256, 512 ...
+        self.self.state["due"][last_idx] = \
+            last_time_reply + self.delay_min * delay
+
+        reward = 0
+
+        return self.state, reward
 
 
 class AssistantPolicy(BasePolicy):
@@ -16,18 +111,29 @@ class AssistantPolicy(BasePolicy):
         :rtype: tuple(`StateElement<coopihc.space.StateElement.StateElement>`, float)
         """
 
-        # item = int(self.observation["task_state"]["item"])
-        # timestamp = self.observation["task_state"]["timestamp"]
-        #
-        # param = self.param
-        # n_pres = self.observation["user_state"]["n_pres"]  # old
-        # last_pres = self.observation["user_state"]["last_pres"]  # old
+        box = self.state["box"].view(np.ndarray)
+        due = self.state["due"].view(np.ndarray)
 
-        reward = 0
-        _action_value = 0
+        if self.observation["task_state"]["iteration"] == 0:
 
-        new_action = self.new_action
-        new_action[:] = _action_value
+            _action_value = box.argmin() # pickup new
+        else:
+
+            seen = np.argwhere(box >= 0).flatten()
+            n_seen = len(seen)
+
+            if n_seen == self.n_item:
+                _action_value = np.argmin(due)
+
+            else:
+                seen__due = np.asarray(due)[seen]
+                seen__is_due = np.asarray(seen__due) <= now
+                if np.sum(seen__is_due):
+                    seen_and_is_due__due = seen__due[seen__is_due]
+
+                    _action_value  = seen[seen__is_due][np.argmin(seen_and_is_due__due)]
+                else:
+                    _action_value = box.argmin()  # pickup new
 
         return new_action, reward
 
@@ -38,26 +144,38 @@ class AssistantPolicy(BasePolicy):
 
 
 class Assistant(BaseAgent):
-    """An Example of a User.
 
-    An agent that handles the ExamplePolicy, has a single 1d state, and has the default observation and inference engines.
-    See the documentation of the :py:mod:`BaseAgent <coopihc.agents.BaseAgent.BaseAgent>` class for more details.
-
-    :meta public:
-    """
-
-    def __init__(self, n_item, *args, **kwargs):
+    def __init__(self, n_item, delay_factor, delay_min,
+                 *args, **kwargs):
 
         # # Define an internal state with a 'goal' substate
-        # state = State()
-        # state["goal"] = StateElement(
-        #     4,
-        #     Space(
-        #         np.array([-4, -3, -2, -1, 0, 1, 2, 3, 4], dtype=np.int16),
-        #         "discrete",
-        #     ),
-        # )
-        #
+        state = State()
+        container = np.atleast_2d(np.zeros(n_item))
+        state["box"] = StateElement(
+            0,
+            np.zeros_like(container),
+            autospace(
+                np.zeros_like(container),
+                np.full(container.shape, np.inf),
+                dtype=np.float32,
+            ),
+        )
+
+        state["due"] = StateElement(
+            0,
+            np.zeros_like(container),
+            autospace(
+                np.zeros_like(container),
+                np.full(container.shape, np.inf),
+                dtype=np.float32,
+            ),
+        )
+
+        self.n_item = n_item
+
+        self.delay_factor = delay_factor
+        self.delay_min = delay_min
+        
         # # Call the policy defined above
         action_state = State()
         action_state["action"] = StateElement(
@@ -69,7 +187,7 @@ class Assistant(BaseAgent):
 
         # # Use default observation and inference engines
         observation_engine = None
-        inference_engine = None
+        inference_engine = AssistantInferenceEngine()
 
         super().__init__(
             "user",

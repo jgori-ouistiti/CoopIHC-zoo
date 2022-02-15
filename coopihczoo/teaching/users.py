@@ -59,8 +59,8 @@ class UserPolicy(BasePolicy):
         timestamp = self.observation["task_state"]["timestamp"]
 
         param = self.param
-        n_pres = self.observation["user_state"]["n_pres_before_obs"]  # old!!
-        last_pres = self.observation["user_state"]["last_pres_before_obs"]  # old!!
+        n_pres = self.observation["user_state"]["n_pres_before_obs"].view(np.ndarray)  # old!!
+        last_pres = self.observation["user_state"]["last_pres_before_obs"].view(np.ndarray)  # old!!
 
         reward = 0
         _action_value = 0
@@ -81,13 +81,13 @@ class UserPolicy(BasePolicy):
             with np.errstate(divide="ignore", invalid="ignore", over="ignore"):
                 p = np.exp(-fr * delta)
 
-            print("p", p)
+            # print("p", p)
 
             _action_value = p > np.random.random()
 
         else:
-
-            print("p", "item not seen!")
+            pass
+            # print("p", "item not seen!")
 
         new_action = self.new_action
         new_action[:] = _action_value

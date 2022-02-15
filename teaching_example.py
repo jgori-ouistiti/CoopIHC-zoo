@@ -9,6 +9,9 @@ inter_trial = 1
 is_item_specific = False
 param = 0.01, 0.2
 
+delay_min = 1
+delay_factor = 2
+
 # Define a task
 task = Task(inter_trial=inter_trial, n_item=n_item)
 print("create task")
@@ -19,7 +22,7 @@ user = User(n_item=n_item, is_item_specific=is_item_specific, param=param)
 print(user.state)
 # Define an assistant
 print("create assistant")
-assistant = Assistant(n_item=n_item)
+assistant = Assistant(n_item=n_item, delay_factor=delay_factor, delay_min=delay_min)
 print(assistant.state)
 # Bundle them together
 print("create bundle")
@@ -38,7 +41,7 @@ k = 0
 while 1:
     k += 1
     print(k)
-    state, rewards, is_done = bundle.step(user_action=1, assistant_action=None)
+    state, rewards, is_done = bundle.step(user_action=None, assistant_action=None)
     print(state)
     # Do something with the state or the rewards
     if is_done:
