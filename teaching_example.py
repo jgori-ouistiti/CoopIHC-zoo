@@ -5,11 +5,12 @@ from coopihczoo.teaching.envs import Task
 from coopihczoo.teaching.assistants import Assistant
 
 n_item = 5
+inter_trial = 1
 is_item_specific = False
 param = 0.01, 0.2
 
 # Define a task
-task = Task(n_item=n_item)
+task = Task(inter_trial=inter_trial, n_item=n_item)
 print("create task")
 print(task.state)
 # Define a user
@@ -27,9 +28,10 @@ print(bundle.game_state)
 # Reset the bundle (i.e. initialize it to a random or prescribed states)
 print("reset bundle")
 bundle.reset(
-    turn=3
+    turn=3,
+    skip_user_step=True
 )  # Reset in a state where the user has already produced an observation and made an inference.
-
+print(bundle.game_state)
 # Step through the bundle (i.e. play full rounds)
 print("start task")
 k = 0

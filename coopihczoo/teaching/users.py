@@ -12,7 +12,7 @@ from coopihc.observation.utils import base_user_engine_specification
 import numpy as np
 
 
-class UpdateMemory(BaseInferenceEngine):
+class UserInferenceEngine(BaseInferenceEngine):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
@@ -20,6 +20,9 @@ class UpdateMemory(BaseInferenceEngine):
 
         item = int(self.observation["task_state"]["item"])
         timestamp = self.observation["task_state"]["timestamp"]
+
+        self.state["last_pres_before_obs"][0, 0] = self.state["last_pres"][item, 0]
+        self.state["n_pres_before_obs"][0, 0] = self.state["n_pres"][item, 0]
 
         self.state["last_pres"][item, 0] = timestamp
         self.state["n_pres"][item, 0] += 1
@@ -29,11 +32,10 @@ class UpdateMemory(BaseInferenceEngine):
         return self.state, reward
 
 
-class ResponseGenerator(BasePolicy):
+class UserPolicy(BasePolicy):
     """ExamplePolicy
 
     A simple policy which assumes that the agent using it has a 'goal' state and that the task has an 'x' state. x is compared to the goal and appropriate action is taken to make sure x reaches the goal.
-
 
     """
 
@@ -44,6 +46,7 @@ class ResponseGenerator(BasePolicy):
         self.param = param
 
     def sample(self, observation=None):
+
         """sample
 
         Compares 'x' to goal and issues +-1 accordingly.
@@ -56,11 +59,12 @@ class ResponseGenerator(BasePolicy):
         timestamp = self.observation["task_state"]["timestamp"]
 
         param = self.param
-        n_pres = self.observation["user_state"]["n_pres"]
-        last_pres = self.observation["user_state"]["last_pres"]
+        n_pres = self.observation["user_state"]["n_pres_before_obs"]  # old!!
+        last_pres = self.observation["user_state"]["last_pres_before_obs"]  # old!!
 
         reward = 0
         _action_value = 0
+        p = 0
 
         if n_pres[item, 0] > 0:
 
@@ -71,18 +75,29 @@ class ResponseGenerator(BasePolicy):
                 init_forget, rep_effect = param
 
             fr = init_forget * (1 - rep_effect) ** (n_pres[item, 0] - 1)
-            #
+
             delta = timestamp - last_pres[item, 0]
 
             with np.errstate(divide="ignore", invalid="ignore", over="ignore"):
                 p = np.exp(-fr * delta)
 
+            print("p", p)
+
             _action_value = p > np.random.random()
+
+        else:
+
+            print("p", "item not seen!")
 
         new_action = self.new_action
         new_action[:] = _action_value
 
         return new_action, reward
+
+    def reset(self):
+
+        _action_value = -1
+        self.action_state["action"][:] = _action_value
 
 
 class User(BaseAgent):
@@ -117,6 +132,25 @@ class User(BaseAgent):
             ),
         )
 
+        container = np.zeros((1,1)) # For a single item
+        state["n_pres_before_obs"] = StateElement(
+            np.zeros_like(container),
+            autospace(
+                np.zeros_like(container),
+                np.full(container.shape, np.inf),
+                dtype=np.float32,
+            ),
+        )
+
+        state["last_pres_before_obs"] = StateElement(
+            np.zeros_like(container),
+            autospace(
+                np.zeros_like(container),
+                np.full(container.shape, np.inf),
+                dtype=np.float32,
+            ),
+        )
+
         # Call the policy defined above
         action_state = State()
         action_state["action"] = StateElement(0, autospace([0, 1]))
@@ -126,8 +160,8 @@ class User(BaseAgent):
         observation_engine = RuleObservationEngine(
             deterministic_specification=base_user_engine_specification
         )
-        inference_engine = UpdateMemory()
-        policy = ResponseGenerator(
+        inference_engine = UserInferenceEngine()
+        policy = UserPolicy(
             action_state=action_state, is_item_specific=is_item_specific, param=param
         )
 
@@ -151,6 +185,8 @@ class User(BaseAgent):
         """
         self.state["n_pres"][:] = np.zeros(self.n_item)
         self.state["last_pres"][:] = np.zeros(self.n_item)
+        self.state["n_pres_before_obs"][:] = 0
+        self.state["last_pres_before_obs"][:] = 0
 
 
 # class Exponential:

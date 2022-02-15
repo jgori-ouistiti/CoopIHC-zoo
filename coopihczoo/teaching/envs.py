@@ -5,13 +5,14 @@ import numpy as np
 class Task(InteractionTask):
     """ """
 
-    def __init__(self, n_item, max_iter=10, *args, **kwargs):
+    def __init__(self, n_item, inter_trial, max_iter=10, *args, **kwargs):
 
         # Call super().__init__() beofre anything else, which initializes some useful attributes, including a State (self.state) for the task
 
         super().__init__(*args, **kwargs)
 
         self.max_iter = max_iter
+        self.inter_trial = inter_trial
 
         # Describe the state. Here it is a single item which takes value in [-4, -3, ..., 3, 4]. The StateElement has out_of_bounds_mode = clip, which means that values outside the range will automatically be clipped to fit the space.
         self.state["iteration"] = StateElement(
@@ -28,9 +29,9 @@ class Task(InteractionTask):
 
     def reset(self, dic=None):
         # Always start with state 'x' at 0
-        self.state["item"][:] = 0
-        self.state["iteration"][:] = 0
-        self.state["timestamp"][:] = 0
+        self.state["item"][:] = -1
+        self.state["iteration"][:] = -1
+        self.state["timestamp"][:] = -1
         return
 
     def user_step(self, *args, **kwargs):
@@ -49,7 +50,7 @@ class Task(InteractionTask):
         item = self.assistant_action
 
         self.state["item"][:] = item
-        # self.state["timestamp"][:] = timestamp
+        self.state["timestamp"][:] += self.inter_trial
         reward = 0
         return self.state, reward, is_done
 

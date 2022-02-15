@@ -2,6 +2,41 @@ from coopihc import BaseAgent, State, StateElement, Space, ExamplePolicy, BasePo
 import numpy as np
 
 
+class AssistantPolicy(BasePolicy):
+
+    def __init__(self, action_state, *args, **kwargs):
+        super().__init__(action_state=action_state, *args, **kwargs)
+
+    def sample(self, observation=None):
+        """sample
+
+        Compares 'x' to goal and issues +-1 accordingly.
+
+        :return: action, reward
+        :rtype: tuple(`StateElement<coopihc.space.StateElement.StateElement>`, float)
+        """
+
+        # item = int(self.observation["task_state"]["item"])
+        # timestamp = self.observation["task_state"]["timestamp"]
+        #
+        # param = self.param
+        # n_pres = self.observation["user_state"]["n_pres"]  # old
+        # last_pres = self.observation["user_state"]["last_pres"]  # old
+
+        reward = 0
+        _action_value = 0
+
+        new_action = self.new_action
+        new_action[:] = _action_value
+
+        return new_action, reward
+
+    def reset(self):
+
+        _action_value = -1
+        self.action_state["action"][:] = _action_value
+
+
 class Assistant(BaseAgent):
     """An Example of a User.
 
@@ -29,7 +64,7 @@ class Assistant(BaseAgent):
             0,
             autospace(np.arange(n_item))
         )
-        agent_policy = BasePolicy(action_state=action_state)
+        agent_policy = AssistantPolicy(action_state=action_state)
         agent_state = None
 
         # # Use default observation and inference engines
