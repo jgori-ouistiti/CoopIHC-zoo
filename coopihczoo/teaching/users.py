@@ -6,7 +6,9 @@ from coopihc import (
     autospace,
     RuleObservationEngine,
     BaseInferenceEngine,
-    array_element, num_element, cat_element
+    array_element,
+    num_element,
+    cat_element,
 )
 from coopihc.observation.utils import base_user_engine_specification
 import numpy as np
@@ -60,8 +62,14 @@ class UserPolicy(BasePolicy):
         item = int(self.observation["task_state"]["item"])
         timestamp = self.observation["task_state"]["timestamp"]
 
-        n_pres = self.observation["user_state"]["n_pres_before_obs"].view(np.ndarray)[0, 0]  # old and unique!!
-        last_pres = self.observation["user_state"]["last_pres_before_obs"].view(np.ndarray)[0, 0]  # old and unique!!
+        n_pres = self.observation["user_state"]["n_pres_before_obs"].view(np.ndarray)[
+            0, 0
+        ]  # old and unique!!
+        last_pres = self.observation["user_state"]["last_pres_before_obs"].view(
+            np.ndarray
+        )[
+            0, 0
+        ]  # old and unique!!
 
         reward = 0
         _action_value = 0
@@ -114,8 +122,8 @@ class User(BaseAgent):
         state["n_pres"] = array_element(shape=n_item, low=-1, high=np.inf)
         state["last_pres"] = array_element(shape=n_item, low=-1, high=np.inf)
 
-        state["n_pres_before_obs"] = num_element(min=-1, max=np.inf)
-        state["last_pres_before_obs"] = num_element(min=-1, max=np.inf)
+        state["n_pres_before_obs"] = num_element(low=-1, high=np.inf)
+        state["last_pres_before_obs"] = num_element(low=-1, high=np.inf)
 
         # Call the policy defined above
         action_state = State()
@@ -127,8 +135,8 @@ class User(BaseAgent):
         )
         inference_engine = UserInferenceEngine()
         policy = UserPolicy(
-            action_state=action_state, is_item_specific=is_item_specific,
-            param=param)
+            action_state=action_state, is_item_specific=is_item_specific, param=param
+        )
 
         super().__init__(
             "user",
