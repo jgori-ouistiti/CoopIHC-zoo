@@ -2,11 +2,11 @@ from coopihc import (
     BaseAgent,
     State,
     StateElement,
-    Space,
     BasePolicy,
     autospace,
     RuleObservationEngine,
     BaseInferenceEngine,
+    array_element, num_element, cat_element
 )
 from coopihc.observation.utils import base_user_engine_specification
 import numpy as np
@@ -55,16 +55,17 @@ class UserPolicy(BasePolicy):
         :rtype: tuple(`StateElement<coopihc.space.StateElement.StateElement>`, float)
         """
 
+        param = self.param
+
         item = int(self.observation["task_state"]["item"])
         timestamp = self.observation["task_state"]["timestamp"]
 
-        param = self.param
         n_pres = self.observation["user_state"]["n_pres_before_obs"].view(np.ndarray)[0, 0]  # old and unique!!
         last_pres = self.observation["user_state"]["last_pres_before_obs"].view(np.ndarray)[0, 0]  # old and unique!!
 
         reward = 0
         _action_value = 0
-        p = 0
+        # p = 0
 
         if n_pres > 0:
 
@@ -106,70 +107,33 @@ class User(BaseAgent):
     def __init__(self, n_item, is_item_specific, param, *args, **kwargs):
 
         self.n_item = n_item
+        self.param = param
 
         # Define an internal state with a 'goal' substate
         state = State()
+        state["n_pres"] = array_element(shape=n_item, low=-1, high=np.inf)
+        state["last_pres"] = array_element(shape=n_item, low=-1, high=np.inf)
 
-        #         self.n_pres = np.zeros(n_item, dtype=int)
-        #         self.last_pres = np.zeros(n_item, dtype=float)
-
-        n_pres_init = np.atleast_2d(np.zeros(n_item)).reshape(-1, 1)
-        state["n_pres"] = StateElement(
-            np.zeros_like(n_pres_init),
-            autospace(
-                np.zeros_like(n_pres_init),
-                np.full(n_pres_init.shape, np.inf),
-                dtype=np.float32,
-            ),
-        )
-
-        state["last_pres"] = StateElement(
-            np.zeros_like(n_pres_init),
-            autospace(
-                np.zeros_like(n_pres_init),
-                np.full(n_pres_init.shape, np.inf),
-                dtype=np.float32,
-            ),
-        )
-
-        container = np.zeros((1,1)) # For a single item
-        state["n_pres_before_obs"] = StateElement(
-            np.zeros_like(container),
-            autospace(
-                np.zeros_like(container),
-                np.full(container.shape, np.inf),
-                dtype=np.float32,
-            ),
-        )
-
-        state["last_pres_before_obs"] = StateElement(
-            np.zeros_like(container),
-            autospace(
-                np.zeros_like(container),
-                np.full(container.shape, np.inf),
-                dtype=np.float32,
-            ),
-        )
+        state["n_pres_before_obs"] = num_element(min=-1, max=np.inf)
+        state["last_pres_before_obs"] = num_element(min=-1, max=np.inf)
 
         # Call the policy defined above
         action_state = State()
-        action_state["action"] = StateElement(0, autospace([0, 1]))
-        # agent_policy = ExamplePolicy(action_state=action_state)
+        action_state["action"] = cat_element(n=2)
 
-        # Use default observation and inference engines
+        # Define observation and inference engines
         observation_engine = RuleObservationEngine(
             deterministic_specification=base_user_engine_specification
         )
         inference_engine = UserInferenceEngine()
         policy = UserPolicy(
-            action_state=action_state, is_item_specific=is_item_specific, param=param
-        )
+            action_state=action_state, is_item_specific=is_item_specific,
+            param=param)
 
         super().__init__(
             "user",
             *args,
             agent_policy=policy,
-            # policy_kwargs={"action_state": action_state},
             agent_observation_engine=observation_engine,
             agent_inference_engine=inference_engine,
             agent_state=state,
