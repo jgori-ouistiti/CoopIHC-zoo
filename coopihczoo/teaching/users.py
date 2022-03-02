@@ -41,11 +41,8 @@ class UserPolicy(BasePolicy):
 
     """
 
-    def __init__(self, action_state, param, is_item_specific=False, *args, **kwargs):
+    def __init__(self, action_state, *args, **kwargs):
         super().__init__(action_state=action_state, *args, **kwargs)
-
-        self.is_item_specific = is_item_specific
-        self.param = param
 
     def sample(self, observation=None):
 
@@ -57,10 +54,12 @@ class UserPolicy(BasePolicy):
         :rtype: tuple(`StateElement<coopihc.space.StateElement.StateElement>`, float)
         """
 
-        param = self.param
+        param = self.host.param
+
+        is_item_specific = bool(self.observation["task_state"]["is_item_specific"][0, 0])
 
         item = int(self.observation["task_state"]["item"])
-        timestamp = self.observation["task_state"]["timestamp"]
+        timestamp = float(self.observation["task_state"]["timestamp"])
 
         n_pres = self.observation["user_state"]["n_pres_before_obs"].view(np.ndarray)[
             0, 0
@@ -77,7 +76,7 @@ class UserPolicy(BasePolicy):
 
         if n_pres > 0:
 
-            if self.is_item_specific:
+            if is_item_specific:
                 init_forget = param[item, 0]
                 rep_effect = param[item, 1]
             else:
@@ -92,16 +91,16 @@ class UserPolicy(BasePolicy):
 
             rv = np.random.random()
 
-            _action_value = p > rv
+            _action_value = int(p > rv)
 
-            # print("p", p, "rv", rv, "action_value", _action_value)
+            print("p", p, "rv", rv, "action_value", _action_value)
 
         else:
             pass
             # print("p", "item not seen!")
 
         new_action = self.new_action
-        new_action[:] = _action_value
+        self.new_action[:] = _action_value
 
         return new_action, reward
 

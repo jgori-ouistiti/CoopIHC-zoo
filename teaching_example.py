@@ -97,7 +97,6 @@ def run_rl():
         skip_user_step=True
     )  # Reset in a state where the user has already produced an observation and made an inference.
     print(bundle.game_state)
-    raise Exception
     # Step through the bundle (i.e. play full rounds)
     print("start task")
     k = 0
