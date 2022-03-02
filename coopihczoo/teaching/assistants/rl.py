@@ -18,18 +18,18 @@ class RlTeacherInferenceEngine(BaseInferenceEngine):
         # last_was_success = self.observation["user_action"]["action"][0]
 
         current_iter = self.observation["task_state"]["iteration"]
-        max_iter = self.observation["task_state"]["iteration"]
+        max_iter = self.observation["task_state"]["max_iter"]
 
-        init_forget_rate = self.observation["user_state"]["param"][0]
-        rep_effect = self.observation["user_state"]["param"][1]
+        init_forget_rate = self.observation["user_state"]["param"][0, 0]
+        rep_effect = self.observation["user_state"]["param"][1, 0]
 
-        n_pres = self.observation["n_pres"].view(np.ndarray)
-        last_pres = self.observation["last_pres"].view(np.ndarray)
+        n_pres = self.observation["user_state"]["n_pres"].view(np.ndarray).flatten()
+        last_pres = self.observation["user_state"]["last_pres"].view(np.ndarray).flatten()
 
         seen = n_pres > 0
         unseen = np.invert(seen)
-        delta = last_pres[seen, 0]  # only consider already seen items
-        rep = n_pres[seen, 1] - 1.  # only consider already seen items
+        delta = last_pres[seen]  # only consider already seen items
+        rep = n_pres[seen] - 1.  # only consider already seen items
 
         # forget_rate = self.init_forget_rate[seen] * \
         #     (1 - self.rep_effect[seen]) ** rep
@@ -49,7 +49,7 @@ class RlTeacherInferenceEngine(BaseInferenceEngine):
 
         seen_survival_if_action = - self.log_thr / seen_f_rate_if_action
 
-        unseen_f_rate_if_action = init_forget_rate[unseen]
+        unseen_f_rate_if_action = init_forget_rate   # [unseen]
         unseen_survival_if_action = - self.log_thr / unseen_f_rate_if_action
 
         # self.memory_state[:, 0] = seen
@@ -85,7 +85,7 @@ class RlTeacherPolicy(BasePolicy):
 
         return new_action, reward
 
-    def reset(self):
+    def reset(self, random=True):
 
         _action_value = -1
         self.action_state["action"][:] = _action_value
@@ -117,11 +117,11 @@ class Teacher(BaseAgent):
 
         # Use default observation engine
         observation_engine = RuleObservationEngine(
-            deterministic_specification=oracle_engine_specification)()
+            deterministic_specification=oracle_engine_specification)
 
-        self.attach_policy(self, agent_policy)
-        self.attach_observation_engine(self, observation_engine)
-        self.attach_inference_engine(self, inference_engine)
+        self.attach_policy(agent_policy)
+        self.attach_observation_engine(observation_engine)
+        self.attach_inference_engine(inference_engine)
 
     def reset(self, dic=None):
         """reset
