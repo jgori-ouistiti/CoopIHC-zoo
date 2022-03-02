@@ -1,41 +1,32 @@
-from coopihc import InteractionTask, StateElement, discrete_space, autospace
+from coopihc import InteractionTask, num_element, array_element
 import numpy as np
 
 
 class Task(InteractionTask):
     """ """
 
-    def __init__(self, n_item, inter_trial, max_iter=10, *args, **kwargs):
-
-        # Call super().__init__() beofre anything else, which initializes some useful attributes, including a State (self.state) for the task
+    def __init__(self, n_item, inter_trial, max_iter, *args, **kwargs):
 
         super().__init__(*args, **kwargs)
 
-        self.state["max_iter"] = max_iter
-        self.state["inter_trial"] = inter_trial
+        # Parameters
+        self.state["n_item"] = array_element(shape=1, low=0, high=np.inf, init=n_item)
+        self.state["max_iter"] = array_element(shape=1, low=0, high=np.inf, init=max_iter)
+        self.state["inter_trial"] = array_element(shape=1, low=0, high=np.inf, init=inter_trial)
 
-        # Describe the state. Here it is a single item which takes value in [-4, -3, ..., 3, 4]. The StateElement has out_of_bounds_mode = clip, which means that values outside the range will automatically be clipped to fit the space.
-        self.state["iteration"] = StateElement(
-            0, autospace(np.zeros((1, 1)), np.full((1, 1), np.inf))
-        )
-
-        self.state["item"] = StateElement(
-            0, autospace(np.zeros((1, 1)), np.full((1, 1), n_item))
-        )
-
-        self.state["timestamp"] = StateElement(
-            0, autospace(np.zeros((1, 1)), np.full((1, 1), np.inf))
-        )
+        # Actual state
+        self.state["iteration"] = array_element(shape=1, low=0, high=np.inf, init=0)
+        self.state["item"] = array_element(shape=1, low=0, high=np.inf, init=0)
+        self.state["timestamp"] = array_element(shape=1, low=0, high=np.inf, init=0)
 
     def reset(self, dic=None):
-        # Always start with state 'x' at 0
+
         self.state["item"][:] = -1
         self.state["iteration"][:] = -1
         self.state["timestamp"][:] = -1
-        return
 
     def user_step(self, *args, **kwargs):
-        # Modify the state in place, adding the user action
+
         is_done = False
         reward = 0
         self.state["iteration"][:] += 1
@@ -46,7 +37,6 @@ class Task(InteractionTask):
     def assistant_step(self, *args, **kwargs):
         is_done = False
 
-        # timestamp =
         item = self.assistant_action
 
         self.state["item"][:] = item

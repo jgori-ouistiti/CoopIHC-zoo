@@ -93,22 +93,18 @@ class RlTeacherPolicy(BasePolicy):
 
 class Teacher(BaseAgent):
 
-    def __init__(self, n_item, delay_factor, delay_min,
-                 *args, **kwargs):
+    def __init__(self, thr, *args, **kwargs):
+        super().__init__("assistant", *args, **kwargs)
+        self.thr = thr
 
-        # Define an internal state with a 'goal' substate
-        agent_state = State()
+    def finit(self, *args, **kwargs):
 
-        agent_state["progress"] = num_element(init=0.0)
-        agent_state["memory"] = array_element(shape=(n_item, 2),
-                                              min=0, max=np.inf)
+        n_item = int(self.bundle.task.state["n_item"][0, 0])
+        print("n_item", n_item)
 
-        agent_state["current_total_iter"] = num_element(min=0, max=10000)
-
-        self.n_item = n_item
-
-        self.delay_factor = delay_factor
-        self.delay_min = delay_min
+        self.state["progress"] = array_element(shape=1, low=0, high=np.inf, init=0.0)
+        self.state["memory"] = array_element(shape=(n_item, 2), low=0, high=np.inf)
+        self.state["current_total_iter"] = array_element(shape=1, low=0, high=np.inf)
 
         # Call the policy defined above
         action_state = State()
@@ -117,20 +113,15 @@ class Teacher(BaseAgent):
         agent_policy = RlTeacherPolicy(action_state=action_state)
 
         # Inference engine
-        inference_engine = RlTeacherInferenceEngine()
+        inference_engine = RlTeacherInferenceEngine(thr=self.thr)
 
         # Use default observation engine
         observation_engine = RuleObservationEngine(
             deterministic_specification=oracle_engine_specification)()
 
-        super().__init__(
-            "assistant",
-            *args,
-            agent_policy=agent_policy,
-            agent_observation_engine=observation_engine,
-            agent_inference_engine=inference_engine,
-            agent_state=agent_state,
-            **kwargs)
+        self.attach_policy(self, agent_policy)
+        self.attach_observation_engine(self, observation_engine)
+        self.attach_inference_engine(self, inference_engine)
 
     def reset(self, dic=None):
         """reset

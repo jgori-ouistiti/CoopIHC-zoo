@@ -103,7 +103,7 @@ class UserPolicy(BasePolicy):
 
         return new_action, reward
 
-    def reset(self):
+    def reset(self, random=True):
 
         _action_value = -1
         self.action_state["action"][:] = _action_value
