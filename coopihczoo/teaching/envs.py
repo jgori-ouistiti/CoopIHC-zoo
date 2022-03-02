@@ -1,5 +1,6 @@
-from coopihc import InteractionTask, num_element, array_element
 import numpy as np
+
+from coopihc import InteractionTask, array_element
 
 
 class Task(InteractionTask):
@@ -22,9 +23,9 @@ class Task(InteractionTask):
 
     def reset(self, dic=None):
 
-        self.state["item"][:] = -1
-        self.state["iteration"][:] = -1
-        self.state["timestamp"][:] = -1
+        self.state["item"][:] = 0
+        self.state["iteration"][:] = 0
+        self.state["timestamp"][:] = 0
 
     def user_step(self, *args, **kwargs):
 

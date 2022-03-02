@@ -95,7 +95,7 @@ class UserPolicy(BasePolicy):
 
             _action_value = int(p > rv)
 
-            print("p", p, "rv", rv, "action_value", _action_value)
+            # print("p", p, "rv", rv, "action_value", _action_value)
 
         else:
             pass
@@ -104,14 +104,11 @@ class UserPolicy(BasePolicy):
         new_action = self.new_action
         new_action[:] = _action_value
 
-        print("\n === new action")
-        print(new_action)
-
         return new_action, reward
 
     def reset(self, random=True):
 
-        _action_value = -1
+        _action_value = 0  # -1
         self.action_state["action"][:] = _action_value
 
 

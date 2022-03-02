@@ -76,19 +76,20 @@ class RlTeacherPolicy(BasePolicy):
     def __init__(self, action_state, *args, **kwargs):
         super().__init__(action_state=action_state, *args, **kwargs)
 
-    def sample(self, observation=None):
-
-        _action_value = 0
-
-        reward = 0
-        new_action = self.new_action
-        new_action[:] = _action_value
-
-        return new_action, reward
+    # def sample(self, observation=None):
+    #
+    #     _action_value = 0
+    #
+    #     reward = 0
+    #
+    #     new_action = self.new_action
+    #     new_action[:] = _action_value
+    #
+    #     return new_action, reward
 
     def reset(self, random=True):
 
-        _action_value = -1
+        _action_value = 0
         self.action_state["action"][:] = _action_value
 
 
@@ -104,7 +105,6 @@ class Teacher(BaseAgent):
 
         self.state["progress"] = array_element(shape=1, low=0, high=np.inf, init=0.0)
         self.state["memory"] = array_element(shape=(n_item, 2), low=0, high=np.inf)
-        self.state["current_total_iter"] = array_element(shape=1, low=0, high=np.inf)
 
         # Call the policy defined above
         action_state = State()
@@ -131,4 +131,7 @@ class Teacher(BaseAgent):
         :meta public:
         """
 
-        pass
+        n_item = int(self.bundle.task.state["n_item"][0, 0])
+
+        self.state["progress"][:] = 0
+        self.state["memory"][:] = np.zeros((n_item, 2))
