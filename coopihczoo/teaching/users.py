@@ -116,11 +116,7 @@ class User(BaseAgent):
 
         self.param = np.asarray(param)
 
-        super().__init__(
-            "user",
-            *args,
-            **kwargs
-        )
+        super().__init__("user", *args, **kwargs)
 
     def finit(self):
 
@@ -129,14 +125,13 @@ class User(BaseAgent):
         param = self.param
 
         # Define an internal state with a 'goal' substate
-        state = State()
-        state["n_pres"] = array_element(shape=n_item, low=-1, high=np.inf)
-        state["last_pres"] = array_element(shape=n_item, low=-1, high=np.inf)
+        self.state["n_pres"] = array_element(shape=n_item, low=-1, high=np.inf)
+        self.state["last_pres"] = array_element(shape=n_item, low=-1, high=np.inf)
 
-        state["n_pres_before_obs"] = num_element(low=-1, high=np.inf)
-        state["last_pres_before_obs"] = num_element(low=-1, high=np.inf)
+        self.state["n_pres_before_obs"] = num_element(low=-1, high=np.inf)
+        self.state["last_pres_before_obs"] = num_element(low=-1, high=np.inf)
 
-        state["param"] = array_element(low=-np.inf, high=np.inf, init=param)
+        self.state["param"] = array_element(low=-np.inf, high=np.inf, init=param)
 
         # Call the policy defined above
         action_state = State()
