@@ -134,7 +134,7 @@ class User(BaseAgent):
         self.state["n_pres_before_obs"] = num_element(low=-1, high=np.inf)
         self.state["last_pres_before_obs"] = num_element(low=-1, high=np.inf)
 
-        self.state["param"] = array_element(low=-np.inf, high=np.inf, init=param)
+        self.state["param"] = array_element(low=-np.inf, high=np.inf, init=param.reshape(-1, 1))
 
         # Call the policy defined above
         action_state = State()
