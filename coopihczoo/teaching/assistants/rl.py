@@ -6,14 +6,22 @@ import numpy as np
 
 class RlTeacherInferenceEngine(BaseInferenceEngine):
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, thr, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        self.log_thr = np.log(thr)
 
     def infer(self, user_state=None):
 
-        last_item = int(self.observation["task_state"]["item"])
-        last_time_reply = self.observation["task_state"]["timestamp"]
-        last_was_success = self.observation["user_action"]["action"][0]
+        # last_item = int(self.observation["task_state"]["item"])
+        # last_time_reply = self.observation["task_state"]["timestamp"]
+        #
+        # last_was_success = self.observation["user_action"]["action"][0]
+
+        current_iter = self.observation["task_state"]["iteration"]
+        max_iter = self.observation["task_state"]["iteration"]
+
+        init_forget_rate = self.observation["user_state"]["param"][0]
+        rep_effect = self.observation["user_state"]["param"][1]
 
         n_pres = self.observation["n_pres"].view(np.ndarray)
         last_pres = self.observation["last_pres"].view(np.ndarray)
@@ -23,24 +31,25 @@ class RlTeacherInferenceEngine(BaseInferenceEngine):
         delta = last_pres[seen, 0]  # only consider already seen items
         rep = n_pres[seen, 1] - 1.  # only consider already seen items
 
-        forget_rate = self.init_forget_rate[seen] * \
-            (1 - self.rep_effect[seen]) ** rep
+        # forget_rate = self.init_forget_rate[seen] * \
+        #     (1 - self.rep_effect[seen]) ** rep
 
-        if self.current_iter == (self.n_iter_per_session - 1):
-            # It will be a break before the next iteration
-            delta += self.break_length
-        else:
-            delta += self.time_per_iter
+        forget_rate = init_forget_rate * (1 - rep_effect) ** rep
+
+        # if self.current_iter == (self.n_iter_per_session - 1):
+        #     # It will be a break before the next iteration
+        #     delta += self.break_length
+        # else:
+        #     delta += self.time_per_iter
 
         survival = - (self.log_thr / forget_rate) - delta
         survival[survival < 0] = 0.
 
-        seen_f_rate_if_action = self.init_forget_rate[seen] * \
-            (1 - self.rep_effect[seen]) ** (rep + 1)
+        seen_f_rate_if_action = init_forget_rate * (1 - rep_effect) ** (rep + 1)
 
         seen_survival_if_action = - self.log_thr / seen_f_rate_if_action
 
-        unseen_f_rate_if_action = self.init_forget_rate[unseen]
+        unseen_f_rate_if_action = init_forget_rate[unseen]
         unseen_survival_if_action = - self.log_thr / unseen_f_rate_if_action
 
         # self.memory_state[:, 0] = seen
@@ -49,14 +58,14 @@ class RlTeacherInferenceEngine(BaseInferenceEngine):
         self.state["memory"][seen, 1] = seen_survival_if_action
         self.state["memory"][unseen, 1] = unseen_survival_if_action
 
-        progress = (self.current_total_iter + 1) / self.total_iteration
+        self.state["progress"] = (current_iter + 1) / max_iter  # +1? Sure?
 
-        self.memory_state[:, :] /= self.total_iteration
-
-        self.obs[:-1] = self.memory_state.flatten()
-        self.obs[-1] = progress
+        # self.memory_state[:, :] /= max_iter
 
         reward = 0
+
+        if current_iter == max_iter - 1:
+            reward = np.sum(- forget_rate > self.log_thr)
 
         return self.state, reward
 
@@ -112,7 +121,7 @@ class Teacher(BaseAgent):
 
         # Use default observation engine
         observation_engine = RuleObservationEngine(
-            deterministic_specification= oracle_engine_specification)()
+            deterministic_specification=oracle_engine_specification)()
 
         super().__init__(
             "assistant",

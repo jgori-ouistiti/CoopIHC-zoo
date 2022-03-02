@@ -125,6 +125,8 @@ class User(BaseAgent):
         state["n_pres_before_obs"] = num_element(low=-1, high=np.inf)
         state["last_pres_before_obs"] = num_element(low=-1, high=np.inf)
 
+        state["param"] = array_element(shape=2, low=-np.inf, high=np.inf)
+
         # Call the policy defined above
         action_state = State()
         action_state["action"] = cat_element(n=2)

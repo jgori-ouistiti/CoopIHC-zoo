@@ -4,6 +4,7 @@ from coopihczoo.teaching.users import User
 from coopihczoo.teaching.envs import Task
 from coopihczoo.teaching.assistants.leitner import Leitner
 
+
 def run_leitner():
     n_item = 5
     inter_trial = 1

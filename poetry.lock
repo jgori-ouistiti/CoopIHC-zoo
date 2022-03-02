@@ -115,6 +115,7 @@ pytest-timeout = "^2.0.2"
 PyYAML = "^6.0"
 scipy = "^1.7.3"
 tabulate = "*"
+torch = "^1.10.2"
 websockets = "^10.1"
 
 [package.extras]

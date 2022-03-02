@@ -11,8 +11,8 @@ class Task(InteractionTask):
 
         super().__init__(*args, **kwargs)
 
-        self.max_iter = max_iter
-        self.inter_trial = inter_trial
+        self.state["max_iter"] = max_iter
+        self.state["inter_trial"] = inter_trial
 
         # Describe the state. Here it is a single item which takes value in [-4, -3, ..., 3, 4]. The StateElement has out_of_bounds_mode = clip, which means that values outside the range will automatically be clipped to fit the space.
         self.state["iteration"] = StateElement(
@@ -39,7 +39,7 @@ class Task(InteractionTask):
         is_done = False
         reward = 0
         self.state["iteration"][:] += 1
-        if self.state["iteration"] == self.max_iter:
+        if self.state["iteration"] == self.state["max_iter"]:
             is_done = True
         return self.state, reward, is_done
 
@@ -50,7 +50,7 @@ class Task(InteractionTask):
         item = self.assistant_action
 
         self.state["item"][:] = item
-        self.state["timestamp"][:] += self.inter_trial
+        self.state["timestamp"][:] += self.state["inter_trial"]
         reward = 0
         return self.state, reward, is_done
 
