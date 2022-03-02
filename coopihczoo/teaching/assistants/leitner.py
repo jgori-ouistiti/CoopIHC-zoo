@@ -1,12 +1,15 @@
-from coopihc import BaseAgent, State, \
-    cat_element, \
-    BasePolicy, BaseInferenceEngine, \
-    array_element
+from coopihc import (
+    BaseAgent,
+    State,
+    cat_element,
+    BasePolicy,
+    BaseInferenceEngine,
+    array_element,
+)
 import numpy as np
 
 
 class LeitnerInferenceEngine(BaseInferenceEngine):
-
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
@@ -21,14 +24,17 @@ class LeitnerInferenceEngine(BaseInferenceEngine):
             if last_was_success:
                 self.state["box"][last_item, 0] += 1
             else:
-                self.state["box"][last_item, 0] = \
-                    max(0, self.state["box"][last_item, 0] - 1)
+                self.state["box"][last_item, 0] = max(
+                    0, self.state["box"][last_item, 0] - 1
+                )
 
-            delay = self.host.delay_factor \
-                ** self.state["box"][last_item, 0].view(np.ndarray)
+            delay = self.host.delay_factor ** self.state["box"][last_item, 0].view(
+                np.ndarray
+            )
             # Delay is 1, 2, 4, 8, 16, 32, 64, 128, 256, 512 ...
-            self.state["due"][last_item, 0] = \
+            self.state["due"][last_item, 0] = (
                 last_time_reply + self.host.delay_min * delay
+            )
 
         reward = 0
 
@@ -36,7 +42,6 @@ class LeitnerInferenceEngine(BaseInferenceEngine):
 
 
 class LeitnerPolicy(BasePolicy):
-
     def __init__(self, action_state, *args, **kwargs):
         super().__init__(action_state=action_state, *args, **kwargs)
 
@@ -66,8 +71,7 @@ class LeitnerPolicy(BasePolicy):
                 seen__is_due = seen__due <= now
                 if np.sum(seen__is_due):
                     seen_and_is_due__due = seen__due[seen__is_due]
-                    _action_value = seen[seen__is_due][
-                        np.argmin(seen_and_is_due__due)]
+                    _action_value = seen[seen__is_due][np.argmin(seen_and_is_due__due)]
                 else:
                     _action_value = box.argmin()  # pickup new
 
@@ -84,17 +88,12 @@ class LeitnerPolicy(BasePolicy):
 
 
 class Leitner(BaseAgent):
-
-    def __init__(self, delay_factor, delay_min,
-                 *args, **kwargs):
+    def __init__(self, delay_factor, delay_min, *args, **kwargs):
 
         self.delay_factor = delay_factor
         self.delay_min = delay_min
 
-        super().__init__(
-            "assistant",
-            *args,
-            **kwargs)
+        super().__init__("assistant", *args, **kwargs)
 
     def finit(self):
 
@@ -106,7 +105,7 @@ class Leitner(BaseAgent):
         # Call the policy defined above
         action_state = State()
         action_state["action"] = cat_element(n=n_item)
-        agent_policy = LeitnerPolicy(action_state=action_state)
+        agent_policy = LeitnerPolicy(action_state)
 
         # Inference engine
         inference_engine = LeitnerInferenceEngine()

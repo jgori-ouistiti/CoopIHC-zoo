@@ -40,8 +40,7 @@ def run_leitner():
     ## 2 : after user takes action + new task state
     ## 3 : after assistant observation + assitant inference
     bundle.reset(
-        turn=3,
-        skip_user_step=True
+        turn=3, skip_user_step=True
     )  # Reset in a state where the user has already produced an observation and made an inference.
     print(bundle.game_state)
     # Step through the bundle (i.e. play full rounds)
@@ -50,9 +49,8 @@ def run_leitner():
     while 1:
         k += 1
         print(k)
-        state, rewards, is_done = bundle.step(user_action=None,
-                                              assistant_action=None)
-                                              # go_to_turn=1)
+        state, rewards, is_done = bundle.step(user_action=None, assistant_action=None)
+        # go_to_turn=1)
         print(state)
         # Do something with the state or the rewards
         if is_done:
@@ -84,6 +82,7 @@ def run_rl():
     # Bundle them together
     print("create bundle")
     bundle = Bundle(task=task, user=user, assistant=assistant, random_reset=False)
+
     print(bundle.game_state)
     # Reset the bundle (i.e. initialize it to a random or prescribed states)
     print("reset bundle")
@@ -93,8 +92,7 @@ def run_rl():
     ## 2 : after user takes action + new task state
     ## 3 : after assistant observation + assitant inference
     bundle.reset(
-        turn=3,
-        skip_user_step=True
+        turn=3, skip_user_step=True
     )  # Reset in a state where the user has already produced an observation and made an inference.
     print(bundle.game_state)
     # Step through the bundle (i.e. play full rounds)
@@ -103,9 +101,8 @@ def run_rl():
     while 1:
         k += 1
         print(k)
-        state, rewards, is_done = bundle.step(user_action=None,
-                                              assistant_action=None)
-                                              # go_to_turn=1)
+        state, rewards, is_done = bundle.step(user_action=None, assistant_action=None)
+        # go_to_turn=1)
         print(state)
         # Do something with the state or the rewards
         if is_done:

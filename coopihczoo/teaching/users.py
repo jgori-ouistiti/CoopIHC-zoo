@@ -56,7 +56,9 @@ class UserPolicy(BasePolicy):
 
         param = self.host.param
 
-        is_item_specific = bool(self.observation["task_state"]["is_item_specific"][0, 0])
+        is_item_specific = bool(
+            self.observation["task_state"]["is_item_specific"][0, 0]
+        )
 
         item = int(self.observation["task_state"]["item"])
         timestamp = float(self.observation["task_state"]["timestamp"])
@@ -100,7 +102,10 @@ class UserPolicy(BasePolicy):
             # print("p", "item not seen!")
 
         new_action = self.new_action
-        self.new_action[:] = _action_value
+        new_action[:] = _action_value
+
+        print("\n === new action")
+        print(new_action)
 
         return new_action, reward
 
