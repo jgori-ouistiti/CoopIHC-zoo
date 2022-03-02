@@ -90,9 +90,11 @@ class UserPolicy(BasePolicy):
             with np.errstate(divide="ignore", invalid="ignore", over="ignore"):
                 p = np.exp(-fr * delta)
 
-            # print("p", p)
+            rv = np.random.random()
 
-            _action_value = p > np.random.random()
+            _action_value = p > rv
+
+            # print("p", p, "rv", rv, "action_value", _action_value)
 
         else:
             pass
@@ -142,9 +144,13 @@ class User(BaseAgent):
             deterministic_specification=base_user_engine_specification
         )
         inference_engine = UserInferenceEngine()
-        policy = UserPolicy(
+        agent_policy = UserPolicy(
             action_state=action_state, is_item_specific=is_item_specific, param=param
         )
+
+        self.attach_policy(agent_policy)
+        self.attach_observation_engine(observation_engine)
+        self.attach_inference_engine(inference_engine)
 
     def reset(self, dic=None):
         """reset
@@ -153,8 +159,11 @@ class User(BaseAgent):
 
         :meta public:
         """
-        self.state["n_pres"][:] = np.zeros(self.n_item)
-        self.state["last_pres"][:] = np.zeros(self.n_item)
+
+        n_item = int(self.bundle.task.state["n_item"][0, 0])
+
+        self.state["n_pres"][:] = np.zeros(n_item)
+        self.state["last_pres"][:] = np.zeros(n_item)
         self.state["n_pres_before_obs"][:] = 0
         self.state["last_pres_before_obs"][:] = 0
 

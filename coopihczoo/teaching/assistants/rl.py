@@ -1,4 +1,5 @@
-from coopihc import BaseAgent, State, num_element, cat_element, \
+from coopihc import BaseAgent, State, \
+    cat_element, \
     array_element, \
     BasePolicy, BaseInferenceEngine, RuleObservationEngine, oracle_engine_specification
 import numpy as np
@@ -100,7 +101,6 @@ class Teacher(BaseAgent):
     def finit(self, *args, **kwargs):
 
         n_item = int(self.bundle.task.state["n_item"][0, 0])
-        print("n_item", n_item)
 
         self.state["progress"] = array_element(shape=1, low=0, high=np.inf, init=0.0)
         self.state["memory"] = array_element(shape=(n_item, 2), low=0, high=np.inf)

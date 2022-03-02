@@ -1,5 +1,7 @@
-from coopihc import BaseAgent, State, StateElement, \
-    BasePolicy, autospace, BaseInferenceEngine
+from coopihc import BaseAgent, State, \
+    cat_element, \
+    BasePolicy, BaseInferenceEngine, \
+    array_element
 import numpy as np
 
 
@@ -43,6 +45,8 @@ class LeitnerPolicy(BasePolicy):
         box = self.state["box"].view(np.ndarray).flatten()
         due = self.state["due"].view(np.ndarray).flatten()
 
+        n_item = int(self.host.bundle.task.state["n_item"][0, 0])
+
         now = self.observation["task_state"]["timestamp"]
 
         if self.observation["task_state"]["iteration"] == 0:
@@ -54,7 +58,7 @@ class LeitnerPolicy(BasePolicy):
             seen = np.argwhere(box >= 0).flatten()
             n_seen = len(seen)
 
-            if n_seen == self.host.n_item:
+            if n_seen == n_item:
                 _action_value = np.argmin(due)
 
             else:
@@ -81,41 +85,27 @@ class LeitnerPolicy(BasePolicy):
 
 class Leitner(BaseAgent):
 
-    def __init__(self, n_item, delay_factor, delay_min,
+    def __init__(self, delay_factor, delay_min,
                  *args, **kwargs):
-
-        # Define an internal state with a 'goal' substate
-        agent_state = State()
-        container = np.atleast_2d(np.zeros(n_item))
-        agent_state["box"] = StateElement(
-            np.zeros_like(container),
-            autospace(
-                np.zeros_like(container),
-                np.full(container.shape, np.inf),
-                dtype=np.float32,
-            ),
-        )
-
-        agent_state["due"] = StateElement(
-            np.zeros_like(container),
-            autospace(
-                np.zeros_like(container),
-                np.full(container.shape, np.inf),
-                dtype=np.float32,
-            ),
-        )
-
-        self.n_item = n_item
 
         self.delay_factor = delay_factor
         self.delay_min = delay_min
 
+        super().__init__(
+            "assistant",
+            *args,
+            **kwargs)
+
+    def finit(self):
+
+        n_item = int(self.bundle.task.state["n_item"][0, 0])
+
+        self.state["box"] = array_element(shape=n_item, low=0, high=np.inf, init=0)
+        self.state["due"] = array_element(shape=n_item, low=0, high=np.inf, init=0)
+
         # Call the policy defined above
         action_state = State()
-        action_state["action"] = StateElement(
-            0,
-            autospace(np.arange(n_item))
-        )
+        action_state["action"] = cat_element(n=n_item)
         agent_policy = LeitnerPolicy(action_state=action_state)
 
         # Inference engine
@@ -124,14 +114,9 @@ class Leitner(BaseAgent):
         # Use default observation engine
         observation_engine = None
 
-        super().__init__(
-            "assistant",
-            *args,
-            agent_policy=agent_policy,
-            agent_observation_engine=observation_engine,
-            agent_inference_engine=inference_engine,
-            agent_state=agent_state,
-            **kwargs)
+        self.attach_policy(agent_policy)
+        self.attach_observation_engine(observation_engine)
+        self.attach_inference_engine(inference_engine)
 
     def reset(self, dic=None):
         """reset
@@ -141,5 +126,7 @@ class Leitner(BaseAgent):
         :meta public:
         """
 
-        self.state["box"][:] = np.zeros(self.n_item)
-        self.state["due"][:] = np.zeros(self.n_item)
+        n_item = int(self.bundle.task.state["n_item"][0, 0])
+
+        self.state["box"][:] = np.zeros(n_item)
+        self.state["due"][:] = np.zeros(n_item)
