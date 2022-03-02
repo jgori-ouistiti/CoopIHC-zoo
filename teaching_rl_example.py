@@ -4,6 +4,27 @@ from coopihczoo.teaching.users import User
 from coopihczoo.teaching.envs import Task
 from coopihczoo.teaching.assistants.rl import Teacher
 
+from gym.wrappers import FilterObservation
+import gym
+
+from stable_baselines3 import A2C
+from stable_baselines3.common.monitor import Monitor
+
+import os
+
+
+class ActionWrapper(gym.ActionWrapper):
+    def __init__(self, env):
+        super().__init__(env)
+        self.action_space = \
+            gym.spaces.Discrete(env.action_space["assistant_action"].n)
+
+    def action(self, action):
+        return {"assistant_action": int(action)}
+
+    def reverse_action(self, action):
+        return action["assistant_action"]
+
 
 def run_rl():
 
@@ -15,6 +36,7 @@ def run_rl():
     thr = 0.9
 
     task = Task(
+        thr=thr,
         inter_trial=inter_trial,
         n_item=n_item,
         max_iter=max_iter,
@@ -29,13 +51,8 @@ def run_rl():
         train_user=False,
         train_assistant=True,
     )
-    obs = env.reset()
-    print(obs)
-    print()
-    print(env.action_space)
-    # Dict(user_action:Discrete(3))
-    print()
-    print(env.observation_space)
+    _ = env.reset()
+
     # Dict(turn_index:Discrete(4), round_index:Discrete(1000), position:Discrete(31), targets:MultiDiscrete([31 31 31 31 31 31 31 31]), goal:Discrete(31), user_action:Discrete(3), assistant_action:Box(1.0, 1.0, (1, 1), float32))
     env.step({"assistant_action": 1})
 
@@ -43,6 +60,23 @@ def run_rl():
     from stable_baselines3.common.env_checker import check_env
 
     check_env(env, warn=False)
+
+    # print(env.observation_space)
+
+    env = FilterObservation(
+        env,
+        ("memory", "progress"))
+
+    env = ActionWrapper(env)
+
+    os.makedirs("tmp", exist_ok=True)
+
+    env = Monitor(env, filename="tmp/log")
+
+    model = A2C("MultiInputPolicy", env, verbose=1, tensorboard_log="./tb/")
+
+    model.learn(total_timesteps=int(1e6))
+    model.save("saved_model")
 
 
 if __name__ == "__main__":

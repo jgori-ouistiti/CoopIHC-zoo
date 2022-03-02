@@ -16,8 +16,12 @@ def run_leitner():
     delay_min = 1
     delay_factor = 2
 
+    thr = 0.9  # Only for reward computation
+
     # Define a task
-    task = Task(inter_trial=inter_trial, n_item=n_item, max_iter=max_iter)
+    task = Task(inter_trial=inter_trial, n_item=n_item, max_iter=max_iter,
+                is_item_specific=is_item_specific,
+                thr=thr)
     print("create task")
     print(task.state)
     # Define a user

@@ -7,19 +7,14 @@ import numpy as np
 
 class RlTeacherInferenceEngine(BaseInferenceEngine):
 
-    def __init__(self, thr, *args, **kwargs):
+    def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.log_thr = np.log(thr)
 
     def infer(self, user_state=None):
 
-        # last_item = int(self.observation["task_state"]["item"])
-        # last_time_reply = self.observation["task_state"]["timestamp"]
-        #
-        # last_was_success = self.observation["user_action"]["action"][0]
-
         current_iter = self.observation["task_state"]["iteration"]
         max_iter = self.observation["task_state"]["max_iter"]
+        log_thr = float(self.observation["task_state"]["log_thr"])
 
         init_forget_rate = self.observation["user_state"]["param"][0, 0]
         rep_effect = self.observation["user_state"]["param"][1, 0]
@@ -27,9 +22,11 @@ class RlTeacherInferenceEngine(BaseInferenceEngine):
         n_pres = self.observation["user_state"]["n_pres"].view(np.ndarray).flatten()
         last_pres = self.observation["user_state"]["last_pres"].view(np.ndarray).flatten()
 
+        now = float(current_iter)
+
         seen = n_pres > 0
         unseen = np.invert(seen)
-        delta = last_pres[seen]  # only consider already seen items
+        delta = now - last_pres[seen]  # only consider already seen items
         rep = n_pres[seen] - 1.  # only consider already seen items
 
         # forget_rate = self.init_forget_rate[seen] * \
@@ -43,15 +40,15 @@ class RlTeacherInferenceEngine(BaseInferenceEngine):
         # else:
         #     delta += self.time_per_iter
 
-        survival = - (self.log_thr / forget_rate) - delta
+        survival = - (log_thr / forget_rate) - delta
         survival[survival < 0] = 0.
 
         seen_f_rate_if_action = init_forget_rate * (1 - rep_effect) ** (rep + 1)
 
-        seen_survival_if_action = - self.log_thr / seen_f_rate_if_action
+        seen_survival_if_action = - log_thr / seen_f_rate_if_action
 
         unseen_f_rate_if_action = init_forget_rate   # [unseen]
-        unseen_survival_if_action = - self.log_thr / unseen_f_rate_if_action
+        unseen_survival_if_action = - log_thr / unseen_f_rate_if_action
 
         # self.memory_state[:, 0] = seen
         self.state["memory"][seen, 0] = survival
@@ -62,12 +59,7 @@ class RlTeacherInferenceEngine(BaseInferenceEngine):
         self.state["progress"] = (current_iter + 1) / max_iter  # +1? Sure?
 
         # self.memory_state[:, :] /= max_iter
-
         reward = 0
-
-        if current_iter == max_iter - 1:
-            reward = np.sum(- forget_rate > self.log_thr)
-
         return self.state, reward
 
 
