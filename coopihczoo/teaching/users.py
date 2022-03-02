@@ -112,10 +112,21 @@ class UserPolicy(BasePolicy):
 class User(BaseAgent):
     """ """
 
-    def __init__(self, n_item, is_item_specific, param, *args, **kwargs):
+    def __init__(self, param, *args, **kwargs):
 
-        self.n_item = n_item
-        self.param = param
+        self.param = np.asarray(param)
+
+        super().__init__(
+            "user",
+            *args,
+            **kwargs
+        )
+
+    def finit(self):
+
+        n_item = int(self.bundle.task.state["n_item"][0, 0])
+        is_item_specific = bool(self.bundle.task.state["is_item_specific"][0, 0])
+        param = self.param
 
         # Define an internal state with a 'goal' substate
         state = State()
@@ -125,7 +136,7 @@ class User(BaseAgent):
         state["n_pres_before_obs"] = num_element(low=-1, high=np.inf)
         state["last_pres_before_obs"] = num_element(low=-1, high=np.inf)
 
-        state["param"] = array_element(shape=2, low=-np.inf, high=np.inf)
+        state["param"] = array_element(low=-np.inf, high=np.inf, init=param)
 
         # Call the policy defined above
         action_state = State()
@@ -138,16 +149,6 @@ class User(BaseAgent):
         inference_engine = UserInferenceEngine()
         policy = UserPolicy(
             action_state=action_state, is_item_specific=is_item_specific, param=param
-        )
-
-        super().__init__(
-            "user",
-            *args,
-            agent_policy=policy,
-            agent_observation_engine=observation_engine,
-            agent_inference_engine=inference_engine,
-            agent_state=state,
-            **kwargs
         )
 
     def reset(self, dic=None):

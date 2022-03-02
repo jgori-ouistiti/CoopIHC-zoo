@@ -22,11 +22,11 @@ def run_leitner():
     print(task.state)
     # Define a user
     print("create user")
-    user = User(n_item=n_item, is_item_specific=is_item_specific, param=param)
+    user = User(param=param)
     print(user.state)
     # Define an assistant
     print("create assistant")
-    assistant = Leitner(n_item=n_item, delay_factor=delay_factor, delay_min=delay_min)
+    assistant = Leitner(delay_factor=delay_factor, delay_min=delay_min)
     print(assistant.state)
     # Bundle them together
     print("create bundle")
@@ -97,6 +97,7 @@ def run_rl():
         skip_user_step=True
     )  # Reset in a state where the user has already produced an observation and made an inference.
     print(bundle.game_state)
+    raise Exception
     # Step through the bundle (i.e. play full rounds)
     print("start task")
     k = 0
@@ -113,5 +114,5 @@ def run_rl():
 
 
 if __name__ == "__main__":
-    run_rl()
-    # run_leitner()
+    # run_rl()
+    run_leitner()

@@ -5,7 +5,7 @@ import numpy as np
 class Task(InteractionTask):
     """ """
 
-    def __init__(self, n_item, inter_trial, max_iter, *args, **kwargs):
+    def __init__(self, n_item, inter_trial, max_iter, is_item_specific=False, *args, **kwargs):
 
         super().__init__(*args, **kwargs)
 
@@ -13,6 +13,7 @@ class Task(InteractionTask):
         self.state["n_item"] = array_element(shape=1, low=0, high=np.inf, init=n_item)
         self.state["max_iter"] = array_element(shape=1, low=0, high=np.inf, init=max_iter)
         self.state["inter_trial"] = array_element(shape=1, low=0, high=np.inf, init=inter_trial)
+        self.state["is_item_specific"] = array_element(shape=1, low=0, high=np.inf, init=is_item_specific)
 
         # Actual state
         self.state["iteration"] = array_element(shape=1, low=0, high=np.inf, init=0)
