@@ -1,19 +1,21 @@
-from coopihc import Bundle, TrainGym
-
-from coopihczoo.teaching.users import User
-from coopihczoo.teaching.envs import Task
-from coopihczoo.teaching.assistants.rl import Teacher
+import os
 
 from gym.wrappers import FilterObservation
 import gym
 
 from stable_baselines3 import A2C
 from stable_baselines3.common.monitor import Monitor
+from stable_baselines3.common.env_checker import check_env
 
-import os
+from coopihc import Bundle, TrainGym
+
+from coopihczoo.teaching.users import User
+from coopihczoo.teaching.envs import Task
+from coopihczoo.teaching.assistants.rl import Teacher
 
 
 class ActionWrapper(gym.ActionWrapper):
+
     def __init__(self, env):
         super().__init__(env)
         self.action_space = \
@@ -57,8 +59,6 @@ def run_rl():
     env.step({"assistant_action": 1})
 
     # Use env_checker from stable_baselines3 to verify that the env adheres to the Gym API
-    from stable_baselines3.common.env_checker import check_env
-
     check_env(env, warn=False)
 
     # print(env.observation_space)
@@ -73,7 +73,8 @@ def run_rl():
 
     env = Monitor(env, filename="tmp/log")
 
-    model = A2C("MultiInputPolicy", env, verbose=1, tensorboard_log="./tb/")
+    model = A2C("MultiInputPolicy", env, verbose=1, tensorboard_log="./tb/",
+                n_steps=max_iter)  # This is important to set for the learning to be effective!!
 
     model.learn(total_timesteps=int(1e6))
     model.save("saved_model")
