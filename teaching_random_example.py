@@ -2,22 +2,19 @@ from coopihc import Bundle
 
 from coopihczoo.teaching.users import User
 from coopihczoo.teaching.envs import Task
-from coopihczoo.teaching.assistants.leitner import Leitner
+from coopihczoo.teaching.assistants.random import RandomTeacher
 
 from coopihczoo.teaching.config import config_example
 
 
-def run_leitner():
-
-    delay_min = 1
-    delay_factor = 2
+def run_random():
 
     # Define a task
     task = Task(**config_example.task_kwargs)
     # Define a user
     user = User(**config_example.user_kwargs)
     # Define an assistant
-    assistant = Leitner(delay_factor=delay_factor, delay_min=delay_min)
+    assistant = RandomTeacher()
     # Bundle them together
     bundle = Bundle(task=task, user=user, assistant=assistant, random_reset=False)
     # Reset the bundle (i.e. initialize it to a random or prescribed states)
@@ -41,4 +38,4 @@ def run_leitner():
 
 
 if __name__ == "__main__":
-    run_leitner()
+    run_random()

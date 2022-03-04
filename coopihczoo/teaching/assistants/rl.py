@@ -15,7 +15,7 @@ class RlTeacherInferenceEngine(BaseInferenceEngine):
         now = int(self.observation["task_state"]["timestamp"])
         log_thr = float(self.observation["task_state"]["log_thr"])
 
-        is_item_specific = self.observation["user_state"]["param"][0, 0]
+        is_item_specific = bool(self.observation.task_state.is_item_specific)
 
         n_pres = self.observation["user_state"]["n_pres"].view(np.ndarray).flatten()
         last_pres = self.observation["user_state"]["last_pres"].view(np.ndarray).flatten()

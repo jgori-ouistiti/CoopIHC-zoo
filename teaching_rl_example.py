@@ -1,11 +1,12 @@
 import os
 
 from gym.wrappers import FilterObservation
-import gym
+# import gym
 
 from stable_baselines3 import A2C
-from stable_baselines3.common.monitor import Monitor
-from stable_baselines3.common.env_checker import check_env
+# from stable_baselines3.common.monitor import Monitor
+# from stable_baselines3.common.env_checker import check_env
+from stable_baselines3.common.vec_env import SubprocVecEnv, VecMonitor
 
 from coopihc import Bundle, TrainGym
 
@@ -13,48 +14,19 @@ from coopihczoo.teaching.users import User
 from coopihczoo.teaching.envs import Task
 from coopihczoo.teaching.assistants.rl import Teacher
 
+from coopihczoo.teaching.config import config_example
 
-class ActionWrapper(gym.ActionWrapper):
-
-    def __init__(self, env):
-        super().__init__(env)
-        self.action_space = \
-            gym.spaces.Discrete(env.action_space["assistant_action"].n)
-
-    def action(self, action):
-        return {"assistant_action": int(action)}
-
-    def reverse_action(self, action):
-        return action["assistant_action"]
+from coopihczoo.teaching.action_wrapper.action_wrapper import AssistantActionWrapper
 
 
-def run_rl():
+def make_env():
 
-    n_item = 5
-    inter_trial = 1
-    n_iter_per_ss = 40
-    break_length = 1
-    n_session = 1
-    time_before_exam = 1
-    is_item_specific = False
-    param = 0.01, 0.2
+    # Define a task
+    task = Task(**config_example.task_kwargs)
+    # Define a user
+    user = User(**config_example.user_kwargs)
 
-    thr = 0.9
-
-    total_n_iter = n_session * n_iter_per_ss
-
-    task = Task(
-        n_item=n_item,
-        inter_trial=inter_trial,
-        break_length=break_length,
-        n_session=n_session,
-        n_iter_per_ss=n_iter_per_ss,
-        time_before_exam=time_before_exam,
-        is_item_specific=is_item_specific,
-        thr=thr)
-
-    user = User(param=param)
-    assistant = Teacher(thr=thr)
+    assistant = Teacher()
     bundle = Bundle(task=task, user=user, assistant=assistant,
                     random_reset=False,
                     reset_turn=3,
@@ -65,15 +37,11 @@ def run_rl():
         train_user=False,
         train_assistant=True,
     )
-    _ = env.reset()
 
-    # Dict(turn_index:Discrete(4), round_index:Discrete(1000), position:Discrete(31),
-    # targets:MultiDiscrete([31 31 31 31 31 31 31 31]), goal:Discrete(31),
-    # user_action:Discrete(3), assistant_action:Box(1.0, 1.0, (1, 1), float32))
-    env.step({"assistant_action": 1})
+    # _ = env.reset()
 
-    # Use env_checker from stable_baselines3 to verify that the env adheres to the Gym API
-    check_env(env, warn=False)
+    ## Use env_checker from stable_baselines3 to verify that the env adheres to the Gym API
+    # check_env(env, warn=False)
 
     # print(env.observation_space)
 
@@ -81,11 +49,26 @@ def run_rl():
         env,
         ("memory", "progress"))
 
-    env = ActionWrapper(env)
+    env = AssistantActionWrapper(env)
+    return env
+
+
+def run_rl():
+
+    # Possibly wrap into
 
     os.makedirs("tmp", exist_ok=True)
 
-    env = Monitor(env, filename="tmp/log")
+    # env = Monitor(env, filename="tmp/log")
+    # env = make_env()
+
+    envs = [make_env for _ in range(4)]
+
+    env = SubprocVecEnv(envs)
+    env = VecMonitor(env, filename="tmp/log")
+
+    dummy_env = make_env()
+    total_n_iter = int(dummy_env.bundle.task.state["n_iter_per_ss"] * dummy_env.bundle.task.state["n_session"])
 
     model = A2C("MultiInputPolicy", env, verbose=1, tensorboard_log="./tb/",
                 n_steps=total_n_iter)  # This is important to set for the learning to be effective!!
