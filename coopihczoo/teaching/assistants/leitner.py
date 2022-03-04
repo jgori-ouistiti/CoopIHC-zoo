@@ -83,7 +83,7 @@ class LeitnerPolicy(BasePolicy):
 
     def reset(self, random=True):
 
-        _action_value = -1
+        _action_value = 0
         self.action_state["action"][:] = _action_value
 
 

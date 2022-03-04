@@ -32,21 +32,33 @@ def run_rl():
 
     n_item = 5
     inter_trial = 1
-    max_iter = 40
+    n_iter_per_ss = 40
+    break_length = 1
+    n_session = 1
+    time_before_exam = 1
     is_item_specific = False
     param = 0.01, 0.2
+
     thr = 0.9
 
+    total_n_iter = n_session * n_iter_per_ss
+
     task = Task(
-        thr=thr,
-        inter_trial=inter_trial,
         n_item=n_item,
-        max_iter=max_iter,
+        inter_trial=inter_trial,
+        break_length=break_length,
+        n_session=n_session,
+        n_iter_per_ss=n_iter_per_ss,
+        time_before_exam=time_before_exam,
         is_item_specific=is_item_specific,
-    )
+        thr=thr)
+
     user = User(param=param)
     assistant = Teacher(thr=thr)
-    bundle = Bundle(task=task, user=user, assistant=assistant, random_reset=False)
+    bundle = Bundle(task=task, user=user, assistant=assistant,
+                    random_reset=False,
+                    reset_turn=3,
+                    reset_skip_user_step=True)  # Begin by assistant
 
     env = TrainGym(
         bundle,
@@ -55,7 +67,9 @@ def run_rl():
     )
     _ = env.reset()
 
-    # Dict(turn_index:Discrete(4), round_index:Discrete(1000), position:Discrete(31), targets:MultiDiscrete([31 31 31 31 31 31 31 31]), goal:Discrete(31), user_action:Discrete(3), assistant_action:Box(1.0, 1.0, (1, 1), float32))
+    # Dict(turn_index:Discrete(4), round_index:Discrete(1000), position:Discrete(31),
+    # targets:MultiDiscrete([31 31 31 31 31 31 31 31]), goal:Discrete(31),
+    # user_action:Discrete(3), assistant_action:Box(1.0, 1.0, (1, 1), float32))
     env.step({"assistant_action": 1})
 
     # Use env_checker from stable_baselines3 to verify that the env adheres to the Gym API
@@ -74,7 +88,7 @@ def run_rl():
     env = Monitor(env, filename="tmp/log")
 
     model = A2C("MultiInputPolicy", env, verbose=1, tensorboard_log="./tb/",
-                n_steps=max_iter)  # This is important to set for the learning to be effective!!
+                n_steps=total_n_iter)  # This is important to set for the learning to be effective!!
 
     model.learn(total_timesteps=int(1e6))
     model.save("saved_model")

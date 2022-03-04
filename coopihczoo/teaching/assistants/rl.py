@@ -12,42 +12,50 @@ class RlTeacherInferenceEngine(BaseInferenceEngine):
 
     def infer(self, user_state=None):
 
-        current_iter = self.observation["task_state"]["iteration"]
-        max_iter = self.observation["task_state"]["max_iter"]
+        now = int(self.observation["task_state"]["timestamp"])
         log_thr = float(self.observation["task_state"]["log_thr"])
 
-        init_forget_rate = self.observation["user_state"]["param"][0, 0]
-        rep_effect = self.observation["user_state"]["param"][1, 0]
+        is_item_specific = self.observation["user_state"]["param"][0, 0]
 
         n_pres = self.observation["user_state"]["n_pres"].view(np.ndarray).flatten()
         last_pres = self.observation["user_state"]["last_pres"].view(np.ndarray).flatten()
-
-        now = float(current_iter)
 
         seen = n_pres > 0
         unseen = np.invert(seen)
         delta = now - last_pres[seen]  # only consider already seen items
         rep = n_pres[seen] - 1.  # only consider already seen items
 
-        # forget_rate = self.init_forget_rate[seen] * \
-        #     (1 - self.rep_effect[seen]) ** rep
+        if is_item_specific:
+            init_forget_rate = self.observation["user_state"]["param"][:, 0]
+            rep_effect = self.observation["user_state"]["param"][:, 1]
 
-        forget_rate = init_forget_rate * (1 - rep_effect) ** rep
+        else:
+            init_forget_rate = self.observation["user_state"]["param"][0, 0]
+            rep_effect = self.observation["user_state"]["param"][1, 0]
 
-        # if self.current_iter == (self.n_iter_per_session - 1):
-        #     # It will be a break before the next iteration
-        #     delta += self.break_length
-        # else:
-        #     delta += self.time_per_iter
+        if is_item_specific:
+            forget_rate = \
+                init_forget_rate[seen] * (1 - rep_effect) ** rep
+        else:
+            forget_rate = \
+                init_forget_rate * (1 - rep_effect) ** rep
 
         survival = - (log_thr / forget_rate) - delta
         survival[survival < 0] = 0.
 
-        seen_f_rate_if_action = init_forget_rate * (1 - rep_effect) ** (rep + 1)
+        if is_item_specific:
+            init_forget_rate_seen = init_forget_rate[seen]
+        else:
+            init_forget_rate_seen = init_forget_rate
 
+        seen_f_rate_if_action = init_forget_rate_seen * (1 - rep_effect) ** (rep + 1)
         seen_survival_if_action = - log_thr / seen_f_rate_if_action
 
-        unseen_f_rate_if_action = init_forget_rate   # [unseen]
+        if is_item_specific:
+            unseen_f_rate_if_action = init_forget_rate[unseen]
+        else:
+            unseen_f_rate_if_action = init_forget_rate
+
         unseen_survival_if_action = - log_thr / unseen_f_rate_if_action
 
         # self.memory_state[:, 0] = seen
@@ -56,7 +64,21 @@ class RlTeacherInferenceEngine(BaseInferenceEngine):
         self.state["memory"][seen, 1] = seen_survival_if_action
         self.state["memory"][unseen, 1] = unseen_survival_if_action
 
-        self.state["progress"] = (current_iter + 1) / max_iter  # +1? Sure?
+        total_n = \
+            self.observation["task_state"]["n_iter_per_ss"] \
+            * self.observation["task_state"]["n_session"]
+
+        current_iter = \
+            int(self.observation["task_state"]["iteration"] \
+            + self.observation["task_state"]["n_iter_per_ss"] * self.observation["task_state"]["session"])
+
+        # print("total_n", int(total_n))
+        # print("current_iter", current_iter)
+
+        self.state["progress"][:] = current_iter / (total_n-1)
+
+        # print("iteration", int(self.observation["task_state"]["iteration"]))
+        # print("progress", float(self.state["progress"]))
 
         # self.memory_state[:, :] /= max_iter
         reward = 0
@@ -87,9 +109,8 @@ class RlTeacherPolicy(BasePolicy):
 
 class Teacher(BaseAgent):
 
-    def __init__(self, thr, *args, **kwargs):
+    def __init__(self, *args, **kwargs):
         super().__init__("assistant", *args, **kwargs)
-        self.thr = thr
 
     def finit(self, *args, **kwargs):
 
@@ -105,7 +126,7 @@ class Teacher(BaseAgent):
         agent_policy = RlTeacherPolicy(action_state=action_state)
 
         # Inference engine
-        inference_engine = RlTeacherInferenceEngine(thr=self.thr)
+        inference_engine = RlTeacherInferenceEngine()
 
         # Use default observation engine
         observation_engine = RuleObservationEngine(
