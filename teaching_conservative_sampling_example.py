@@ -4,32 +4,15 @@ from coopihczoo.teaching.users import User
 from coopihczoo.teaching.envs import Task
 from coopihczoo.teaching.assistants.conservative_sampling import ConservativeSampling
 
+from coopihczoo.teaching.config import config_example
+
 
 def run_conservative():
 
-    n_item = 5
-    inter_trial = 1
-    n_iter_per_ss = 40
-    break_length = 1
-    n_session = 1
-    time_before_exam = 1
-    is_item_specific = False
-    param = 0.01, 0.2
-
-    thr = 0.9  # Only for reward computation
-
     # Define a task
-    task = Task(
-        n_item=n_item,
-        inter_trial=inter_trial,
-        break_length=break_length,
-        n_session=n_session,
-        n_iter_per_ss=n_iter_per_ss,
-        time_before_exam=time_before_exam,
-        is_item_specific=is_item_specific,
-        thr=thr)
+    task = Task(**config_example.task_kwargs)
     # Define a user
-    user = User(param=param)
+    user = User(**config_example.user_kwargs)
     # Define an assistant
     assistant = ConservativeSampling()
     # Bundle them together
@@ -46,13 +29,11 @@ def run_conservative():
     k = 0
     while 1:
         k += 1
-        print(k)
         state, rewards, is_done = bundle.step(user_action=None, assistant_action=None)
-        # go_to_turn=1)
-        print(state)
-        # Do something with the state or the rewards
         if is_done:
             break
+
+    print("Final reward", rewards['first_task_reward'])
 
 
 if __name__ == "__main__":
