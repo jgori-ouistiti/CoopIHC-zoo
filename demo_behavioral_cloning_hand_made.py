@@ -26,39 +26,6 @@ class FeedForward32Policy(ActorCriticPolicy):
         super().__init__(*args, **kwargs, net_arch=[32, 32])
 
 
-class RolloutInfoWrapper(gym.Wrapper):
-    """Add the entire episode's rewards and observations to `info` at episode end.
-
-    Whenever done=True, `info["rollouts"]` is a dict with keys "obs" and "rews", whose
-    corresponding values hold the Numpy arrays containing the raw observations and
-    rewards seen during this episode.
-    """
-
-    def __init__(self, env):
-        super().__init__(env)
-        self._obs = None
-        self._rews = None
-
-    def reset(self, **kwargs):
-        new_obs = super().reset()
-        self._obs = [new_obs]
-        self._rews = []
-        return new_obs
-
-    def step(self, action):
-        obs, rew, done, info = self.env.step(action)
-        self._obs.append(obs)
-        self._rews.append(rew)
-
-        if done:
-            assert "rollout" not in info
-            info["rollout"] = {
-                "obs": np.stack(self._obs),
-                "rews": np.stack(self._rews),
-            }
-        return obs, rew, done, info
-
-
 class ConstantLRSchedule:
     """A callable that returns a constant learning rate."""
 
