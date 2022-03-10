@@ -235,14 +235,10 @@ def train_expert(env):
     return expert
 
 
-def sample_expert(env, expert):
+def sample_expert(env, expert, n_episode=50):
     env = VecMonitor(DummyVecEnv([lambda: env]))
 
-    n_episode = 50
-
-    device = "cpu"
-
-    _last_obs = env.reset()
+    obs = env.reset()
 
     n_steps = 0
     ep = 0
@@ -252,30 +248,13 @@ def sample_expert(env, expert):
     with torch.no_grad():
         while ep < n_episode:
 
-            if expert.use_sde and expert.sde_sample_freq > 0 and n_steps % expert.sde_sample_freq == 0:
-                # Sample a new noise matrix
-                expert.policy.reset_noise(env.num_envs)
+            action, _states = expert.predict(obs)
 
-            # Convert to pytorch tensor or to TensorDict
-            obs_tensor = obs_as_tensor(_last_obs, device)
-            actions, values, log_probs = expert.policy.forward(obs_tensor)
-            actions = actions.cpu().numpy()
-
-            # Rescale and perform action
-            clipped_actions = actions
-            # Clip the actions to avoid out of bound error
-            if isinstance(expert.action_space, gym.spaces.Box):
-                clipped_actions = np.clip(actions, expert.action_space.low, expert.action_space.high)
-
-            new_obs, rewards, dones, infos = env.step(clipped_actions)
+            new_obs, rewards, dones, info = env.step(action)
 
             n_steps += 1
 
-            if isinstance(expert.action_space, gym.spaces.Discrete):
-                # Reshape in case of discrete action
-                actions = actions.reshape(-1, 1)
-
-            expert_data[-1].append({"acts": actions.squeeze(), "obs": _last_obs.squeeze()})
+            expert_data[-1].append({"acts": action.squeeze(), "obs": obs.squeeze()})
 
             # Handle timeout by bootstraping with value function
             # see GitHub issue #633
@@ -284,7 +263,7 @@ def sample_expert(env, expert):
                     ep += 1
                     expert_data.append([])
 
-            _last_obs = new_obs
+            obs = new_obs
 
     expert_data = expert_data[:-1]
 
