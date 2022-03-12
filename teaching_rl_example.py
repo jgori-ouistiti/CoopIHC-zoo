@@ -3,7 +3,7 @@ import os
 from gym.wrappers import FilterObservation
 # import gym
 
-from stable_baselines3 import A2C
+from stable_baselines3 import PPO
 # from stable_baselines3.common.monitor import Monitor
 # from stable_baselines3.common.env_checker import check_env
 from stable_baselines3.common.vec_env import SubprocVecEnv, VecMonitor
@@ -68,12 +68,13 @@ def run_rl():
     env = VecMonitor(env, filename="tmp/log")
 
     dummy_env = make_env()
-    total_n_iter = int(dummy_env.bundle.task.state["n_iter_per_ss"] * dummy_env.bundle.task.state["n_session"])
+    total_n_iter = \
+        int(dummy_env.bundle.task.state["n_iter_per_ss"] * dummy_env.bundle.task.state["n_session"])
 
-    model = A2C("MultiInputPolicy", env, verbose=1, tensorboard_log="./tb/",
+    model = PPO("MultiInputPolicy", env, verbose=1, tensorboard_log="./tb/",
                 n_steps=total_n_iter)  # This is important to set for the learning to be effective!!
 
-    model.learn(total_timesteps=int(1e6))
+    model.learn(total_timesteps=int(1e7))
     model.save("saved_model")
 
 
