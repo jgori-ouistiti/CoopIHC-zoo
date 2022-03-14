@@ -188,6 +188,9 @@ class BC:
                 self.optimizer.zero_grad()
                 loss.backward()
 
+                for p in self.policy.parameters():
+                    print(p.grad)
+
                 self.optimizer.step()
                 stats_dict["epoch_num"] = epoch_num
                 stats_dict["n_updates"] = batch_num
