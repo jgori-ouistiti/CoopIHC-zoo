@@ -2,7 +2,7 @@ import torch
 import numpy as np
 import gym
 
-from stable_baselines3 import PPO
+from stable_baselines3 import PPO, A2C
 from stable_baselines3.common.evaluation import evaluate_policy
 from stable_baselines3.common.vec_env import DummyVecEnv
 from stable_baselines3.common.policies import ActorCriticPolicy
@@ -175,6 +175,7 @@ class BC:
         """
         samples_so_far = 0
         batch_num = 0
+
         for epoch_num in range(n_epochs):
             for batch in self.expert_data_loader:
 
@@ -187,9 +188,6 @@ class BC:
 
                 self.optimizer.zero_grad()
                 loss.backward()
-
-                for p in self.policy.parameters():
-                    print(p.grad)
 
                 self.optimizer.step()
                 stats_dict["epoch_num"] = epoch_num
@@ -235,43 +233,13 @@ def sample_expert():
         if is_done:
             break
 
-    # print("Final reward", rewards['first_task_reward'])
-
-    # env = VecMonitor(DummyVecEnv([lambda: env]))
-    #
-    # obs = env.reset()
-    #
-    # n_steps = 0
-    # ep = 0
-    #
-    # expert_data = [[], ]
-    #
-    # with torch.no_grad():
-    #     while ep < n_episode:
-    #
-    #         action, _states = expert.predict(obs)
-    #
-    #         new_obs, rewards, dones, info = env.step(action)
-    #
-    #         n_steps += 1
-    #
-    #         expert_data[-1].append({"acts": action.squeeze(), "obs": obs.squeeze()})
-    #
-    #         # Handle timeout by bootstraping with value function
-    #         # see GitHub issue #633
-    #         for idx, done in enumerate(dones):
-    #             if done:
-    #                 ep += 1
-    #                 expert_data.append([])
-    #
-    #         obs = new_obs
-
-    # expert_data = expert_data[:-1]
-
     return expert_data
 
 
 def main():
+
+    torch.manual_seed(123)
+    np.random.seed(123)
 
     os.makedirs("tmp", exist_ok=True)
 
@@ -293,7 +261,7 @@ def main():
     total_n_iter = \
         int(env.bundle.task.state["n_iter_per_ss"] * env.bundle.task.state["n_session"])
 
-    model = PPO("MultiInputPolicy", vec_env, verbose=1, tensorboard_log="./tb/",
+    model = A2C("MultiInputPolicy", vec_env, verbose=1, tensorboard_log="./tb/",
                 n_steps=total_n_iter)  # This is important to set for the learning to be effective!!
 
     policy = model.policy
@@ -318,10 +286,15 @@ def main():
         policy=policy)
 
     print("Training a policy using Behavior Cloning")
-    bc_trainer.train(n_epochs=10000)
+    bc_trainer.train(n_epochs=100)
 
-    reward, _ = evaluate_policy(bc_trainer.policy, Monitor(env), n_eval_episodes=3, render=False)
+    reward, _ = evaluate_policy(model.policy, Monitor(env), n_eval_episodes=3, render=False)
     print(f"Reward after training: {reward}")
+
+    model.learn(total_timesteps=int(10e5), )
+
+    reward, _ = evaluate_policy(model.policy, Monitor(env), n_eval_episodes=3, render=False)
+    print(f"Reward after extended training: {reward}")
 
 
 if __name__ == "__main__":
