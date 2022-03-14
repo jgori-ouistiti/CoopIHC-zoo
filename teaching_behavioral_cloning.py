@@ -28,17 +28,15 @@ from coopihczoo.teaching.envs import Task
 from coopihczoo.teaching.assistants.rl import Teacher
 
 from coopihczoo.teaching.config import config_example
+from coopihczoo.teaching.assistants.conservative_sampling_expert import ConservativeSamplingExpert
 
 from coopihczoo.teaching.action_wrapper.action_wrapper import AssistantActionWrapper
 
 
 def make_env():
 
-    # Define a task
     task = Task(**config_example.task_kwargs)
-    # Define a user
     user = User(**config_example.user_kwargs)
-
     assistant = Teacher()
     bundle = Bundle(task=task, user=user, assistant=assistant,
                     random_reset=False,
@@ -51,13 +49,6 @@ def make_env():
         train_assistant=True,
     )
 
-    # _ = env.reset()
-
-    ## Use env_checker from stable_baselines3 to verify that the env adheres to the Gym API
-    # check_env(env, warn=False)
-
-    # print(env.observation_space)
-
     env = FilterObservation(
         env,
         ("memory", "progress"))
@@ -66,52 +57,20 @@ def make_env():
     return env
 
 
-def run_rl():
-
-    # Possibly wrap into
-
-    os.makedirs("tmp", exist_ok=True)
-
-    # env = Monitor(env, filename="tmp/log")
-    # env = make_env()
-
-    envs = [make_env for _ in range(4)]
-
-    env = SubprocVecEnv(envs)
-    env = VecMonitor(env, filename="tmp/log")
-
-    dummy_env = make_env()
-    total_n_iter = \
-        int(dummy_env.bundle.task.state["n_iter_per_ss"] * dummy_env.bundle.task.state["n_session"])
-
-    model = PPO("MultiInputPolicy", env, verbose=1, tensorboard_log="./tb/",
-                n_steps=total_n_iter)  # This is important to set for the learning to be effective!!
-
-    model.learn(total_timesteps=int(1e6))
-    model.save("saved_model")
-
-
 class BC:
-
-    DEFAULT_BATCH_SIZE: int = 32
-    """Default batch size for DataLoader automatically constructed from Transitions.
-
-    See `set_expert_data_loader()`.
-    """
 
     def __init__(
         self,
         policy,
-        batch_size,
         observation_space: gym.Space,
         action_space: gym.Space,
-        *,
-        expert_data,#: Union[Iterable[Mapping], types.TransitionsMinimal, None] = None,
+        expert_data,
         optimizer_cls=torch.optim.Adam,
         optimizer_kwargs = None,
         ent_weight: float = 1e-3,
         l2_weight: float = 0.0,
         shuffle_data: bool = False,
+        batch_size: int = 32
     ):
         """Behavioral cloning (BC).
 
@@ -122,8 +81,6 @@ class BC:
         Args:
             observation_space: the observation space of the environment.
             action_space: the action space of the environment.
-            policy_class: used to instantiate imitation policy.
-            policy_kwargs: keyword arguments passed to policy's constructor.
             expert_data: If not None, then immediately call
                   `self.set_expert_data_loader(expert_data)` during initialization.
             optimizer_cls: optimiser to use for supervised training.
@@ -131,7 +88,6 @@ class BC:
                   weight decay, for optimiser construction.
             ent_weight: scaling applied to the policy's entropy regularization.
             l2_weight: scaling applied to the policy's L2 regularization.
-            device: name/identity of device to place policy on.
         """
         if optimizer_kwargs:
             if "weight_decay" in optimizer_kwargs:
@@ -180,8 +136,8 @@ class BC:
             stats_dict: Statistics about the learning process to be logged.
 
         """
-        obs = obs.detach()
-        acts = acts.detach()
+        # obs = obs.detach()
+        # acts = acts.detach()
 
         _, log_prob, entropy = self.policy.evaluate_actions(obs, acts)
         prob_true_act = torch.exp(log_prob).mean()
@@ -246,80 +202,101 @@ class BC:
         torch.save(self.policy, policy_path)
 
 
-def train_expert(env):
+def sample_expert():
 
-    print("Training a expert.")
-    expert = PPO(
-        policy=MlpPolicy,
-        env=env,
-        seed=0,
-        batch_size=64,
-        ent_coef=0.0,
-        learning_rate=0.0003,
-        n_epochs=10,
-        n_steps=64,
-    )
-    expert.learn(100)  # Note: change this to 100000 to train a decent expert.
-    return expert
+    task = Task(**config_example.task_kwargs)
+    user = User(**config_example.user_kwargs)
+    assistant = ConservativeSamplingExpert()
+    bundle = Bundle(task=task, user=user, assistant=assistant, random_reset=False)
+    bundle.reset(
+        turn=3, skip_user_step=True
+    )  # Reset in a state where the user has already produced an observation and made an inference.
 
-
-def sample_expert(env, expert, n_episode=50):
-
-    env = VecMonitor(DummyVecEnv([lambda: env]))
-
-    obs = env.reset()
-
-    n_steps = 0
-    ep = 0
+    obs = assistant.state
 
     expert_data = [[], ]
 
-    with torch.no_grad():
-        while ep < n_episode:
+    while True:
 
-            action, _states = expert.predict(obs)
+        state, rewards, is_done = bundle.step(user_action=None, assistant_action=None)
+        new_obs = state["assistant_state"]
+        action = int(state['assistant_action']["action"])
 
-            new_obs, rewards, dones, info = env.step(action)
+        obs_dic = {"memory": obs["memory"].view(np.ndarray),
+                   "progress": obs["progress"].view(np.ndarray)}
 
-            n_steps += 1
+        expert_data[-1].append({"acts": action,            # .squeeze(),
+                                "obs": obs_dic})    # .squeeze()})
 
-            expert_data[-1].append({"acts": action.squeeze(), "obs": obs.squeeze()})
+        obs = new_obs
+        if is_done:
+            break
 
-            # Handle timeout by bootstraping with value function
-            # see GitHub issue #633
-            for idx, done in enumerate(dones):
-                if done:
-                    ep += 1
-                    expert_data.append([])
+    # print("Final reward", rewards['first_task_reward'])
 
-            obs = new_obs
+    # env = VecMonitor(DummyVecEnv([lambda: env]))
+    #
+    # obs = env.reset()
+    #
+    # n_steps = 0
+    # ep = 0
+    #
+    # expert_data = [[], ]
+    #
+    # with torch.no_grad():
+    #     while ep < n_episode:
+    #
+    #         action, _states = expert.predict(obs)
+    #
+    #         new_obs, rewards, dones, info = env.step(action)
+    #
+    #         n_steps += 1
+    #
+    #         expert_data[-1].append({"acts": action.squeeze(), "obs": obs.squeeze()})
+    #
+    #         # Handle timeout by bootstraping with value function
+    #         # see GitHub issue #633
+    #         for idx, done in enumerate(dones):
+    #             if done:
+    #                 ep += 1
+    #                 expert_data.append([])
+    #
+    #         obs = new_obs
 
-    expert_data = expert_data[:-1]
+    # expert_data = expert_data[:-1]
 
     return expert_data
 
 
 def main():
-    env = gym.make("CartPole-v1")
 
-    novice = PPO(
-        policy=MlpPolicy,
-        env=env,
-        # seed=0,
-        # batch_size=64,
-        # ent_coef=0.0,
-        # learning_rate=0.0003,
-        # n_epochs=10,
-        # n_steps=64,
-    )
-    policy = novice.policy
+    os.makedirs("tmp", exist_ok=True)
+
+    # env = make_env()
+    # new_obs, rewards, dones, info = env.step(0)
+    # print(new_obs)
+
+    expert_data = sample_expert()
+
+    # env = Monitor(env, filename="tmp/log")
+    # env = make_env()
+
+    envs = [make_env for _ in range(4)]
+
+    vec_env = SubprocVecEnv(envs)
+    vec_env = VecMonitor(vec_env, filename="tmp/log")
+
+    env = make_env()
+    total_n_iter = \
+        int(env.bundle.task.state["n_iter_per_ss"] * env.bundle.task.state["n_session"])
+
+    model = PPO("MultiInputPolicy", vec_env, verbose=1, tensorboard_log="./tb/",
+                n_steps=total_n_iter)  # This is important to set for the learning to be effective!!
+
+    policy = model.policy
 
     reward, _ = evaluate_policy(policy, Monitor(env), n_eval_episodes=3, render=False)
     print(f"Reward before training: {reward}")
-
-    expert = train_expert(env)
-
-    expert_data = sample_expert(env=env, expert=expert)
 
     np.random.shuffle(expert_data)
 
@@ -338,9 +315,9 @@ def main():
         policy=policy)
 
     print("Training a policy using Behavior Cloning")
-    bc_trainer.train(n_epochs=1)
+    bc_trainer.train(n_epochs=10000)
 
-    reward, _ = evaluate_policy(bc_trainer.policy, Monitor(env), n_eval_episodes=3, render=True)
+    reward, _ = evaluate_policy(bc_trainer.policy, Monitor(env), n_eval_episodes=3, render=False)
     print(f"Reward after training: {reward}")
 
 

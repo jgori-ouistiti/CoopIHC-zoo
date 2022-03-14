@@ -127,7 +127,6 @@ class User(BaseAgent):
         is_item_specific = bool(self.bundle.task.state["is_item_specific"][0, 0])
         param = self.param
 
-        # Define an internal state with a 'goal' substate
         self.state["n_pres"] = array_element(shape=n_item, low=-1, high=np.inf)
         self.state["last_pres"] = array_element(shape=n_item, low=-1, high=np.inf)
 
@@ -136,30 +135,20 @@ class User(BaseAgent):
 
         self.state["param"] = array_element(low=-np.inf, high=np.inf, init=param.reshape(-1, 1))
 
-        # Call the policy defined above
         action_state = State()
         action_state["action"] = cat_element(n=2)
 
-        # Define observation and inference engines
         observation_engine = RuleObservationEngine(
-            deterministic_specification=base_user_engine_specification
-        )
+            deterministic_specification=base_user_engine_specification)
         inference_engine = UserInferenceEngine()
         agent_policy = UserPolicy(
-            action_state=action_state, is_item_specific=is_item_specific, param=param
-        )
+            action_state=action_state, is_item_specific=is_item_specific, param=param)
 
         self.attach_policy(agent_policy)
         self.attach_observation_engine(observation_engine)
         self.attach_inference_engine(inference_engine)
 
     def reset(self, dic=None):
-        """reset
-
-        Override default behaviour of BaseAgent which would randomly sample new goal values on each reset. Here for purpose of demonstration we impose a goal = 4
-
-        :meta public:
-        """
 
         n_item = int(self.bundle.task.state["n_item"][0, 0])
 
@@ -167,3 +156,46 @@ class User(BaseAgent):
         self.state["last_pres"][:] = np.zeros(n_item)
         self.state["n_pres_before_obs"][:] = 0
         self.state["last_pres_before_obs"][:] = 0
+#
+#
+# class RLUserInferenceEngine(UserInferenceEngine):
+#
+#     def __init__(self, *args, **kwargs):
+#         super().__init__(*args, **kwargs)
+#
+#     def infer(self, user_state=None):
+#         item = int(self.observation["task_state"]["item"])
+#         timestamp = self.observation["task_state"]["timestamp"]
+#
+#         self.state["last_pres_before_obs"][0, 0] = self.state["last_pres"][item, 0]
+#         self.state["n_pres_before_obs"][0, 0] = self.state["n_pres"][item, 0]
+#
+#         self.state["last_pres"][item, 0] = timestamp
+#         self.state["n_pres"][item, 0] += 1
+#
+#
+#
+#         reward = 0
+#
+#         return self.state, reward
+#
+#
+# class RLUser(User):
+#
+#     def __init__(self, *args, **kwargs):
+#         super().__init__(*args, **kwargs)
+#
+#     def finit(self):
+#
+#         super().finit()
+#         n_item = int(self.bundle.task.state["n_item"][0, 0])
+#
+#         self.state["progress"] = array_element(shape=1, low=0, high=np.inf, init=0.0)
+#         self.state["memory"] = array_element(shape=(n_item, 2), low=0, high=np.inf)
+#
+#         inf_engine = RLUserInferenceEngine
+#         self.attach_inference_engine(inf_engine)
+#
+
+
+

@@ -1,11 +1,8 @@
 import os
 
 from gym.wrappers import FilterObservation
-# import gym
 
 from stable_baselines3 import PPO
-# from stable_baselines3.common.monitor import Monitor
-# from stable_baselines3.common.env_checker import check_env
 from stable_baselines3.common.vec_env import SubprocVecEnv, VecMonitor
 
 from coopihc import Bundle, TrainGym
@@ -13,19 +10,14 @@ from coopihc import Bundle, TrainGym
 from coopihczoo.teaching.users import User
 from coopihczoo.teaching.envs import Task
 from coopihczoo.teaching.assistants.rl import Teacher
-
 from coopihczoo.teaching.config import config_example
-
 from coopihczoo.teaching.action_wrapper.action_wrapper import AssistantActionWrapper
 
 
 def make_env():
 
-    # Define a task
     task = Task(**config_example.task_kwargs)
-    # Define a user
     user = User(**config_example.user_kwargs)
-
     assistant = Teacher()
     bundle = Bundle(task=task, user=user, assistant=assistant,
                     random_reset=False,
@@ -35,15 +27,10 @@ def make_env():
     env = TrainGym(
         bundle,
         train_user=False,
-        train_assistant=True,
-    )
+        train_assistant=True)
 
-    # _ = env.reset()
-
-    ## Use env_checker from stable_baselines3 to verify that the env adheres to the Gym API
+    # # Use env_checker from stable_baselines3 to verify that the env adheres to the Gym API
     # check_env(env, warn=False)
-
-    # print(env.observation_space)
 
     env = FilterObservation(
         env,
@@ -54,8 +41,6 @@ def make_env():
 
 
 def run_rl():
-
-    # Possibly wrap into
 
     os.makedirs("tmp", exist_ok=True)
 

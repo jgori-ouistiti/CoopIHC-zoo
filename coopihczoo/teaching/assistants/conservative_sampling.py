@@ -217,10 +217,4 @@ class ConservativeSampling(BaseAgent):
         self.attach_inference_engine(inference_engine)
 
     def reset(self, dic=None):
-        """reset
-
-        Override default behaviour of BaseAgent which would randomly sample new goal values on each reset.
-
-        :meta public:
-        """
         pass

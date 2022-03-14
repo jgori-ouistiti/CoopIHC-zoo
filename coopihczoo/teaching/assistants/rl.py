@@ -70,7 +70,7 @@ class RlTeacherInferenceEngine(BaseInferenceEngine):
 
         current_iter = \
             int(self.observation["task_state"]["iteration"] \
-            + self.observation["task_state"]["n_iter_per_ss"] * self.observation["task_state"]["session"])
+                + self.observation["task_state"]["n_iter_per_ss"] * self.observation["task_state"]["session"])
 
         # print("total_n", int(total_n))
         # print("current_iter", current_iter)
@@ -137,12 +137,6 @@ class Teacher(BaseAgent):
         self.attach_inference_engine(inference_engine)
 
     def reset(self, dic=None):
-        """reset
-
-        Override default behaviour of BaseAgent which would randomly sample new goal values on each reset.
-
-        :meta public:
-        """
 
         n_item = int(self.bundle.task.state["n_item"][0, 0])
 

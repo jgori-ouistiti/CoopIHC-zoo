@@ -44,12 +44,6 @@ class ConstantLRSchedule:
 
 class BC:
 
-    DEFAULT_BATCH_SIZE: int = 32
-    """Default batch size for DataLoader automatically constructed from Transitions.
-
-    See `set_expert_data_loader()`.
-    """
-
     def __init__(
         self,
         policy,
@@ -62,6 +56,7 @@ class BC:
         ent_weight: float = 1e-3,
         l2_weight: float = 0.0,
         shuffle_data: bool = False,
+        batch_size: int = 32
     ):
         """Behavioral cloning (BC).
 
@@ -99,10 +94,11 @@ class BC:
         self.ent_weight = ent_weight
         self.l2_weight = l2_weight
 
-        self.expert_data_loader = self._get_expert_data_loader(expert_data, shuffle=shuffle_data)
+        self.expert_data_loader = self._get_expert_data_loader(expert_data, shuffle=shuffle_data,
+                                                               batch_size=batch_size)
 
     @staticmethod
-    def _get_expert_data_loader(expert_data, shuffle):
+    def _get_expert_data_loader(expert_data, shuffle, batch_size):
         """Set the expert data loader, which yields batches of obs-act pairs.
 
         Changing the expert data loader on-demand is useful for DAgger and other
@@ -121,7 +117,7 @@ class BC:
         return torch.utils.data.DataLoader(
             expert_data,
             shuffle=shuffle,
-            batch_size=BC.DEFAULT_BATCH_SIZE)
+            batch_size=batch_size)
 
     def _calculate_loss(
         self,
