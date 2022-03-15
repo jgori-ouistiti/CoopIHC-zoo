@@ -231,7 +231,7 @@ def train_expert(env):
         n_epochs=10,
         n_steps=64,
     )
-    expert.learn(100)  # Note: change this to 100000 to trian a decent expert.
+    expert.learn(1000)  # Note: change this to 100000 to trian a decent expert.
     return expert
 
 
@@ -294,13 +294,13 @@ def main():
         policy_class=FeedForward32Policy
     )
 
-    reward, _ = evaluate_policy(bc_trainer.policy, Monitor(env), n_eval_episodes=3, render=True)
+    reward, _ = evaluate_policy(bc_trainer.policy, Monitor(env), n_eval_episodes=10, render=False)
     print(f"Reward before training: {reward}")
 
     print("Training a policy using Behavior Cloning")
     bc_trainer.train(n_epochs=1)
 
-    reward, _ = evaluate_policy(bc_trainer.policy, Monitor(env), n_eval_episodes=3, render=True)
+    reward, _ = evaluate_policy(bc_trainer.policy, Monitor(env), n_eval_episodes=10, render=False)
     print(f"Reward after training: {reward}")
 
 

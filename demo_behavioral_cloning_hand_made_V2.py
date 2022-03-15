@@ -217,7 +217,7 @@ def train_expert(env):
         n_epochs=10,
         n_steps=64,
     )
-    expert.learn(100)  # Note: change this to 100000 to train a decent expert.
+    expert.learn(1000)  # Note: change this to 100000 to train a decent expert.
     return expert
 
 
@@ -277,7 +277,7 @@ def main():
     #     action_space=env.action_space,
     #     lr_schedule=ConstantLRSchedule())
 
-    reward, _ = evaluate_policy(policy, Monitor(env), n_eval_episodes=3, render=False)
+    reward, _ = evaluate_policy(policy, Monitor(env), n_eval_episodes=10)
     print(f"Reward before training: {reward}")
 
     expert = train_expert(env)
@@ -303,7 +303,7 @@ def main():
     print("Training a policy using Behavior Cloning")
     bc_trainer.train(n_epochs=1)
 
-    reward, _ = evaluate_policy(bc_trainer.policy, Monitor(env), n_eval_episodes=3, render=True)
+    reward, _ = evaluate_policy(bc_trainer.policy, Monitor(env), n_eval_episodes=10)
     print(f"Reward after training: {reward}")
 
 

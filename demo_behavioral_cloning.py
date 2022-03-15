@@ -12,11 +12,10 @@ from imitation.algorithms import bc
 from imitation.data import rollout
 from imitation.data.wrappers import RolloutInfoWrapper
 
-env = gym.make("CartPole-v1")
 
+def main():
 
-def train_expert():
-    print("Training a expert.")
+    env = gym.make("CartPole-v1")
     expert = PPO(
         policy=MlpPolicy,
         env=env,
@@ -27,36 +26,30 @@ def train_expert():
         n_epochs=10,
         n_steps=64,
     )
-    expert.learn(100)  # Note: change this to 100000 to trian a decent expert.
-    return expert
+    expert.learn(1000)  # Note: set to 100000 to train a proficient expert
 
-
-def sample_expert_transitions():
-    expert = train_expert()
-
-    print("Sampling expert transitions.")
-    rollouts = rollout.rollout_and_save(
-        policy=expert.policy,
-        venv=DummyVecEnv([lambda: RolloutInfoWrapper(env)]),
-        sample_until=rollout.make_sample_until(n_timesteps=None, n_episodes=50),
-        path="~/Desktop"
+    rollouts = rollout.rollout(
+        expert,
+        DummyVecEnv([lambda: RolloutInfoWrapper(env)]),
+        rollout.make_sample_until(min_timesteps=None, min_episodes=50),
     )
-    return rollout.flatten_trajectories(rollouts)
+    transitions = rollout.flatten_trajectories(rollouts)
+
+    bc_trainer = bc.BC(
+        observation_space=env.observation_space,
+        action_space=env.action_space,
+        demonstrations=transitions,
+    )
+
+    reward, _ = evaluate_policy(bc_trainer.policy, env, n_eval_episodes=10)
+    print(f"Reward before training: {reward}")
+
+    print("Training a policy using Behavior Cloning")
+    bc_trainer.train(n_epochs=1)
+
+    reward_after_training, _ = evaluate_policy(bc_trainer.policy, env, n_eval_episodes=10)
+    print(f"Reward after training: {reward_after_training}")
 
 
-expert_data = sample_expert_transitions()
-
-bc_trainer = bc.BC(
-    observation_space=env.observation_space,
-    action_space=env.action_space,
-    expert_data=expert_data,
-)
-
-reward, _ = evaluate_policy(bc_trainer.policy, env, n_eval_episodes=3, render=True)
-print(f"Reward before training: {reward}")
-
-print("Training a policy using Behavior Cloning")
-bc_trainer.train(n_epochs=1)
-
-reward, _ = evaluate_policy(bc_trainer.policy, env, n_eval_episodes=3, render=True)
-print(f"Reward after training: {reward}")
+if __name__ == "__main__":
+    main()

@@ -1,7 +1,8 @@
+import numpy as np
+
 from coopihc import BaseAgent, State, \
     cat_element, array_element, \
-    BasePolicy, BaseInferenceEngine, RuleObservationEngine, oracle_engine_specification
-import numpy as np
+    RuleObservationEngine, oracle_engine_specification
 
 from . conservative_sampling import ConservativeSamplingPolicy
 from . rl import RlTeacherInferenceEngine
