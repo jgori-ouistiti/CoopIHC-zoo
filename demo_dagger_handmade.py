@@ -1,6 +1,16 @@
 from stable_baselines3 import PPO
 from stable_baselines3.ppo import MlpPolicy
 
+import tempfile
+from stable_baselines3.common.vec_env import DummyVecEnv
+from stable_baselines3.common.evaluation import evaluate_policy
+
+# from imitation.algorithms import bc
+# from imitation.algorithms.dagger import SimpleDAggerTrainer
+
+from coopihczoo.teaching.rl.behavioral_cloning import BC
+from coopihczoo.teaching.rl.dagger import SimpleDAggerTrainer
+
 import gym
 
 env = gym.make("CartPole-v1")
@@ -16,18 +26,10 @@ expert = PPO(
 )
 expert.learn(1000)  # Note: set to 100000 to train a proficient expert
 
-import tempfile
-import gym
-from stable_baselines3.common.vec_env import DummyVecEnv
-from stable_baselines3.common.evaluation import evaluate_policy
-
-from imitation.algorithms import bc
-from imitation.algorithms.dagger import SimpleDAggerTrainer
-
 venv = DummyVecEnv([lambda: gym.make("CartPole-v1")])
 
 
-bc_trainer = bc.BC(
+bc_trainer = BC(
     observation_space=env.observation_space,
     action_space=env.action_space,
 )

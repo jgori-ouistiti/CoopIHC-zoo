@@ -1,8 +1,9 @@
 """This is a simple example demonstrating how to clone the behavior of an expert.
 Refer to the jupyter notebooks for more detailed examples of how to use the algorithms.
 """
-
+import numpy as np
 import gym
+import torch
 from stable_baselines3 import PPO
 from stable_baselines3.common.evaluation import evaluate_policy
 from stable_baselines3.common.vec_env import DummyVecEnv
@@ -14,6 +15,9 @@ from imitation.data.wrappers import RolloutInfoWrapper
 
 
 def main():
+
+    torch.manual_seed(1234)
+    np.random.seed(1234)
 
     env = gym.make("CartPole-v1")
     expert = PPO(
