@@ -75,6 +75,16 @@ def sample_expert():
         if is_done:
             break
 
+    np.random.shuffle(expert_data)
+
+    # Flatten expert data
+    flatten_expert_data = []
+    for traj in expert_data:
+        for e in traj:
+            flatten_expert_data.append(e)
+
+    expert_data = flatten_expert_data
+
     return expert_data
 
 
@@ -101,18 +111,8 @@ def main():
 
     policy = model.policy
 
-    reward, _ = evaluate_policy(policy, Monitor(env), n_eval_episodes=3, render=False)
+    reward, _ = evaluate_policy(policy, Monitor(env), n_eval_episodes=10, render=False)
     print(f"Reward before training: {reward}")
-
-    np.random.shuffle(expert_data)
-
-    # Flatten expert data
-    flatten_expert_data = []
-    for traj in expert_data:
-        for e in traj:
-            flatten_expert_data.append(e)
-
-    expert_data = flatten_expert_data
 
     bc_trainer = BC(
         observation_space=env.observation_space,
@@ -121,15 +121,15 @@ def main():
         policy=policy)
 
     print("Training a policy using Behavior Cloning")
-    bc_trainer.train(n_epochs=100)
+    bc_trainer.train()
 
-    reward, _ = evaluate_policy(model.policy, Monitor(env), n_eval_episodes=3, render=False)
+    reward, _ = evaluate_policy(model.policy, Monitor(env), n_eval_episodes=10, render=False)
     print(f"Reward after training: {reward}")
 
-    model.learn(total_timesteps=int(10e5), )
-
-    reward, _ = evaluate_policy(model.policy, Monitor(env), n_eval_episodes=3, render=False)
-    print(f"Reward after extended training: {reward}")
+    # model.learn(total_timesteps=int(10e5), )
+    #
+    # reward, _ = evaluate_policy(model.policy, Monitor(env), n_eval_episodes=3, render=False)
+    # print(f"Reward after extended training: {reward}")
 
 
 if __name__ == "__main__":

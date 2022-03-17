@@ -4,14 +4,17 @@ import dataclasses
 import datetime
 import uuid
 import os
-import abc
 
-from stable_baselines3.common import vec_env
 import numpy as np
+import torch
 import torch.utils.data as th_data
 
-from .behavioral_cloning import Trajectory, generate_trajectories, make_min_episodes, \
-    TrajectoryAccumulator, TrajectoryWithRew, Transitions, transitions_collate_fn
+from stable_baselines3.common import vec_env
+from stable_baselines3.common.vec_env import DummyVecEnv, VecMonitor
+
+# from .behavioral_cloning import Trajectory, generate_trajectories, make_min_episodes, \
+#     TrajectoryAccumulator, TrajectoryWithRew, Transitions, transitions_collate_fn, flatten_trajectories, \
+#     make_sample_until
 
 
 class NeedsDemosException(Exception):
@@ -105,23 +108,22 @@ class InteractiveTrajectoryCollector(vec_env.VecEnvWrapper):
         self._done_before = True
         self._is_reset = False
         self._last_user_actions = None
-        self.rng = np.random.RandomState()
 
-    def seed(self, seed=Optional[int]) -> List[Union[None, int]]:
-        """Set the seed for the DAgger random number generator and wrapped VecEnv.
-
-        The DAgger RNG is used along with `self.beta` to determine whether the expert
-        or robot action is forwarded to the wrapped VecEnv.
-
-        Args:
-            seed: The random seed. May be None for completely random seeding.
-
-        Returns:
-            A list containing the seeds for each individual env. Note that all list
-            elements may be None, if the env does not return anything when seeded.
-        """
-        self.rng = np.random.RandomState(seed=seed)
-        return self.venv.seed(seed)
+    # def seed(self, seed=Optional[int]) -> List[Union[None, int]]:
+    #     """Set the seed for the DAgger random number generator and wrapped VecEnv.
+    #
+    #     The DAgger RNG is used along with `self.beta` to determine whether the expert
+    #     or robot action is forwarded to the wrapped VecEnv.
+    #
+    #     Args:
+    #         seed: The random seed. May be None for completely random seeding.
+    #
+    #     Returns:
+    #         A list containing the seeds for each individual env. Note that all list
+    #         elements may be None, if the env does not return anything when seeded.
+    #     """
+    #     self.rng = np.random.RandomState(seed=seed)
+    #     return self.venv.seed(seed)
 
     def reset(self) -> np.ndarray:
         """Resets the environment.
@@ -130,6 +132,7 @@ class InteractiveTrajectoryCollector(vec_env.VecEnvWrapper):
             obs: first observation of a new trajectory.
         """
         self.traj_accum = TrajectoryAccumulator()
+        # self.venv.seed(seed=1234)
         obs = self.venv.reset()
         for i, ob in enumerate(obs):
             self.traj_accum.add_step({"obs": ob}, key=i)
@@ -162,7 +165,7 @@ class InteractiveTrajectoryCollector(vec_env.VecEnvWrapper):
         # Replace each given action with a robot action 100*(1-beta)% of the time.
         actual_acts = np.array(actions)
 
-        mask = self.rng.uniform(0, 1, size=(self.num_envs,)) > self.beta
+        mask = np.random.uniform(0, 1, size=(self.num_envs,)) > self.beta
         if np.sum(mask) != 0:
             actual_acts[mask] = self.get_robot_acts(self._last_obs[mask])
 
@@ -192,25 +195,9 @@ class InteractiveTrajectoryCollector(vec_env.VecEnvWrapper):
         return next_obs, rews, dones, infos
 
 
-class BetaSchedule(abc.ABC):
-    """Computes beta (% of time demonstration action used) from training round."""
-
-    @abc.abstractmethod
-    def __call__(self, round_num: int) -> float:
-        """Computes the value of beta for the current round.
-
-        Args:
-            round_num: the current round number. Rounds are assumed to be sequentially
-                numbered from 0.
-
-        Returns:
-            The fraction of the time to sample a demonstrator action. Robot
-                actions will be sampled the remainder of the time.
-        """  # noqa: DAR202
-
-
-class LinearBetaSchedule(BetaSchedule):
-    """Linearly-decreasing schedule for beta."""
+class LinearBetaSchedule:
+    """Computes beta (% of time demonstration action used) from training round.
+    Linearly-decreasing schedule for beta."""
 
     def __init__(self, rampdown_rounds: int):
         """Builds LinearBetaSchedule.
@@ -221,17 +208,70 @@ class LinearBetaSchedule(BetaSchedule):
         self.rampdown_rounds = rampdown_rounds
 
     def __call__(self, round_num: int) -> float:
-        """Computes beta value.
+        """Computes the value of beta for the current round.
 
         Args:
-            round_num: the current round number.
+            round_num: the current round number. Rounds are assumed to be sequentially
+                numbered from 0.
 
         Returns:
+             The fraction of the time to sample a demonstrator action. Robot
+                actions will be sampled the remainder of the time.
             beta linearly decreasing from `1` to `0` between round `0` and
             `self.rampdown_rounds`. After that, it is 0.
         """
         assert round_num >= 0
         return min(1, max(0, (self.rampdown_rounds - round_num) / self.rampdown_rounds))
+
+
+def sample_expert(env, expert, n_episode=50, n_timesteps=None, deterministic=True):
+
+    env = VecMonitor(DummyVecEnv([lambda: env]))
+
+    obs = env.reset()
+
+    n_steps = 0
+    ep = 0
+
+    expert_data = [[], ]
+
+    with torch.no_grad():
+        while True:
+
+            action, _states = expert.predict(obs, deterministic=deterministic)
+
+            new_obs, rewards, dones, info = env.step(action)
+
+            n_steps += 1
+
+            expert_data[-1].append({"acts": action.squeeze(), "obs": obs.squeeze()})
+
+            # Handle timeout by bootstraping with value function
+            # see GitHub issue #633
+            for idx, done in enumerate(dones):
+                if done:
+                    ep += 1
+                    expert_data.append([])
+
+            obs = new_obs
+
+            if n_episode is None or ep < n_episode:
+                continue
+            if n_timesteps is None or n_steps < n_timesteps:
+                continue
+
+    expert_data = expert_data[:-1]
+
+    np.random.shuffle(expert_data)
+
+    # Flatten expert data
+    flatten_expert_data = []
+    for traj in expert_data:
+        for e in traj:
+            flatten_expert_data.append(e)
+
+    expert_data = flatten_expert_data
+    return expert_data
 
 
 class SimpleDAggerTrainer:
@@ -262,8 +302,6 @@ class SimpleDAggerTrainer:
             expert_policy: The expert policy used to generate synthetic demonstrations.
             expert_trajs: Optional starting dataset that is inserted into the round 0
                 dataset.
-            dagger_trainer_kwargs: Other keyword arguments passed to the
-                superclass initializer `DAggerTrainer.__init__`.
 
         Raises:
             ValueError: The observation or action space does not match between
@@ -306,10 +344,8 @@ class SimpleDAggerTrainer:
     def train(
         self,
         total_timesteps: int,
-        *,
         rollout_round_min_episodes: int = 3,
         rollout_round_min_timesteps: int = 500,
-        bc_train_kwargs=None #Optional[dict] = None,
     ) -> None:
         """Train the DAgger agent.
 
@@ -357,13 +393,13 @@ class SimpleDAggerTrainer:
                 min_episodes=rollout_round_min_episodes,
             )
 
-            trajectories = generate_trajectories(
-                policy=self.expert_policy,
-                venv=collector,
-                sample_until=sample_until,
-                deterministic_policy=True,
-                rng=collector.rng,
-            )
+            trajectories = sample_expert(env=self.venv, expert=self.expert_policy,
+                                         )
+                # generate_trajectories(
+                # policy=self.expert_policy,
+                # venv=collector,
+                # sample_until=sample_until,
+                # deterministic_policy=True)
 
             for traj in trajectories:
                 # self._logger.record_mean(
@@ -376,10 +412,10 @@ class SimpleDAggerTrainer:
             round_episode_count += len(trajectories)
 
             # `logger.dump` is called inside BC.train within the following fn call:
-            self.extend_and_update(bc_train_kwargs)
+            self.extend_and_update()
             round_num += 1
 
-    def extend_and_update(self, bc_train_kwargs: Optional[Mapping] = None) -> int:
+    def extend_and_update(self) -> int:
         """Extend internal batch of data and train BC.
 
         Specifically, this method will load new transitions (if necessary), train
@@ -392,30 +428,26 @@ class SimpleDAggerTrainer:
         the current interaction round.
 
         Arguments:
-            bc_train_kwargs: Keyword arguments for calling `BC.train()`. If
-                the `log_rollouts_venv` key is not provided, then it is set to
-                `self.venv` by default. If neither of the `n_epochs` and `n_batches`
-                keys are provided, then `n_epochs` is set to `self.DEFAULT_N_EPOCHS`.
 
         Returns:
             New round number after advancing the round counter.
         """
-        if bc_train_kwargs is None:
-            bc_train_kwargs = {}
-        else:
-            bc_train_kwargs = dict(bc_train_kwargs)
-
-        user_keys = bc_train_kwargs.keys()
-        if "log_rollouts_venv" not in user_keys:
-            bc_train_kwargs["log_rollouts_venv"] = self.venv
-
-        if "n_epochs" not in user_keys and "n_batches" not in user_keys:
-            bc_train_kwargs["n_epochs"] = self.DEFAULT_N_EPOCHS
+        # if bc_train_kwargs is None:
+        #     bc_train_kwargs = {}
+        # else:
+        #     bc_train_kwargs = dict(bc_train_kwargs)
+        #
+        # user_keys = bc_train_kwargs.keys()
+        # if "log_rollouts_venv" not in user_keys:
+        #     bc_train_kwargs["log_rollouts_venv"] = self.venv
+        #
+        # if "n_epochs" not in user_keys and "n_batches" not in user_keys:
+        #     bc_train_kwargs["n_epochs"] = self.DEFAULT_N_EPOCHS
 
         # logging.info("Loading demonstrations")
         self._try_load_demos()
         # logging.info(f"Training at round {self.round_num}")
-        self.bc_trainer.train(**bc_train_kwargs)
+        self.bc_trainer.train() # **bc_train_kwargs)
         self.round_num += 1
         # logging.info(f"New round number is {self.round_num}")
         return self.round_num
@@ -425,7 +457,7 @@ class SimpleDAggerTrainer:
             round_num = self.round_num
         return self.scratch_dir / "demos" / f"round-{round_num:03d}"
 
-    def create_trajectory_collector(self): #-> InteractiveTrajectoryCollector:
+    def create_trajectory_collector(self):  # -> InteractiveTrajectoryCollector:
         """Create trajectory collector to extend current round's demonstration set.
 
         Returns:
@@ -439,8 +471,7 @@ class SimpleDAggerTrainer:
             venv=self.venv,
             get_robot_acts=lambda acts: self.bc_trainer.policy.predict(acts)[0],
             beta=beta,
-            save_dir=save_dir,
-        )
+            save_dir=save_dir)
         return collector
 
     @property
@@ -469,14 +500,14 @@ class SimpleDAggerTrainer:
                     f"self.batch_size={self.batch_size} > "
                     f"len(transitions)={len(transitions)}",
                 )
-            data_loader = th_data.DataLoader(
-                transitions,
-                self.batch_size,
-                drop_last=True,
-                shuffle=True,
-                collate_fn=transitions_collate_fn,
-            )
-            self.bc_trainer.set_demonstrations(data_loader)
+            # data_loader = th_data.DataLoader(
+            #     transitions,
+            #     self.batch_size,
+            #     drop_last=False,
+            #     shuffle=False,
+            #     collate_fn=transitions_collate_fn,
+            # )
+            self.bc_trainer.set_demonstrations(transitions)
             self._last_loaded_round = self.round_num
 
     def _get_demo_paths(self, round_dir):
