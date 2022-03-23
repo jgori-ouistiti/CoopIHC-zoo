@@ -83,4 +83,4 @@ class ConservativeSamplingExpert(BaseAgent):
             init_forget_rate=init_forget_rate,
             rep_effect=rep_effect)
 
-        return torch.tensor([item, ]), None
+        return np.array([item, ]), None

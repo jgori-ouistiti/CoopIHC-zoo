@@ -140,6 +140,7 @@ class DAgger:
 
                 if np.random.random() > beta:
                     action, _states = self.bc_trainer.policy.predict(obs, deterministic=deterministic)
+
                 else:
 
                     action, _states = expert.predict(obs, deterministic=deterministic)
@@ -148,18 +149,17 @@ class DAgger:
 
                 n_steps += 1
 
-                if isinstance(action, torch.Tensor):
-                    action = action.squeeze()
-                else:
-                    action = torch.from_numpy(action).squeeze()
+                action = action.squeeze()
 
-                if isinstance(obs, torch.Tensor):
+                if isinstance(obs, torch.Tensor) or isinstance(obs, np.ndarray):
                     obs = obs.squeeze()
-                # elif isinstance(obs, np.ndarray):
-                #     obs = torch.from_numpy(obs).squeeze()
-                # else:
-                #     for k, v in obs.items():
-                #         obs[k] = v # torch.from_numpy(v)
+                else:
+                    for k, v in obs.items():
+                        if len(v.squeeze().shape):
+                            obs[k] = v.squeeze()
+                        else:
+                            obs[k] = v.squeeze(-1).squeeze(-1)
+                            # print(v.squeeze(-1).squeeze(-1).shape)
 
                 expert_data[-1].append({"acts": action, "obs": obs})
 
