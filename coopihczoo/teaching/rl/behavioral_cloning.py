@@ -171,7 +171,7 @@ class BC:
         self.ent_weight = ent_weight
         self.l2_weight = l2_weight
 
-    def set_demonstrations(self, demonstrations): # algo_base.AnyTransitions) -> None:
+    def set_demonstrations(self, demonstrations, shuffle=True):  # algo_base.AnyTransitions) -> None:
 
         self._demo_data_loader = th_data.DataLoader(
             demonstrations,

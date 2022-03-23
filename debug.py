@@ -1,3 +1,7 @@
-import pyglet
+import torch
+import torch.nn as nn
 
-gl_lib = pyglet.lib.load_library(framework='/System/Library/Frameworks/OpenGL.framework/Ressources')
+a = torch.tensor([[1, 2, 3]).float()
+b = torch.tensor([1, 0, 1]).float()
+
+print(nn.CrossEntropyLoss()(a, b))

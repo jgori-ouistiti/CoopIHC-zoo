@@ -68,7 +68,7 @@ def sample_expert():
         obs_dic = {"memory": obs["memory"].view(np.ndarray),
                    "progress": obs["progress"].view(np.ndarray)}
 
-        expert_data[-1].append({"acts": action,            # .squeeze(),
+        expert_data[-1].append({"acts": action,     # .squeeze(),
                                 "obs": obs_dic})    # .squeeze()})
 
         obs = new_obs
@@ -106,7 +106,7 @@ def main():
     total_n_iter = \
         int(env.bundle.task.state["n_iter_per_ss"] * env.bundle.task.state["n_session"])
 
-    model = A2C("MultiInputPolicy", vec_env, verbose=1, tensorboard_log="./tb/",
+    model = PPO("MultiInputPolicy", vec_env, verbose=1, tensorboard_log="./tb/",
                 n_steps=total_n_iter)  # This is important to set for the learning to be effective!!
 
     policy = model.policy

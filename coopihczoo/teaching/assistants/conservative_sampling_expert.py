@@ -1,4 +1,5 @@
 import numpy as np
+import torch
 
 from coopihc import BaseAgent, State, \
     cat_element, array_element, \
@@ -16,6 +17,12 @@ class ConservativeSamplingExpert(BaseAgent):
     def finit(self, *args, **kwargs):
 
         n_item = int(self.bundle.task.state["n_item"][0, 0])
+        n_session = int(self.bundle.task.state.n_session[0, 0])
+        inter_trial = int(self.bundle.task.state.inter_trial[0, 0])
+        n_iter_per_ss = int(self.bundle.task.state.n_iter_per_ss[0, 0])
+        break_length = int(self.bundle.task.state.break_length[0, 0])
+        log_thr = float(self.bundle.task.state.log_thr[0, 0])
+        is_item_specific = bool(self.bundle.task.state.is_item_specific)
 
         self.state["progress"] = array_element(shape=1, low=0, high=np.inf, init=0.0)
         self.state["memory"] = array_element(shape=(n_item, 2), low=0, high=np.inf)
@@ -24,7 +31,15 @@ class ConservativeSamplingExpert(BaseAgent):
         action_state = State()
         action_state["action"] = cat_element(min=0, max=n_item)
 
-        agent_policy = ConservativeSamplingPolicy(action_state=action_state)
+        agent_policy = ConservativeSamplingPolicy(
+            action_state=action_state,
+            n_session=n_session,
+            inter_trial=inter_trial,
+            n_item=n_item,
+            n_iter_per_ss=n_iter_per_ss,
+            break_length=break_length,
+            log_thr=log_thr,
+            is_item_specific=is_item_specific)
 
         # Inference engine
         inference_engine = RlTeacherInferenceEngine()  # This is specific!!!
@@ -43,3 +58,29 @@ class ConservativeSamplingExpert(BaseAgent):
 
         self.state["progress"][:] = 0
         self.state["memory"][:] = np.zeros((n_item, 2))
+
+    def predict(self, obs, deterministic=None):
+
+        if self.policy.is_item_specific:
+            init_forget_rate = obs["user_state"]["param"][:, 0]
+            rep_effect = obs["user_state"]["param"][:, 1]
+
+        else:
+            init_forget_rate, rep_effect = obs["param"].squeeze()
+
+        iteration = obs["iteration"].squeeze()
+        session = obs["session"].squeeze()
+        n_pres = obs["n_pres"].squeeze()
+        last_pres = obs["last_pres"].squeeze()
+        timestamp = obs["timestamp"].squeeze()
+
+        item = self.policy._loop(
+            timestamp=timestamp,
+            iteration=iteration,
+            session=session,
+            n_pres=n_pres,
+            last_pres=last_pres,
+            init_forget_rate=init_forget_rate,
+            rep_effect=rep_effect)
+
+        return torch.tensor([item, ]), None
