@@ -1,5 +1,8 @@
-import numpy as np
+from abc import ABC
 import torch
+from typing import Any, Dict, List, Optional, Tuple, Type, Union
+
+import numpy as np
 
 from coopihc import BaseAgent, State, \
     cat_element, array_element, \
@@ -7,12 +10,13 @@ from coopihc import BaseAgent, State, \
 
 from . conservative_sampling import ConservativeSamplingPolicy
 from . rl import RlTeacherInferenceEngine
+from stable_baselines3.common.policies import BasePolicy
 
 
-class ConservativeSamplingExpert(BaseAgent):
+class ConservativeSamplingExpert(BaseAgent, BasePolicy, ABC):
 
     def __init__(self, *args, **kwargs):
-        super().__init__("assistant", *args, **kwargs)
+        super(ConservativeSamplingExpert, self).__init__("assistant", *args, **kwargs)
 
     def finit(self, *args, **kwargs):
 
@@ -59,7 +63,18 @@ class ConservativeSamplingExpert(BaseAgent):
         self.state["progress"][:] = 0
         self.state["memory"][:] = np.zeros((n_item, 2))
 
-    def predict(self, obs, deterministic=None):
+    def predict(
+        self,
+        observation: Union[np.ndarray, Dict[str, np.ndarray]],
+        state: Optional[Tuple[np.ndarray, ...]] = None,
+        episode_start: Optional[np.ndarray] = None,
+        deterministic: bool = False,
+    ) -> Tuple[np.ndarray, Optional[Tuple[np.ndarray, ...]]]:
+
+        obs = observation
+
+        if state is not None or episode_start is not None:
+            raise NotImplementedError
 
         if self.policy.is_item_specific:
             init_forget_rate = obs["user_state"]["param"][:, 0]
@@ -84,3 +99,9 @@ class ConservativeSamplingExpert(BaseAgent):
             rep_effect=rep_effect)
 
         return np.array([item, ]), None
+
+    def _predict(self, observation: torch.Tensor, deterministic: bool = False) -> torch.Tensor:
+        raise NotImplementedError
+
+    def forward(self, *args, **kwargs):
+        raise NotImplementedError

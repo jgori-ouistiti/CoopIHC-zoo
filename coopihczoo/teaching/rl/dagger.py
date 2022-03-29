@@ -2,6 +2,7 @@ import numpy as np
 import torch
 
 from stable_baselines3.common.vec_env import DummyVecEnv, VecMonitor
+import coopihc
 
 
 class LinearBetaSchedule:
@@ -126,7 +127,7 @@ class DAgger:
 
         beta = self.beta_schedule(self.round_num)
 
-        env = VecMonitor(DummyVecEnv([lambda: env]))
+        # env = VecMonitor(DummyVecEnv([lambda: env]))
 
         obs = env.reset()
 
@@ -139,36 +140,46 @@ class DAgger:
             while True:
 
                 if np.random.random() > beta:
+                    # Student takes the decision
+                    # expert_chose = False
                     action, _states = self.bc_trainer.policy.predict(obs, deterministic=deterministic)
 
                 else:
+                    # Expert takes the decision
+                    # expert_chose = True
+                    if isinstance(expert, coopihc.BaseAgent):
+                        action, _reward = env.unwrapped.bundle.assistant._take_action()
+                        action = int(action)
+                    else:
+                        action, _state = expert.predict(obs, deterministic=deterministic)
 
-                    action, _states = expert.predict(obs, deterministic=deterministic)
-
-                new_obs, rewards, dones, info = env.step(action)
+                new_obs, reward, done, info = env.step(action)
 
                 n_steps += 1
 
-                action = action.squeeze()
+                # action = action.squeeze()
 
-                if isinstance(obs, torch.Tensor) or isinstance(obs, np.ndarray):
-                    obs = obs.squeeze()
-                else:
-                    for k, v in obs.items():
-                        if len(v.squeeze().shape):
-                            obs[k] = v.squeeze()
-                        else:
-                            obs[k] = v.squeeze(-1).squeeze(-1)
+                # if isinstance(obs, torch.Tensor) or isinstance(obs, np.ndarray):
+                #     obs = obs.squeeze()
+                # else:
+                #     for k, v in obs.items():
+                #         if len(v.squeeze().shape):
+                #             obs[k] = v.squeeze()
+                #         else:
+                #             obs[k] = v.squeeze(-1).squeeze(-1)
                             # print(v.squeeze(-1).squeeze(-1).shape)
 
+                # if expert_chose:
                 expert_data[-1].append({"acts": action, "obs": obs})
 
                 # Handle timeout by bootstraping with value function
                 # see GitHub issue #633
-                for idx, done in enumerate(dones):
-                    if done:
-                        ep += 1
-                        expert_data.append([])
+
+                if done:
+                    env.reset()
+
+                    ep += 1
+                    expert_data.append([])
 
                 obs = new_obs
 

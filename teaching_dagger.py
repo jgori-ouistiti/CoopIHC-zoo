@@ -14,17 +14,14 @@ from coopihc import Bundle, TrainGym
 
 from coopihczoo.teaching.users import User
 from coopihczoo.teaching.envs import Task
-from coopihczoo.teaching.assistants.rl import Teacher
 from coopihczoo.teaching.config import config_example
 from coopihczoo.teaching.assistants.conservative_sampling_expert import ConservativeSamplingExpert
 from coopihczoo.teaching.action_wrapper.action_wrapper import AssistantActionWrapper
 
 import torch
-import gym
 
 from stable_baselines3.common.evaluation import evaluate_policy
 from stable_baselines3 import PPO
-from stable_baselines3.ppo import MlpPolicy
 
 from coopihczoo.teaching.rl.behavioral_cloning import BC
 from coopihczoo.teaching.rl.dagger import DAgger
@@ -34,7 +31,7 @@ def make_env():
 
     task = Task(**config_example.task_kwargs)
     user = User(**config_example.user_kwargs)
-    assistant = Teacher()
+    assistant = ConservativeSamplingExpert()
     bundle = Bundle(task=task, user=user, assistant=assistant,
                     random_reset=False,
                     reset_turn=3,
@@ -48,27 +45,10 @@ def make_env():
 
     env = FilterObservation(
         env,
-        ("memory", "progress",
-         "param", "iteration",
-         "session", "timestamp",
-         "n_pres", "last_pres"))
+        ("memory", "progress"))
 
     env = AssistantActionWrapper(env)
     return env
-
-
-def make_expert():
-
-    task = Task(**config_example.task_kwargs)
-    user = User(**config_example.user_kwargs)
-    assistant = ConservativeSamplingExpert()
-    Bundle(
-        task=task, user=user, assistant=assistant,
-        random_reset=False,
-        reset_turn=3,
-        reset_skip_user_step=True)  # Begin by assistant
-
-    return assistant
 
 
 def main():
@@ -78,7 +58,7 @@ def main():
 
     env = make_env()
 
-    expert = make_expert()
+    expert = env.unwrapped.bundle.assistant
 
     total_n_iter = \
         int(env.bundle.task.state["n_iter_per_ss"] * env.bundle.task.state["n_session"])

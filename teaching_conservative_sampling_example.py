@@ -21,7 +21,7 @@ def run_conservative():
     bundle.reset(
         turn=3, skip_user_step=True
     )  # Reset in a state where the user has already produced an observation and made an inference.
-    while 1:
+    while True:
         state, rewards, is_done = bundle.step(user_action=None, assistant_action=None)
         if is_done:
             break

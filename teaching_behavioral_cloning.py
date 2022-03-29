@@ -90,8 +90,8 @@ def sample_expert():
 
 def main():
 
-    torch.manual_seed(123)
-    np.random.seed(123)
+    torch.manual_seed(1234)
+    np.random.seed(1234)
 
     os.makedirs("tmp", exist_ok=True)
 
