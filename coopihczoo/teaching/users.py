@@ -1,13 +1,10 @@
 from coopihc import (
     BaseAgent,
     State,
-    StateElement,
     BasePolicy,
-    autospace,
     RuleObservationEngine,
     BaseInferenceEngine,
     array_element,
-    num_element,
     cat_element,
 )
 from coopihc.observation.utils import base_user_engine_specification
@@ -109,7 +106,8 @@ class UserPolicy(BasePolicy):
     def reset(self, random=True):
 
         _action_value = 0  # -1
-        self.action_state["action"][:] = _action_value
+        print(self.action_state["action"].shape)
+        self.action_state["action"] = _action_value
 
 
 class User(BaseAgent):
@@ -127,16 +125,16 @@ class User(BaseAgent):
         is_item_specific = bool(self.bundle.task.state["is_item_specific"][0, 0])
         param = self.param
 
-        self.state["n_pres"] = array_element(shape=n_item, low=-1, high=np.inf)
-        self.state["last_pres"] = array_element(shape=n_item, low=-1, high=np.inf)
+        self.state["n_pres"] = array_element(shape=(n_item,), low=-1, high=np.inf)
+        self.state["last_pres"] = array_element(shape=(n_item,), low=-1, high=np.inf)
 
-        self.state["n_pres_before_obs"] = num_element(low=-1, high=np.inf)
-        self.state["last_pres_before_obs"] = num_element(low=-1, high=np.inf)
+        self.state["n_pres_before_obs"] = array_element(shape=(1, ), low=-1, high=np.inf)
+        self.state["last_pres_before_obs"] = array_element(shape=(1, ), low=-1, high=np.inf)
 
-        self.state["param"] = array_element(low=-np.inf, high=np.inf, init=param.reshape(-1, 1))
+        self.state["param"] = array_element(shape=param.shape, low=-np.inf, high=np.inf, init=param.reshape(-1, 1))
 
         action_state = State()
-        action_state["action"] = cat_element(n=2)
+        action_state["action"] = cat_element(N=2)
 
         observation_engine = RuleObservationEngine(
             deterministic_specification=base_user_engine_specification)
@@ -144,9 +142,9 @@ class User(BaseAgent):
         agent_policy = UserPolicy(
             action_state=action_state, is_item_specific=is_item_specific, param=param)
 
-        self.attach_policy(agent_policy)
-        self.attach_observation_engine(observation_engine)
-        self.attach_inference_engine(inference_engine)
+        self._attach_policy(agent_policy)
+        self._attach_observation_engine(observation_engine)
+        self._attach_inference_engine(inference_engine)
 
     def reset(self, dic=None):
 

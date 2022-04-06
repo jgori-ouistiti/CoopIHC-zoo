@@ -12,7 +12,7 @@ class RandomTeacher(BaseAgent):
 
         # Call the policy defined above
         action_state = State()
-        action_state["action"] = cat_element(min=0, max=n_item)
+        action_state["action"] = cat_element(N=n_item)
 
         agent_policy = BasePolicy(action_state=action_state)
 
@@ -20,9 +20,9 @@ class RandomTeacher(BaseAgent):
         observation_engine = None
         inference_engine = None
 
-        self.attach_policy(agent_policy)
-        self.attach_observation_engine(observation_engine)
-        self.attach_inference_engine(inference_engine)
+        self._attach_policy(agent_policy)
+        self._attach_observation_engine(observation_engine)
+        self._attach_inference_engine(inference_engine)
 
     def reset(self, dic=None):
         """reset

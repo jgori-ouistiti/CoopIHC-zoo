@@ -39,8 +39,9 @@ class DAgger:
     def __init__(
         self,
         env,
-        expert,  #: policies.BasePolicy,
-        bc_trainer,
+        expert,
+        policy,
+        batch_size,
         expert_trajs=None,
         beta_schedule=None
     ):
@@ -62,7 +63,12 @@ class DAgger:
             beta_schedule = LinearBetaSchedule(15)
 
         self.beta_schedule = beta_schedule
-        self.bc_trainer = bc_trainer
+
+        self.bc_trainer = BC(
+            observation_space=env.observation_space,
+            action_space=env.action_space,
+            policy=policy,
+            batch_size=total_n_iter)
 
         self.round_num = 0
         self._last_loaded_round = -1

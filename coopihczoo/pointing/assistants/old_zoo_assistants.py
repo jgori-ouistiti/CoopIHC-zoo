@@ -4,9 +4,9 @@ from coopihc.policy.BIGDiscretePolicy import BIGDiscretePolicy
 from coopihc.inference.GoalInferenceWithUserPolicyGiven import (
     GoalInferenceWithUserPolicyGiven,
 )
-from coopihc.space.Space import Space
-from coopihc.space.StateElement import StateElement
-from coopihc.space.utils import autospace, discrete_space
+from coopihc.base.Space import Space
+from coopihc.base.StateElement import StateElement
+from coopihc.base.utils import autospace, discrete_space
 
 import numpy
 import copy

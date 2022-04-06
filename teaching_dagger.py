@@ -69,23 +69,18 @@ def main():
 
     policy = model.policy
 
-    bc_trainer = BC(
-        observation_space=env.observation_space,
-        action_space=env.action_space,
-        policy=policy,
-        batch_size=total_n_iter)
-
-    reward, _ = evaluate_policy(bc_trainer.policy, Monitor(env), n_eval_episodes=10, render=False)
+    reward, _ = evaluate_policy(policy, Monitor(env), n_eval_episodes=10, render=False)
     print(f"Reward before training: {reward}")
 
     dagger_trainer = DAgger(
         env=env,
         expert=expert,
-        bc_trainer=bc_trainer)
+        policy=policy,
+        batch_size=total_n_iter)
 
     dagger_trainer.train(2000)
 
-    reward, _ = evaluate_policy(bc_trainer.policy, Monitor(env), n_eval_episodes=10, render=False)
+    reward, _ = evaluate_policy(policy, Monitor(env), n_eval_episodes=10, render=False)
     print(f"Reward after training: {reward}")
 
 
