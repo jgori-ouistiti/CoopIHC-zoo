@@ -15,9 +15,12 @@ class UserInferenceEngine(BaseInferenceEngine):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-    def infer(self, user_state=None):
+    def infer(self, agent_observation=None):
 
-        item = int(self.observation["task_state"]["item"])
+        print(agent_observation)
+        print(self.observation)
+
+        item = int(self.observation["task_state"]["item"][0, 0])
         timestamp = self.observation["task_state"]["timestamp"]
 
         self.state["last_pres_before_obs"][0, 0] = self.state["last_pres"][item, 0]
@@ -41,7 +44,7 @@ class UserPolicy(BasePolicy):
     def __init__(self, action_state, *args, **kwargs):
         super().__init__(action_state=action_state, *args, **kwargs)
 
-    def sample(self, observation=None):
+    def sample(self, observation=None, **kwargs):
 
         """sample
 
@@ -106,7 +109,6 @@ class UserPolicy(BasePolicy):
     def reset(self, random=True):
 
         _action_value = 0  # -1
-        print(self.action_state["action"].shape)
         self.action_state["action"] = _action_value
 
 

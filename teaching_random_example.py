@@ -26,12 +26,9 @@ def run_random():
         start_at=3,
         go_to=3
     )  # Reset in a state where the user has already produced an observation and made an inference.
-
-    # Step through the bundle (i.e. play full rounds)
-    k = 0
-    while 1:
-        k += 1
-        state, rewards, is_done = bundle.step(user_action=None, assistant_action=None)
+    while True:
+        print(bundle.state)
+        state, rewards, is_done = bundle.step()
         if is_done:
             break
 
