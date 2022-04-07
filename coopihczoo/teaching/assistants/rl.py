@@ -101,8 +101,8 @@ class Teacher(BaseAgent):
 
         n_item = int(self.bundle.task.state["n_item"])
 
-        self.state["progress"] = array_element(low=0, high=np.inf, init=0.0)
-        self.state["memory"] = array_element(low=0, high=np.inf, init=np.zeros((n_item, 2)))
+        self.state["progress"] = array_element(low=0.0, high=1.0, init=0.0)
+        self.state["memory"] = array_element(low=0.0, high=np.inf, init=np.zeros((n_item, 2)))
 
         # Call the policy defined above
         action_state = State()
