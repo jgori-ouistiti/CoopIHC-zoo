@@ -3,26 +3,27 @@ from coopihc import BaseAgent, State, BasePolicy, cat_element
 
 class RandomTeacher(BaseAgent):
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, seed, *args, **kwargs):
         super().__init__("assistant", *args, **kwargs)
+        self.seed = seed
 
     def finit(self):
 
-        n_item = int(self.bundle.game_state.task_state.n_item[0, 0])
+        n_item = int(self.bundle.game_state.task_state.n_item)
 
         # Call the policy defined above
         action_state = State()
-        action_state["action"] = cat_element(N=n_item)
+        action_state["action"] = cat_element(N=n_item, seed=self.seed)
 
         agent_policy = BasePolicy(action_state=action_state)
 
         # Use default
-        observation_engine = None
-        inference_engine = None
+        # observation_engine = None
+        # inference_engine = None
 
         self._attach_policy(agent_policy)
-        self._attach_observation_engine(observation_engine)
-        self._attach_inference_engine(inference_engine)
+        # self._attach_observation_engine(observation_engine)
+        # self._attach_inference_engine(inference_engine)
 
     def reset(self, dic=None):
         """reset

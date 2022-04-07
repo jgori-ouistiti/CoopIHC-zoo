@@ -1,6 +1,6 @@
 import numpy as np
 
-from coopihc import InteractionTask, array_element
+from coopihc import InteractionTask, discrete_array_element, array_element
 
 
 class Task(InteractionTask):
@@ -15,28 +15,28 @@ class Task(InteractionTask):
         super().__init__(*args, **kwargs)
 
         # Parameters
-        self.state["n_item"] = array_element(shape=(1, ), low=0, high=np.inf, init=n_item)
-        self.state["n_iter_per_ss"] = array_element(shape=(1, ), low=0, high=np.inf, init=n_iter_per_ss)
-        self.state["n_session"] = array_element(shape=(1, ), low=0, high=np.inf, init=n_session)
-        self.state["inter_trial"] = array_element(shape=(1, ), low=0, high=np.inf, init=inter_trial)
-        self.state["break_length"] = array_element(shape=(1, ), low=0, high=np.inf, init=break_length)  # 24*60**2
-        self.state["is_item_specific"] = array_element(shape=(1, ), low=0, high=np.inf, init=is_item_specific)
-        self.state["time_before_exam"] = array_element(shape=(1, ), low=0, high=np.inf, init=time_before_exam)
+        self.state["n_item"] = discrete_array_element(low=0, high=np.inf, init=n_item)
+        self.state["n_iter_per_ss"] = discrete_array_element(low=0, high=np.inf, init=n_iter_per_ss)
+        self.state["n_session"] = discrete_array_element(low=0, high=np.inf, init=n_session)
+        self.state["inter_trial"] = discrete_array_element(low=0, high=np.inf, init=inter_trial)
+        self.state["break_length"] = discrete_array_element(low=0, high=np.inf, init=break_length)  # 24*60**2
+        self.state["is_item_specific"] = discrete_array_element(low=0, high=np.inf, init=is_item_specific)
+        self.state["time_before_exam"] = discrete_array_element(low=0, high=np.inf, init=time_before_exam)
 
-        self.state["log_thr"] = array_element(shape=(1, ), low=-np.inf, high=np.inf, init=np.log(thr))
+        self.state["log_thr"] = array_element(low=-np.inf, high=np.inf, init=np.log(thr))
 
         # Actual state
-        self.state["iteration"] = array_element(shape=(1, ), low=0, high=np.inf, init=0)
-        self.state["session"] = array_element(shape=(1, ), low=0, high=np.inf, init=0)
-        self.state["item"] = array_element(shape=(1, ), low=0, high=np.inf, init=0)
-        self.state["timestamp"] = array_element(shape=(1, ), low=0, high=np.inf, init=0)
+        self.state["iteration"] = discrete_array_element(low=0, high=np.inf)
+        self.state["session"] = discrete_array_element(low=0, high=np.inf)
+        self.state["item"] = discrete_array_element(low=0, high=np.inf)
+        self.state["timestamp"] = discrete_array_element(low=0, high=np.inf)
 
     def reset(self, dic=None):
 
-        self.state["item"][:] = 0
-        self.state["iteration"][:] = 0
-        self.state["timestamp"][:] = 0
-        self.state["session"][:] = 0
+        self.state["item"] = 0
+        self.state["iteration"] = 0
+        self.state["timestamp"] = 0
+        self.state["session"] = 0
 
     def on_user_action(self, *args, user_action=None, **kwargs):
 
@@ -63,8 +63,8 @@ class Task(InteractionTask):
                 init_forget_rate = self.bundle.game_state["user_state"]["param"][seen, 0]
                 rep_effect = self.bundle.game_state["user_state"]["param"][seen, 1]
             else:
-                init_forget_rate = self.bundle.game_state["user_state"]["param"][0, 0]
-                rep_effect = self.bundle.game_state["user_state"]["param"][1, 0]
+                init_forget_rate = self.bundle.game_state["user_state"]["param"][0]
+                rep_effect = self.bundle.game_state["user_state"]["param"][1]
 
             forget_rate = init_forget_rate * (1 - rep_effect) ** rep
             delta = exam_timestamp - last_pres[seen]
@@ -75,10 +75,10 @@ class Task(InteractionTask):
 
         is_done = False
 
-        self.state["iteration"][:] += 1
+        self.state["iteration"] += 1
         if self.state["iteration"] == self.state["n_iter_per_ss"]:
-            self.state["iteration"][:] = 0
-            self.state["session"][:] += 1
+            self.state["iteration"] = 0
+            self.state["session"] += 1
             delta = int(self.state["break_length"])
         else:
             delta = int(self.state["inter_trial"])
@@ -86,16 +86,16 @@ class Task(InteractionTask):
         if self.state["session"] >= self.state["n_session"]:
             is_done = True
 
-        self.state["timestamp"][:] += delta
+        self.state["timestamp"] += delta
 
         return self.state, reward, is_done
 
-    def on_assistant_action(self, *args, assistant_action=None, **kwargs):
+    def on_assistant_action(self, assistant_action=None, **kwargs):
 
         is_done = False
         reward = 0
 
-        self.state["item"][:] = assistant_action
+        self.state["item"] = assistant_action
 
         return self.state, reward, is_done
 

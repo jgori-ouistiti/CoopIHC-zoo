@@ -1,16 +1,7 @@
 from coopihc import BaseAgent, State, \
     cat_element, \
-    BasePolicy, BaseInferenceEngine, RuleObservationEngine, oracle_engine_specification
+    BasePolicy, RuleObservationEngine, oracle_engine_specification
 import numpy as np
-
-
-class ConservativeSamplingInferenceEngine(BaseInferenceEngine):
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-
-    def infer(self, user_state=None):
-        return super().infer(user_state=user_state)
 
 
 class ConservativeSamplingPolicy(BasePolicy):
@@ -180,7 +171,7 @@ class ConservativeSamplingPolicy(BasePolicy):
 
         return first_item
 
-    def sample(self, observation=None):
+    def sample(self, observation=None, **kwargs):
         if observation is None:
             observation = self.observation
 
@@ -189,8 +180,8 @@ class ConservativeSamplingPolicy(BasePolicy):
             rep_effect = observation.user_state.param[:, 1]
 
         else:
-            init_forget_rate = observation.user_state.param[0, 0]
-            rep_effect = observation.user_state.param[1, 0]
+            init_forget_rate = observation.user_state.param[0]
+            rep_effect = observation.user_state.param[1]
 
         iteration = int(observation.task_state.iteration)
         session = int(observation.task_state.session)
@@ -198,7 +189,7 @@ class ConservativeSamplingPolicy(BasePolicy):
         last_pres = observation.user_state.last_pres.view(np.ndarray)
         n_pres = observation.user_state.n_pres.view(np.ndarray)
 
-        first_item = self._loop(
+        _action_value = self._loop(
             timestamp=timestamp,
             last_pres=last_pres,
             iteration=iteration,
@@ -207,18 +198,12 @@ class ConservativeSamplingPolicy(BasePolicy):
             init_forget_rate=init_forget_rate,
             rep_effect=rep_effect)
 
-        _action_value = first_item
-
-        new_action = self.new_action
-        new_action[:] = _action_value
-
         reward = 0
-        return new_action, reward
+        return _action_value, reward
 
     def reset(self, random=True):
 
-        _action_value = 0
-        self.action_state["action"][:] = _action_value
+        self.action_state["action"] = 0
 
 
 class ConservativeSampling(BaseAgent):
@@ -228,17 +213,17 @@ class ConservativeSampling(BaseAgent):
 
     def finit(self, *args, **kwargs):
 
-        n_item = int(self.bundle.task.state.n_item[0, 0])
-        n_session = int(self.bundle.task.state.n_session[0, 0])
-        inter_trial = int(self.bundle.task.state.inter_trial[0, 0])
-        n_iter_per_ss = int(self.bundle.task.state.n_iter_per_ss[0, 0])
-        break_length = int(self.bundle.task.state.break_length[0, 0])
-        log_thr = float(self.bundle.task.state.log_thr[0, 0])
-        is_item_specific = bool(self.bundle.task.state.is_item_specific[0, 0])
+        n_item = int(self.bundle.task.state.n_item)
+        n_session = int(self.bundle.task.state.n_session)
+        inter_trial = int(self.bundle.task.state.inter_trial)
+        n_iter_per_ss = int(self.bundle.task.state.n_iter_per_ss)
+        break_length = int(self.bundle.task.state.break_length)
+        log_thr = float(self.bundle.task.state.log_thr)
+        is_item_specific = bool(self.bundle.task.state.is_item_specific)
 
         # Call the policy defined above
         action_state = State()
-        action_state["action"] = cat_element(min=0, max=n_item)
+        action_state["action"] = cat_element(N=n_item)
 
         agent_policy = ConservativeSamplingPolicy(
             action_state=action_state,
@@ -248,16 +233,13 @@ class ConservativeSampling(BaseAgent):
             log_thr=log_thr,
             is_item_specific=is_item_specific)
 
-        # Inference engine
-        inference_engine = ConservativeSamplingInferenceEngine()
-
         # Use default observation engine
         observation_engine = RuleObservationEngine(
             deterministic_specification=oracle_engine_specification)
 
-        self.attach_policy(agent_policy)
-        self.attach_observation_engine(observation_engine)
-        self.attach_inference_engine(inference_engine)
+        self._attach_policy(agent_policy)
+        self._attach_observation_engine(observation_engine)
+        # self.attach_inference_engine(inference_engine)
 
     def reset(self, dic=None):
         pass

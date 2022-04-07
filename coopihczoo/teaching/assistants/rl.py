@@ -10,15 +10,18 @@ class RlTeacherInferenceEngine(BaseInferenceEngine):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-    def infer(self, user_state=None):
+    def infer(self, agent_observation=None):
 
-        now = int(self.observation["task_state"]["timestamp"])
-        log_thr = float(self.observation["task_state"]["log_thr"])
+        if agent_observation is None:
+            agent_observation = self.observation
 
-        is_item_specific = bool(self.observation.task_state.is_item_specific)
+        now = int(agent_observation.task_state.timestamp)
+        log_thr = float(agent_observation.task_state.log_thr)
 
-        n_pres = self.observation["user_state"]["n_pres"].view(np.ndarray).flatten()
-        last_pres = self.observation["user_state"]["last_pres"].view(np.ndarray).flatten()
+        is_item_specific = bool(agent_observation.task_state.is_item_specific)
+
+        n_pres = agent_observation.user_state.n_pres.view(np.ndarray).flatten()
+        last_pres = agent_observation.user_state.last_pres.view(np.ndarray).flatten()
 
         seen = n_pres > 0
         unseen = np.invert(seen)
@@ -26,12 +29,12 @@ class RlTeacherInferenceEngine(BaseInferenceEngine):
         rep = n_pres[seen] - 1.  # only consider already seen items
 
         if is_item_specific:
-            init_forget_rate = self.observation["user_state"]["param"][:, 0]
-            rep_effect = self.observation["user_state"]["param"][:, 1]
+            init_forget_rate = agent_observation.user_state.param[:, 0]
+            rep_effect = agent_observation.user_state.param[:, 1]
 
         else:
-            init_forget_rate = self.observation["user_state"]["param"][0, 0]
-            rep_effect = self.observation["user_state"]["param"][1, 0]
+            init_forget_rate = agent_observation.user_state.param[0]
+            rep_effect = agent_observation.user_state.param[1]
 
         if is_item_specific:
             forget_rate = \
@@ -69,16 +72,10 @@ class RlTeacherInferenceEngine(BaseInferenceEngine):
             * self.observation["task_state"]["n_session"]
 
         current_iter = \
-            int(self.observation["task_state"]["iteration"] \
+            int(self.observation["task_state"]["iteration"]
                 + self.observation["task_state"]["n_iter_per_ss"] * self.observation["task_state"]["session"])
 
-        # print("total_n", int(total_n))
-        # print("current_iter", current_iter)
-
-        self.state["progress"][:] = current_iter / (total_n-1)
-
-        # print("iteration", int(self.observation["task_state"]["iteration"]))
-        # print("progress", float(self.state["progress"]))
+        self.state["progress"] = current_iter / (total_n-1)
 
         # self.memory_state[:, :] /= max_iter
         reward = 0
@@ -90,21 +87,9 @@ class RlTeacherPolicy(BasePolicy):
     def __init__(self, action_state, *args, **kwargs):
         super().__init__(action_state=action_state, *args, **kwargs)
 
-    # def sample(self, observation=None):
-    #
-    #     _action_value = 0
-    #
-    #     reward = 0
-    #
-    #     new_action = self.new_action
-    #     new_action[:] = _action_value
-    #
-    #     return new_action, reward
-
     def reset(self, random=True):
 
-        _action_value = 0
-        self.action_state["action"][:] = _action_value
+        self.action_state["action"] = 0
 
 
 class Teacher(BaseAgent):
@@ -114,14 +99,14 @@ class Teacher(BaseAgent):
 
     def finit(self, *args, **kwargs):
 
-        n_item = int(self.bundle.task.state["n_item"][0, 0])
+        n_item = int(self.bundle.task.state["n_item"])
 
-        self.state["progress"] = array_element(shape=1, low=0, high=np.inf, init=0.0)
-        self.state["memory"] = array_element(shape=(n_item, 2), low=0, high=np.inf)
+        self.state["progress"] = array_element(low=0, high=np.inf, init=0.0)
+        self.state["memory"] = array_element(low=0, high=np.inf, init=np.zeros((n_item, 2)))
 
         # Call the policy defined above
         action_state = State()
-        action_state["action"] = cat_element(min=0, max=n_item)
+        action_state["action"] = cat_element(N=n_item)
 
         agent_policy = RlTeacherPolicy(action_state=action_state)
 
@@ -132,13 +117,13 @@ class Teacher(BaseAgent):
         observation_engine = RuleObservationEngine(
             deterministic_specification=oracle_engine_specification)
 
-        self.attach_policy(agent_policy)
-        self.attach_observation_engine(observation_engine)
-        self.attach_inference_engine(inference_engine)
+        self._attach_policy(agent_policy)
+        self._attach_observation_engine(observation_engine)
+        self._attach_inference_engine(inference_engine)
 
     def reset(self, dic=None):
 
-        n_item = int(self.bundle.task.state["n_item"][0, 0])
+        n_item = int(self.bundle.task.state["n_item"])
 
-        self.state["progress"][:] = 0
-        self.state["memory"][:] = np.zeros((n_item, 2))
+        self.state["progress"] = 0.0
+        self.state["memory"] = np.zeros((n_item, 2))

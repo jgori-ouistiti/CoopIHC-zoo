@@ -4,6 +4,7 @@ from gym.wrappers import FilterObservation
 
 from stable_baselines3 import PPO
 from stable_baselines3.common.vec_env import SubprocVecEnv, VecMonitor
+from stable_baselines3.common.env_checker import check_env
 
 from coopihc import Bundle, TrainGym
 
@@ -21,22 +22,26 @@ def make_env():
     assistant = Teacher()
     bundle = Bundle(task=task, user=user, assistant=assistant,
                     random_reset=False,
-                    reset_turn=3,
-                    reset_skip_user_step=True)  # Begin by assistant
+                    start_at=3,
+                    go_to=3)  # Begin by assistant
 
     env = TrainGym(
         bundle,
         train_user=False,
         train_assistant=True)
 
-    # # Use env_checker from stable_baselines3 to verify that the env adheres to the Gym API
-    # check_env(env, warn=False)
+    env = AssistantActionWrapper(env)
 
     env = FilterObservation(
         env,
         ("memory", "progress"))
 
-    env = AssistantActionWrapper(env)
+    print(env.observation_space["memory"].shape)
+    print(env.observation_space["progress"].shape)
+
+    # # Use env_checker from stable_baselines3 to verify that the env adheres to the Gym API
+    check_env(env, warn=False)
+
     return env
 
 
@@ -45,22 +50,28 @@ def run_rl():
     os.makedirs("tmp", exist_ok=True)
 
     # env = Monitor(env, filename="tmp/log")
-    # env = make_env()
+    make_env()
 
-    envs = [make_env for _ in range(4)]
-
-    env = SubprocVecEnv(envs)
-    env = VecMonitor(env, filename="tmp/log")
-
-    dummy_env = make_env()
-    total_n_iter = \
-        int(dummy_env.bundle.task.state["n_iter_per_ss"] * dummy_env.bundle.task.state["n_session"])
-
-    model = PPO("MultiInputPolicy", env, verbose=1, tensorboard_log="./tb/",
-                n_steps=total_n_iter)  # This is important to set for the learning to be effective!!
-
-    model.learn(total_timesteps=int(1e7))
-    model.save("saved_model")
+    # n_env = 4
+    #
+    # envs = [make_env for _ in range(n_env)]
+    #
+    # env = SubprocVecEnv(envs)
+    # env = VecMonitor(env, filename="tmp/log")
+    #
+    # dummy_env = make_env()
+    #
+    # print(dummy_env.observation_space)
+    #
+    # ts = dummy_env.bundle.task.state
+    # total_n_iter = int(ts.n_iter_per_ss * ts.n_session)
+    #
+    # model = PPO("MultiInputPolicy", env, verbose=1, tensorboard_log="./tb/",
+    #             n_steps=total_n_iter,  # This is important to set for the learning to be effective!!
+    #             batch_size=total_n_iter*n_env)
+    #
+    # model.learn(total_timesteps=int(1e7))
+    # model.save("saved_model")
 
 
 if __name__ == "__main__":
