@@ -2,13 +2,12 @@ from coopihc import BaseAgent, State, BasePolicy, cat_element
 
 
 class RandomTeacher(BaseAgent):
-
     def __init__(self, *args, **kwargs):
         super().__init__("assistant", *args, **kwargs)
 
     def finit(self):
 
-        n_item = int(self.bundle.game_state.task_state.n_item[0, 0])
+        n_item = self.parameters["n_item"]
 
         # Call the policy defined above
         action_state = State()
@@ -25,10 +24,4 @@ class RandomTeacher(BaseAgent):
         self._attach_inference_engine(inference_engine)
 
     def reset(self, dic=None):
-        """reset
-
-        Override default behaviour of BaseAgent which would randomly sample new goal values on each reset. Here for purpose of demonstration we impose a goal = 4
-
-        :meta public:
-        """
         pass
