@@ -87,8 +87,7 @@ def main():
 
     model = PPO("MultiInputPolicy", vec_env, verbose=1, tensorboard_log="./tb/",
                 n_steps=total_n_iter,  # This is important to set for the learning to be effective!!
-                batch_size=100,
-                )
+                batch_size=100)
 
     policy = model.policy
 

@@ -12,16 +12,16 @@ def run_conservative():
     task = Task(**config_example.task_kwargs)
     user = User(**config_example.user_kwargs)
     assistant = ConservativeSampling()
-    bundle = Bundle(task=task, user=user, assistant=assistant, random_reset=False)
+
+    bundle = Bundle(task=task, user=user, assistant=assistant, random_reset=False,
+                    reset_start_after=2,
+                    reset_go_to=3)  # Begin by assistant
     # Reset the bundle (i.e. initialize it to a random or prescribed states)
     ## 0 : after assistant takes action + new task state
     ## 1 : after user observation + user inference + new user state
     ## 2 : after user takes action + new task state
     ## 3 : after assistant observation + assitant inference
-    bundle.reset(
-        start_at=3,
-        go_to=3
-    )  # Reset in a state where the user has already produced an observation and made an inference.
+    bundle.reset()
     while True:
         state, rewards, is_done = bundle.step(user_action=None, assistant_action=None)
         if is_done:
