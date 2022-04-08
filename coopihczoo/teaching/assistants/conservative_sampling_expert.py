@@ -20,20 +20,20 @@ class ConservativeSamplingExpert(BaseAgent, BasePolicy, ABC):
 
     def finit(self, *args, **kwargs):
 
-        n_item = int(self.bundle.task.state["n_item"][0, 0])
-        n_session = int(self.bundle.task.state.n_session[0, 0])
-        inter_trial = int(self.bundle.task.state.inter_trial[0, 0])
-        n_iter_per_ss = int(self.bundle.task.state.n_iter_per_ss[0, 0])
-        break_length = int(self.bundle.task.state.break_length[0, 0])
-        log_thr = float(self.bundle.task.state.log_thr[0, 0])
+        n_item = int(self.bundle.task.state.n_item)
+        n_session = int(self.bundle.task.state.n_session)
+        inter_trial = int(self.bundle.task.state.inter_trial)
+        n_iter_per_ss = int(self.bundle.task.state.n_iter_per_ss)
+        break_length = int(self.bundle.task.state.break_length)
+        log_thr = float(self.bundle.task.state.log_thr)
         is_item_specific = bool(self.bundle.task.state.is_item_specific)
 
-        self.state["progress"] = array_element(shape=1, low=0, high=np.inf, init=0.0)
-        self.state["memory"] = array_element(shape=(n_item, 2), low=0, high=np.inf)
+        self.state["progress"] = array_element(low=0, high=np.inf, init=np.zeros(1))
+        self.state["memory"] = array_element(low=0, high=np.inf, init=np.zeros((n_item, 2)))
 
         # Call the policy defined above
         action_state = State()
-        action_state["action"] = cat_element(min=0, max=n_item)
+        action_state["action"] = cat_element(N=n_item)
 
         agent_policy = ConservativeSamplingPolicy(
             action_state=action_state,
@@ -52,16 +52,16 @@ class ConservativeSamplingExpert(BaseAgent, BasePolicy, ABC):
         observation_engine = RuleObservationEngine(
             deterministic_specification=oracle_engine_specification)
 
-        self.attach_policy(agent_policy)
-        self.attach_observation_engine(observation_engine)
-        self.attach_inference_engine(inference_engine)
+        self._attach_policy(agent_policy)
+        self._attach_observation_engine(observation_engine)
+        self._attach_inference_engine(inference_engine)
 
     def reset(self, dic=None):
 
-        n_item = int(self.bundle.task.state["n_item"][0, 0])
+        n_item = int(self.bundle.task.state["n_item"])
 
-        self.state["progress"][:] = 0
-        self.state["memory"][:] = np.zeros((n_item, 2))
+        self.state["progress"] = 0
+        self.state["memory"] = np.zeros((n_item, 2))
 
     def predict(
         self,

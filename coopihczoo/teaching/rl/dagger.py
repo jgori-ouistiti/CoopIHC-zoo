@@ -155,7 +155,7 @@ class DAgger:
                     # Expert takes the decision
                     # expert_chose = True
                     if isinstance(expert, coopihc.BaseAgent):
-                        action, _reward = env.unwrapped.bundle.assistant._take_action()
+                        action, _reward = env.unwrapped.bundle.assistant.take_action(increment_turn=False)
                         action = int(action)
                     else:
                         action, _state = expert.predict(obs, deterministic=deterministic)

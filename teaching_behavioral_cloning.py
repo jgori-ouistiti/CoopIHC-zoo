@@ -21,28 +21,7 @@ from coopihczoo.teaching.action_wrapper.action_wrapper import AssistantActionWra
 from coopihczoo.teaching.rl.behavioral_cloning import BC
 
 
-def make_env():
-
-    task = Task(**config_example.task_kwargs)
-    user = User(**config_example.user_kwargs)
-    assistant = Teacher()
-    bundle = Bundle(task=task, user=user, assistant=assistant,
-                    random_reset=False,
-                    reset_turn=3,
-                    reset_skip_user_step=True)  # Begin by assistant
-
-    env = TrainGym(
-        bundle,
-        train_user=False,
-        train_assistant=True,
-    )
-
-    env = FilterObservation(
-        env,
-        ("memory", "progress"))
-
-    env = AssistantActionWrapper(env)
-    return env
+from teaching_rl_example import make_env
 
 
 def sample_expert():
@@ -50,10 +29,10 @@ def sample_expert():
     task = Task(**config_example.task_kwargs)
     user = User(**config_example.user_kwargs)
     assistant = ConservativeSamplingExpert()
-    bundle = Bundle(task=task, user=user, assistant=assistant, random_reset=False)
-    bundle.reset(
-        turn=3, skip_user_step=True
-    )  # Reset in a state where the user has already produced an observation and made an inference.
+    bundle = Bundle(task=task, user=user, assistant=assistant, random_reset=False,
+                    reset_start_after=2,
+                    reset_go_to=3)
+    bundle.reset()
 
     obs = assistant.state
 
@@ -97,17 +76,19 @@ def main():
 
     expert_data = sample_expert()
 
-    envs = [make_env for _ in range(4)]
+    env = make_env()
+    ts = env.bundle.task.state
+    total_n_iter = int(ts["n_iter_per_ss"] * ts["n_session"])
 
+    n_env = 4
+    envs = [make_env for _ in range(n_env)]
     vec_env = SubprocVecEnv(envs)
     vec_env = VecMonitor(vec_env, filename="tmp/log")
 
-    env = make_env()
-    total_n_iter = \
-        int(env.bundle.task.state["n_iter_per_ss"] * env.bundle.task.state["n_session"])
-
     model = PPO("MultiInputPolicy", vec_env, verbose=1, tensorboard_log="./tb/",
-                n_steps=total_n_iter)  # This is important to set for the learning to be effective!!
+                n_steps=total_n_iter,  # This is important to set for the learning to be effective!!
+                batch_size=100,
+                )
 
     policy = model.policy
 
