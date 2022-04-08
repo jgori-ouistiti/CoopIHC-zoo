@@ -1,6 +1,6 @@
 import numpy as np
 
-from coopihc import InteractionTask, array_element
+from coopihc import InteractionTask, discrete_array_element
 import copy
 
 
@@ -38,10 +38,10 @@ class Task(InteractionTask):
         )
 
         # state
-        self.state["iteration"] = array_element(low=0, high=np.inf)
-        self.state["session"] = array_element(low=0, high=np.inf)
-        self.state["item"] = array_element(low=0, high=np.inf)
-        self.state["timestamp"] = array_element(low=0, high=np.inf)
+        self.state["iteration"] = discrete_array_element(low=0, high=np.inf)
+        self.state["session"] = discrete_array_element(low=0, high=np.inf)
+        self.state["item"] = discrete_array_element(low=0, high=np.inf)
+        self.state["timestamp"] = discrete_array_element(low=0, high=np.inf)
 
     def reset(self, dic=None):
 
@@ -60,10 +60,8 @@ class Task(InteractionTask):
         reward = 0
         if iteration == self.n_iter_per_ss - 1 and session == self.n_session - 1:
 
-            n_pres = self.bundle.game_state["user_state"]["n_pres"].view(np.ndarray)
-            last_pres = self.bundle.game_state["user_state"]["last_pres"].view(
-                np.ndarray
-            )
+            n_pres = self.bundle.game_state["user_state"]["n_pres"]
+            last_pres = self.bundle.game_state["user_state"]["last_pres"]
 
             log_thr = self.log_thr
 
@@ -76,12 +74,13 @@ class Task(InteractionTask):
                 ]
                 rep_effect = self.bundle.game_state["user_state"]["param"][seen, 1]
             else:
-                init_forget_rate = self.bundle.game_state["user_state"]["param"][0, 0]
-                rep_effect = self.bundle.game_state["user_state"]["param"][1, 0]
+                init_forget_rate = self.bundle.game_state["user_state"]["param"][0]
+                rep_effect = self.bundle.game_state["user_state"]["param"][1]
 
             forget_rate = init_forget_rate * (1 - rep_effect) ** rep
             delta = exam_timestamp - last_pres[seen]
             lop_p = -forget_rate * delta
+
             reward = np.sum(lop_p > log_thr)
 
         is_done = False

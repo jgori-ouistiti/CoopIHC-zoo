@@ -23,8 +23,6 @@ bundle.reset(
     go_to=3,
 )
 
-exit()
-
 
 def run_random():
 

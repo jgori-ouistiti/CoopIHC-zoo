@@ -2,9 +2,9 @@ from coopihc import (
     BaseAgent,
     State,
     BasePolicy,
-    RuleObservationEngine,
     BaseInferenceEngine,
     array_element,
+    discrete_array_element,
     cat_element,
 )
 from coopihc.observation.utils import base_user_engine_specification
@@ -115,11 +115,15 @@ class User(BaseAgent):
         n_item = self.parameters["n_item"]
         is_item_specific = self.parameters["is_item_specific"]
 
-        self.state["n_pres"] = array_element(shape=(n_item,), low=-1, high=np.inf)
-        self.state["last_pres"] = array_element(shape=(n_item,), low=-1, high=np.inf)
+        self.state["n_pres"] = discrete_array_element(
+            shape=(n_item,), low=-1, high=np.inf
+        )
+        self.state["last_pres"] = discrete_array_element(
+            shape=(n_item,), low=-1, high=np.inf
+        )
 
-        self.state["n_pres_before_obs"] = array_element(low=-1, high=np.inf)
-        self.state["last_pres_before_obs"] = array_element(low=-1, high=np.inf)
+        self.state["n_pres_before_obs"] = discrete_array_element(low=-1, high=np.inf)
+        self.state["last_pres_before_obs"] = discrete_array_element(low=-1, high=np.inf)
 
         param = self.param
         self.state["param"] = array_element(init=param, low=-np.inf, high=np.inf)
