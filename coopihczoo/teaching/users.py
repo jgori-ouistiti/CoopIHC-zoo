@@ -63,8 +63,12 @@ class UserPolicy(BasePolicy):
         item = int(self.observation["task_state"]["item"])
         timestamp = float(self.observation["task_state"]["timestamp"])
 
-        n_pres = self.observation["user_state"]["n_pres_before_obs"].view(np.ndarray)  # old and unique!!
-        last_pres = self.observation["user_state"]["last_pres_before_obs"].view(np.ndarray) # old and unique!!
+        n_pres = self.observation["user_state"]["n_pres_before_obs"].view(
+            np.ndarray
+        )  # old and unique!!
+        last_pres = self.observation["user_state"]["last_pres_before_obs"].view(
+            np.ndarray
+        )  # old and unique!!
 
         reward = 0
         _action_value = 0
@@ -121,8 +125,12 @@ class User(BaseAgent):
         is_item_specific = bool(self.bundle.task.state["is_item_specific"])
         param = self.param
 
-        self.state["n_pres"] = discrete_array_element(shape=(n_item,), low=-1, high=np.inf)
-        self.state["last_pres"] = discrete_array_element(shape=(n_item,), low=-1, high=np.inf)
+        self.state["n_pres"] = discrete_array_element(
+            shape=(n_item,), low=-1, high=np.inf
+        )
+        self.state["last_pres"] = discrete_array_element(
+            shape=(n_item,), low=-1, high=np.inf
+        )
 
         self.state["n_pres_before_obs"] = discrete_array_element(low=-1, high=np.inf)
         self.state["last_pres_before_obs"] = discrete_array_element(low=-1, high=np.inf)
@@ -133,11 +141,15 @@ class User(BaseAgent):
         action_state["action"] = cat_element(N=2)
 
         observation_engine = RuleObservationEngine(
-            deterministic_specification=base_user_engine_specification)
+            deterministic_specification=base_user_engine_specification
+        )
         inference_engine = UserInferenceEngine()
         agent_policy = UserPolicy(
-            action_state=action_state, is_item_specific=is_item_specific, param=param,
-            seed=self.seed)
+            action_state=action_state,
+            is_item_specific=is_item_specific,
+            param=param,
+            seed=self.seed,
+        )
 
         self._attach_policy(agent_policy)
         self._attach_observation_engine(observation_engine)
@@ -151,6 +163,8 @@ class User(BaseAgent):
         self.state["last_pres"] = np.zeros(n_item)
         self.state["n_pres_before_obs"] = 0
         self.state["last_pres_before_obs"] = 0
+
+
 #
 #
 # class RLUserInferenceEngine(UserInferenceEngine):
@@ -191,6 +205,3 @@ class User(BaseAgent):
 #         inf_engine = RLUserInferenceEngine
 #         self.attach_inference_engine(inf_engine)
 #
-
-
-
