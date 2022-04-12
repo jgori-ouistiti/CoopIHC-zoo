@@ -1,5 +1,5 @@
-from coopihczoo.pointing.envs import SimplePointingTask
-from coopihc.bundle.Bundle import Bundle
+from coopihc import SimplePointingTask
+from coopihc import Bundle
 
 
 task = SimplePointingTask(gridsize=31, number_of_targets=8, mode="position")

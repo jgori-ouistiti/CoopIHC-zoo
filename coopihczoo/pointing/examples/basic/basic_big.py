@@ -1,7 +1,5 @@
-from coopihczoo.pointing.envs import SimplePointingTask
-from coopihczoo.pointing.users import CarefulPointer
-from coopihczoo.pointing.assistants import BIGGain
-from coopihc.bundle.Bundle import Bundle
+from coopihc import SimplePointingTask, CarefulPointer, BIGGain
+from coopihc import Bundle
 
 import matplotlib.pyplot as plt
 
@@ -11,16 +9,15 @@ BIGpointer = BIGGain()
 
 bundle = Bundle(task=task, user=binary_user, assistant=BIGpointer)
 game_state = bundle.reset()
-bundle.render("plotext")
+bundle.render("plot")
 plt.tight_layout()
 k = 0
-plt.savefig("/home/juliengori/Pictures/img_tmp/biggain_{}.png".format(k))
-
+# plt.savefig("/home/juliengori/Pictures/img_tmp/biggain_{}.png".format(k))
 while True:
     game_state, rewards, is_done = bundle.step(user_action=None, assistant_action=None)
-    bundle.render("plotext")
+    bundle.render("plot")
     k += 1
-    plt.savefig("/home/juliengori/Pictures/img_tmp/biggain_{}.png".format(k))
+    # plt.savefig("/home/juliengori/Pictures/img_tmp/biggain_{}.png".format(k))
     if is_done:
         bundle.close()
         break
