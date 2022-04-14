@@ -102,7 +102,6 @@ class TaskWithoutSequence(InteractionTask):
 
         # state
         self.state["iteration"] = discrete_array_element(low=0, high=np.inf)
-        self.state["session"] = discrete_array_element(low=0, high=np.inf)
         self.state["item"] = discrete_array_element(low=0, high=np.inf)
         self.state["timestamp"] = discrete_array_element(low=0, high=np.inf)
 
@@ -110,7 +109,6 @@ class TaskWithoutSequence(InteractionTask):
         self.state["item"] = 0
         self.state["iteration"] = 0
         self.state["timestamp"] = 0
-        # self.state["session"] = 0
 
     def on_user_action(self, *args, user_action=None, **kwargs):
 
