@@ -9,15 +9,12 @@ from coopihczoo.teaching.config import config_example
 
 def run_leitner():
 
-    delay_min = 1
-    delay_factor = 2
-
     # Define a task
     task = Task(**config_example.task_kwargs)
     # Define a user
     user = User(**config_example.user_kwargs)
     # Define an assistant
-    assistant = Leitner(delay_factor=delay_factor, delay_min=delay_min)
+    assistant = Leitner(**config_example.leitner_kwargs)
     # Bundle them together
     bundle = Bundle(task=task, user=user, assistant=assistant, random_reset=False)
     # Reset the bundle (i.e. initialize it to a random or prescribed states)
@@ -26,14 +23,12 @@ def run_leitner():
     ## 2 : after user takes action + new task state
     ## 3 : after assistant observation + assitant inference
     bundle.reset(
-        turn=3, skip_user_step=True
+        start_at=3,
+        go_to=3
     )  # Reset in a state where the user has already produced an observation and made an inference.
 
-    # Step through the bundle (i.e. play full rounds)
-    k = 0
-    while 1:
-        k += 1
-        state, rewards, is_done = bundle.step(user_action=None, assistant_action=None)
+    while True:
+        state, rewards, is_done = bundle.step()
         if is_done:
             break
 

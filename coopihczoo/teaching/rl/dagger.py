@@ -3,6 +3,7 @@ import torch
 
 from stable_baselines3.common.vec_env import DummyVecEnv, VecMonitor
 import coopihc
+from coopihczoo.teaching.rl.behavioral_cloning import BC
 
 
 class LinearBetaSchedule:
@@ -68,7 +69,7 @@ class DAgger:
             observation_space=env.observation_space,
             action_space=env.action_space,
             policy=policy,
-            batch_size=total_n_iter)
+            batch_size=batch_size)
 
         self.round_num = 0
         self._last_loaded_round = -1

@@ -6,7 +6,6 @@ class RandomTeacher(BaseAgent):
         super().__init__("assistant", *args, **kwargs)
 
     def finit(self):
-
         n_item = self.parameters["n_item"]
 
         # Call the policy defined above
@@ -15,13 +14,7 @@ class RandomTeacher(BaseAgent):
 
         agent_policy = BasePolicy(action_state=action_state)
 
-        # Use default
-        observation_engine = None
-        inference_engine = None
-
         self._attach_policy(agent_policy)
-        self._attach_observation_engine(observation_engine)
-        self._attach_inference_engine(inference_engine)
 
     def reset(self, dic=None):
         pass

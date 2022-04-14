@@ -1,7 +1,132 @@
 import numpy as np
-
-from coopihc import InteractionTask, discrete_array_element
 import copy
+
+from coopihc import InteractionTask, discrete_array_element, Bundle
+
+from coopihczoo.teaching.memory_models import ExponentialDecayMemory
+
+
+class TeachingOrchestrator:
+    def __init__(
+        self,
+        task=None,
+        user=None,
+        assistant=None,
+        n_iter_per_ss=None,  # list of n_iter e.g. [10,20,20] (length N)
+        breaks=None,  # list of break durations e.g. [30,20] (should be of length N-1 where)
+        time_before_exam=None,
+        exam_threshold=None,
+        **kwargs,
+    ):
+        self.raw_bundle = Bundle(task=task, user=user, assistant=assistant, **kwargs)
+
+        self.n_iter_per_ss = n_iter_per_ss
+        self.breaks = breaks
+        self.time_before_exam = time_before_exam
+        self.exam_threshold = exam_threshold
+
+        self.past_iter_per_ss_accumulator = -1
+        self.break_number = 0
+
+    # Make sure the bundle is not randomly reset
+    def reset(self, **kwargs):
+        kwargs.pop("random_reset", None)
+        self.raw_bundle.reset(random_reset=False, **kwargs)
+
+    def step(self, **kwargs):
+
+        # ======================   If we have reached the last trial, compute the rewards
+
+        # print(self.break_number)
+        # print(len(self.n_iter_per_ss) - 1)
+        # print(self.raw_bundle.round_number - self.past_iter_per_ss_accumulator)
+        # print(self.n_iter_per_ss[self.break_number])
+
+        if (
+            self.break_number == len(self.n_iter_per_ss) - 1
+            and self.raw_bundle.round_number - self.past_iter_per_ss_accumulator
+            == self.n_iter_per_ss[self.break_number]
+        ):
+            state, _, _ = self.raw_bundle.step(**kwargs)
+            p = state.user_state.recall_probabilities
+            _reward = int(np.sum(p > self.exam_threshold))
+
+            rewards = {}
+            rewards["user_observation_reward"] = 0
+            rewards["user_inference_reward"] = 0
+            rewards["user_policy_reward"] = 0
+            rewards["first_task_reward"] = _reward
+            rewards["assistant_observation_reward"] = 0
+            rewards["assistant_inference_reward"] = 0
+            rewards["assistant_policy_reward"] = 0
+            rewards["second_task_reward"] = 0
+            return state, rewards, True
+
+        # ======================  If we are changing sessions, increment time since last presentation to account for the break during sessions before playing out the Bundle.
+        if (
+            self.raw_bundle.round_number - self.past_iter_per_ss_accumulator
+            == self.n_iter_per_ss[self.break_number]
+        ):
+
+            # Apply break (copy likely not needed, but let's be safe)
+            game_state = copy.deepcopy(self.raw_bundle.game_state.filter(mode="array"))
+            game_state["task_state"]["timestamp"] += self.breaks[self.break_number]
+
+            self.reset(dic=game_state)
+
+            self.past_iter_per_ss_accumulator += self.n_iter_per_ss[self.break_number]
+            self.break_number += 1
+
+        # Play out the bundle
+        return self.raw_bundle.step(**kwargs)
+
+
+class TaskWithoutSequence(InteractionTask):
+    """ """
+
+    def __init__(
+        self, thr=None, n_item=None, inter_trial=None, is_item_specific=None, **kwargs
+    ):
+
+        super().__init__(**kwargs)
+
+        # Parameters
+        self.parameters.update(
+            {
+                "n_item": n_item,
+                "inter_trial": inter_trial,
+                "is_item_specific": is_item_specific,  # should be in user?
+                "log_thr": np.log(thr),
+            }
+        )
+
+        # state
+        self.state["iteration"] = discrete_array_element(low=0, high=np.inf)
+        self.state["session"] = discrete_array_element(low=0, high=np.inf)
+        self.state["item"] = discrete_array_element(low=0, high=np.inf)
+        self.state["timestamp"] = discrete_array_element(low=0, high=np.inf)
+
+    def reset(self, dic=None):
+        self.state["item"] = 0
+        self.state["iteration"] = 0
+        self.state["timestamp"] = 0
+        # self.state["session"] = 0
+
+    def on_user_action(self, *args, user_action=None, **kwargs):
+
+        reward = 0
+        is_done = False
+        self.state["timestamp"] += self.inter_trial
+
+        return self.state, reward, is_done
+
+    def on_assistant_action(self, assistant_action=None, **kwargs):
+
+        is_done = False
+        reward = 0
+        self.state["item"] = int(assistant_action)
+
+        return self.state, reward, is_done
 
 
 class Task(InteractionTask):
@@ -18,7 +143,7 @@ class Task(InteractionTask):
         is_item_specific,
         time_before_exam,
         *args,
-        **kwargs
+        **kwargs,
     ):
 
         super().__init__(*args, **kwargs)
@@ -44,7 +169,6 @@ class Task(InteractionTask):
         self.state["timestamp"] = discrete_array_element(low=0, high=np.inf)
 
     def reset(self, dic=None):
-
         self.state["item"] = 0
         self.state["iteration"] = 0
         self.state["timestamp"] = 0
@@ -81,7 +205,7 @@ class Task(InteractionTask):
             delta = exam_timestamp - last_pres[seen]
             lop_p = -forget_rate * delta
 
-            reward = np.sum(lop_p > log_thr)
+            reward = int(np.sum(lop_p > log_thr))
 
         is_done = False
 
@@ -100,12 +224,12 @@ class Task(InteractionTask):
 
         return self.state, reward, is_done
 
-    def on_assistant_action(self, *args, assistant_action=None, **kwargs):
+    def on_assistant_action(self, assistant_action=None, **kwargs):
 
         is_done = False
         reward = 0
 
-        self.state["item"] = assistant_action
+        self.state["item"] = int(assistant_action)
 
         return self.state, reward, is_done
 
