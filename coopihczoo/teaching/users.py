@@ -168,8 +168,9 @@ class UserInferenceEngineWithP(BaseInferenceEngine):
         self.state["last_pres"][int(item)] = timestamp
         self.state["n_pres"][int(item)] += 1
 
+        # cast to float to handle infinites
         self.state["recall_probabilities"] = ExponentialDecayMemory.decay(
-            delta_time=timestamp - self.state.last_pres,
+            delta_time=(timestamp - self.state.last_pres.astype(np.float64)),
             times_presented=self.state.n_pres - 1,
             initial_forgetting_rate=self.retention_params[:, 0],
             repetition_effect=self.retention_params[:, 1],
@@ -270,9 +271,10 @@ class UserWithP(BaseAgent):
         n_item = self.parameters["n_item"]
 
         self.state["n_pres"] = np.zeros(n_item)
-        self.state["last_pres"] = np.full(
-            (n_item,), -9223372036854774783
-        )  # Hack for now
+        # self.state["last_pres"] = np.full(
+        #     (n_item,), -9223372036854774783
+        # )  # Hack for now
+        self.state["last_pres"] = np.full((n_item,), -np.inf)  # Hack for now
         self.state["n_pres_before_obs"] = 0
         self.state["last_pres_before_obs"] = 0
         self.state["recall_probabilities"] = np.zeros(n_item)
