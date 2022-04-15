@@ -18,7 +18,7 @@ task = Task(**config_example.task_kwargs)
 user = User(**config_example.user_kwargs)
 assistant = Teacher()
 
-bundle = Bundle(task=task, user=user, assistant=assistant)
+# bundle = Bundle(task=task, user=user, assistant=assistant)
 bundle = Bundle(
     task=task,
     user=user,
