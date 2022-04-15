@@ -11,3 +11,8 @@ For `imitation`, install from source:
     cd imitation
     pip install -e .
 
+
+For errors due to multiprocessing:
+
+    export OBJC_DISABLE_INITIALIZE_FORK_SAFETY=YES
+
