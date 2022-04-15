@@ -81,7 +81,7 @@ class RlTeacherInferenceEngine(BaseInferenceEngine):
             * self.observation["task_state"]["session"]
         )
 
-        self.state["progress"] = current_iter / (total_n - 1)
+        self.state["progress"] = current_iter / float(total_n-1)
 
         # self.memory_state[:, :] /= max_iter
         reward = 0
@@ -105,10 +105,8 @@ class Teacher(BaseAgent):
 
         n_item = int(self.bundle.task.state["n_item"])
 
-        self.state["progress"] = array_element(low=0.0, high=1.0, init=0.0)
-        self.state["memory"] = array_element(
-            low=0.0, high=np.inf, init=np.zeros((n_item, 2))
-        )
+        self.state["progress"] = array_element(low=0.0, high=1.0, init=np.zeros(1))
+        self.state["memory"] = array_element(low=0.0, high=np.inf, init=np.zeros((n_item, 2)))
 
         # Call the policy defined above
         action_state = State()

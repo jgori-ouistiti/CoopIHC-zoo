@@ -63,8 +63,8 @@ def main():
     total_n_iter = \
         int(env.bundle.task.state["n_iter_per_ss"] * env.bundle.task.state["n_session"])
 
-    model = PPO("MultiInputPolicy", Monitor(env), verbose=1, tensorboard_log="./tb/",
-                batch_size=total_n_iter,
+    model = A2C("MultiInputPolicy", Monitor(env), verbose=1, tensorboard_log="./tb/",
+                # batch_size=total_n_iter,
                 n_steps=total_n_iter)  # This is important to set for the learning to be effective!!
 
     policy = model.policy
@@ -82,6 +82,11 @@ def main():
 
     reward, _ = evaluate_policy(policy, Monitor(env), n_eval_episodes=10, render=False)
     print(f"Reward after training: {reward}")
+
+    model.learn(total_timesteps=int(10e5), )
+
+    reward, _ = evaluate_policy(model.policy, Monitor(env), n_eval_episodes=10, render=False)
+    print(f"Reward after extended training: {reward}")
 
 
 if __name__ == "__main__":

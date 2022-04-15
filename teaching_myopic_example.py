@@ -16,16 +16,14 @@ def run_myopic():
     # Define an assistant
     assistant = Myopic()
     # Bundle them together
-    bundle = Bundle(task=task, user=user, assistant=assistant, random_reset=False)
-    # Reset the bundle (i.e. initialize it to a random or prescribed states)
+    # Bundle them together
+    bundle = Bundle(task=task, user=user, assistant=assistant, random_reset=False,
+                    reset_start_after=2, reset_go_to=3)
+    bundle.reset()  # Reset in a state where the user has already produced an observation and made an inference.
     ## 0 : after assistant takes action + new task state
     ## 1 : after user observation + user inference + new user state
     ## 2 : after user takes action + new task state
     ## 3 : after assistant observation + assitant inference
-    bundle.reset(
-        start_at=3,
-        go_to=3
-    )  # Reset in a state where the user has already produced an observation and made an inference.
 
     # Step through the bundle (i.e. play full rounds)
     while True:
