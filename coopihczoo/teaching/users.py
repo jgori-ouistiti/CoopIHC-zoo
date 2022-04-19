@@ -233,8 +233,8 @@ class UserWithP(BaseAgent):
 
     def finit(self):
 
-        # set params --------- Hack for now
-        self._parameters.update({"retention_params": self.param})
+        # update params ---------
+        self.update_parameters({"retention_params": self.param})
 
         # get params --------------
         n_item = self.parameters["n_item"]
@@ -271,10 +271,7 @@ class UserWithP(BaseAgent):
         n_item = self.parameters["n_item"]
 
         self.state["n_pres"] = np.zeros(n_item)
-        # self.state["last_pres"] = np.full(
-        #     (n_item,), -9223372036854774783
-        # )  # Hack for now
-        self.state["last_pres"] = np.full((n_item,), -np.inf)  # Hack for now
+        self.state["last_pres"] = np.full((n_item,), -np.inf)
         self.state["n_pres_before_obs"] = 0
         self.state["last_pres_before_obs"] = 0
         self.state["recall_probabilities"] = np.zeros(n_item)

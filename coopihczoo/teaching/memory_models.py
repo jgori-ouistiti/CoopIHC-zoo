@@ -13,10 +13,10 @@ class ExponentialDecayMemory:
 
         forget_rate = initial_forgetting_rate * (1 - repetition_effect) ** (
             times_presented
-        ).view(np.ndarray)
+        )
 
         if log:
-            return -forget_rate * delta_time.view(np.ndarray)
+            return -forget_rate * delta_time
         else:
             with np.errstate(divide="ignore", over="ignore"):  # invalid="ignore",
-                return np.exp(-forget_rate * delta_time.view(np.ndarray))
+                return np.exp(-forget_rate * delta_time)

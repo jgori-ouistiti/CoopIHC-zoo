@@ -94,6 +94,7 @@ def sample_expert():
     # plt.savefig("/home/juliengori/Pictures/img_tmp/biggain_{}.png".format(k))
 
     obs = assistant.observation.filter(mode="array-Gym", flat=True)
+    print(obs)
     obs_dic = {k: obs[k] for k in obs_keys}
 
     expert_data = [
@@ -133,54 +134,6 @@ def sample_expert():
     return expert_data
 
 
-# ---- Main -------------
-
-
-# torch.manual_seed(1234)
-# np.random.seed(1234)
-
-# os.makedirs("tmp", exist_ok=True)
-
-# expert_data = sample_expert()
-
-# # n_env = 4
-# # envs = [make_env for _ in range(n_env)]
-# # vec_env = SubprocVecEnv(envs)
-# # vec_env = VecMonitor(vec_env, filename="tmp/log")
-
-# env = make_env()
-# from stable_baselines3.common.env_checker import check_env
-
-# check_env(env, warn=False)
-# env.reset()
-
-# model = PPO("MultiInputPolicy", env, verbose=1, tensorboard_log="./tb/")
-# policy = model.policy
-
-# reward, _ = evaluate_policy(policy, Monitor(env), n_eval_episodes=10, render=False)
-# print(f"Reward before training: {reward}")
-
-# bc_trainer = BC(
-#     observation_space=env.observation_space,
-#     action_space=env.action_space,
-#     demonstrations=expert_data,
-#     policy=policy,
-# )
-
-# print("Training a policy using Behavior Cloning")
-# bc_trainer.train()
-
-# reward, _ = evaluate_policy(
-#     model.policy, Monitor(env), n_eval_episodes=10, render=False
-# )
-# print(f"Reward after training: {reward}")
-
-# model.learn(total_timesteps=int(10e5), )
-#
-# reward, _ = evaluate_policy(model.policy, Monitor(env), n_eval_episodes=3, render=False)
-# print(f"Reward after extended training: {reward}")
-
-
 def main():
     torch.manual_seed(1234)
     np.random.seed(1234)
@@ -198,12 +151,37 @@ def main():
     from stable_baselines3.common.env_checker import check_env
 
     check_env(env, warn=False)
+    env.reset()
 
     model = PPO("MultiInputPolicy", env, verbose=1, tensorboard_log="./tb/")
     policy = model.policy
 
     reward, _ = evaluate_policy(policy, Monitor(env), n_eval_episodes=10, render=False)
     print(f"Reward before training: {reward}")
+
+    bc_trainer = BC(
+        observation_space=env.observation_space,
+        action_space=env.action_space,
+        demonstrations=expert_data,
+        policy=policy,
+    )
+
+    print("Training a policy using Behavior Cloning")
+    bc_trainer.train()
+
+    reward, _ = evaluate_policy(
+        model.policy, Monitor(env), n_eval_episodes=10, render=False
+    )
+    print(f"Reward after training: {reward}")
+
+    model.learn(
+        total_timesteps=int(10e5),
+    )
+
+    reward, _ = evaluate_policy(
+        model.policy, Monitor(env), n_eval_episodes=3, render=False
+    )
+    print(f"Reward after extended training: {reward}")
 
 
 if __name__ == "__main__":
