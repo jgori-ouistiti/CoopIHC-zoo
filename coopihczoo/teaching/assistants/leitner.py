@@ -4,7 +4,7 @@ from coopihc import (
     cat_element,
     BasePolicy,
     BaseInferenceEngine,
-    discrete_array_element
+    discrete_array_element,
 )
 import numpy as np
 
@@ -13,28 +13,22 @@ class LeitnerInferenceEngine(BaseInferenceEngine):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
+    @BaseInferenceEngine.default_value
     def infer(self, agent_observation=None):
+        last_item = int(agent_observation["task_state"]["item"])
+        last_time_reply = int(agent_observation["task_state"]["timestamp"])
+        last_was_success = bool(agent_observation["user_action"]["action"])
 
-        last_item = int(self.observation["task_state"]["item"])
-        last_time_reply = int(self.observation["task_state"]["timestamp"])
-        last_was_success = bool(self.observation["user_action"]["action"])
-
-        if self.observation["task_state"]["iteration"] > 0:
+        if agent_observation["game_info"]["round_index"] > 0:
 
             if last_was_success:
                 self.state["box"][last_item] += 1
             else:
-                self.state["box"][last_item] = max(
-                    0, self.state["box"][last_item] - 1
-                )
+                self.state["box"][last_item] = max(0, self.state["box"][last_item] - 1)
 
-            delay = self.host.delay_factor ** self.state["box"][last_item].view(
-                np.ndarray
-            )
+            delay = self.delay_factor ** self.state["box"][last_item]
             # Delay is 1, 2, 4, 8, 16, 32, 64, 128, 256, 512 ...
-            self.state["due"][last_item] = (
-                last_time_reply + self.host.delay_min * delay
-            )
+            self.state["due"][last_item] = last_time_reply + self.delay_min * delay
 
         reward = 0
 
@@ -45,27 +39,25 @@ class LeitnerPolicy(BasePolicy):
     def __init__(self, action_state, *args, **kwargs):
         super().__init__(action_state=action_state, *args, **kwargs)
 
-    def sample(self, observation=None, **kwargs):
+    @BasePolicy.default_value
+    def sample(self, agent_observation=None, agent_state=None):
 
-        box = self.state["box"].view(np.ndarray).flatten()
-        due = self.state["due"].view(np.ndarray).flatten()
+        box = self.state["box"].flatten()
+        due = self.state["due"].flatten()
 
-        n_item = int(self.host.bundle.task.state["n_item"])
+        n_item = self.parameters["n_item"]
 
-        now = self.observation["task_state"]["timestamp"]
+        now = agent_observation["task_state"]["timestamp"]
 
-        if self.observation["task_state"]["iteration"] == 0:
-
+        if agent_observation["game_info"]["round_index"] == 0:
             _action_value = box.argmin()  # pickup new
 
         else:
-
             seen = np.argwhere(box >= 0).flatten()
             n_seen = len(seen)
 
             if n_seen == n_item:
                 _action_value = np.argmin(due)
-
             else:
                 seen__due = due[seen]
                 seen__is_due = seen__due <= now
@@ -80,24 +72,24 @@ class LeitnerPolicy(BasePolicy):
         return _action_value, reward
 
     def reset(self, random=True):
-
         self.action_state["action"] = 0
 
 
 class Leitner(BaseAgent):
     def __init__(self, delay_factor, delay_min, *args, **kwargs):
-
-        self.delay_factor = delay_factor
-        self.delay_min = delay_min
-
         super().__init__("assistant", *args, **kwargs)
+        self.parameters = {"delay_factor": delay_factor, "delay_min": delay_min}
 
     def finit(self):
 
-        n_item = int(self.bundle.task.state["n_item"])
+        n_item = self.parameters["n_item"]
 
-        self.state["box"] = discrete_array_element(low=0, high=np.inf, init=np.zeros(n_item))
-        self.state["due"] = discrete_array_element(low=0, high=np.inf, init=np.zeros(n_item))
+        self.state["box"] = discrete_array_element(
+            low=0, high=np.inf, init=np.zeros(n_item)
+        )
+        self.state["due"] = discrete_array_element(
+            low=0, high=np.inf, init=np.zeros(n_item)
+        )
 
         # Call the policy defined above
         action_state = State()
@@ -107,11 +99,7 @@ class Leitner(BaseAgent):
         # Inference engine
         inference_engine = LeitnerInferenceEngine()
 
-        # Use default observation engine
-        observation_engine = None
-
         self._attach_policy(agent_policy)
-        self._attach_observation_engine(observation_engine)
         self._attach_inference_engine(inference_engine)
 
     def reset(self, dic=None):
@@ -122,7 +110,7 @@ class Leitner(BaseAgent):
         :meta public:
         """
 
-        n_item = int(self.bundle.task.state["n_item"])
+        n_item = self.parameters["n_item"]
 
         self.state["box"] = np.zeros(n_item)
         self.state["due"] = np.zeros(n_item)

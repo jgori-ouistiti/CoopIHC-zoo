@@ -1,7 +1,7 @@
 from coopihc import Bundle
 
-from coopihczoo.teaching.users import UserWithP
-from coopihczoo.teaching.envs import TaskWithoutSequence, TeachingOrchestrator
+from coopihczoo.teaching.users import ExponentialUser
+from coopihczoo.teaching.envs import TeachingTask, TeachingOrchestrator
 from coopihczoo.teaching.assistants.random import RandomTeacher
 from coopihczoo.teaching.config import config_example
 
@@ -10,8 +10,8 @@ import numpy
 
 def run_random():
 
-    task = TaskWithoutSequence(**config_example.task_kwargs)
-    user = UserWithP(**config_example.user_per_item_kwargs)
+    task = TeachingTask(**config_example.task_kwargs)
+    user = ExponentialUser(**config_example.user_per_item_kwargs)
     assistant = RandomTeacher()
 
     orchestrator = TeachingOrchestrator(
@@ -24,7 +24,6 @@ def run_random():
     )
 
     orchestrator.reset(start_after=2, go_to=3)
-
     while True:
         state, rewards, is_done = orchestrator.step()
         if is_done:

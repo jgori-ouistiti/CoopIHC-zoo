@@ -8,13 +8,9 @@ class RandomTeacher(BaseAgent):
     def finit(self):
         n_item = self.parameters["n_item"]
 
-        # Call the policy defined above
         action_state = State()
         action_state["action"] = cat_element(N=n_item)
 
         agent_policy = BasePolicy(action_state=action_state)
 
         self._attach_policy(agent_policy)
-
-    def reset(self, dic=None):
-        pass
