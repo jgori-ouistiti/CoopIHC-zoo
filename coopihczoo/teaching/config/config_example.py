@@ -15,8 +15,6 @@ task_kwargs = dict(
 )
 
 
-user_kwargs = dict(param=[0.01, 0.2])
-
 user_per_item_kwargs = dict(
     param=numpy.concatenate(
         (numpy.full((n_item, 1), 0.01), numpy.full((n_item, 1), 0.2)), axis=1

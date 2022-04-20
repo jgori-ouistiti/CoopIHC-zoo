@@ -1,32 +1,67 @@
-from coopihc import Bundle
-
-from coopihczoo.teaching.users import User
-from coopihczoo.teaching.envs import Task
+from coopihczoo.teaching.users import ExponentialUser
+from coopihczoo.teaching.envs import TeachingTask, TeachingOrchestrator
+from coopihczoo.teaching.config import config_example
 from coopihczoo.teaching.assistants.conservative_sampling import ConservativeSampling
 
 from coopihczoo.teaching.config import config_example
 
+from coopihc import Bundle
+
+# Define a task
+task = TeachingTask(**config_example.task_kwargs)
+# Define a user
+user = ExponentialUser(**config_example.user_per_item_kwargs)
+user_model = ExponentialUser(**config_example.user_per_item_kwargs)
+# Define an assistant
+assistant = ConservativeSampling(
+    task_class=TeachingTask,
+    user_class=ExponentialUser,
+    task_kwargs=config_example.task_kwargs,
+    user_kwargs=config_example.user_per_item_kwargs,
+)
+# Bundle them together
+orchestrator = TeachingOrchestrator(
+    task=task,
+    user=user,
+    assistant=assistant,
+    random_reset=False,
+    seed=1234,
+    **config_example.teaching_orchestrator_kwargs,
+)
+orchestrator.reset(start_after=2, go_to=3)
+while True:
+    state, rewards, is_done = orchestrator.step()
+    if is_done:
+        break
+print(orchestrator.raw_bundle.state)
+exit()
+
 
 def run_conservative():
 
-    task = Task(**config_example.task_kwargs)
-    user = User(**config_example.user_kwargs)
-    assistant = ConservativeSampling()
-    bundle = Bundle(task=task, user=user, assistant=assistant, random_reset=False)
-    # Reset the bundle (i.e. initialize it to a random or prescribed states)
-    ## 0 : after assistant takes action + new task state
-    ## 1 : after user observation + user inference + new user state
-    ## 2 : after user takes action + new task state
-    ## 3 : after assistant observation + assitant inference
-    bundle.reset(
-        turn=3, skip_user_step=True
-    )  # Reset in a state where the user has already produced an observation and made an inference.
-    while True:
-        state, rewards, is_done = bundle.step(user_action=None, assistant_action=None)
-        if is_done:
-            break
+    # Define a task
+    task = TeachingTask(**config_example.task_kwargs)
+    # Define a user
+    user = ExponentialUser(**config_example.user_per_item_kwargs)
+    user_model = ExponentialUser(**config_example.user_per_item_kwargs)
+    # Define an assistant
+    assistant = ConservativeSampling(
+        task_class=TeachingTask,
+        user_class=ExponentialUser,
+        task_kwargs=config_example.task_kwargs,
+        user_kwargs=config_example.user_per_item_kwargs,
+    )
+    # Bundle them together
 
-    print("Final reward", rewards['first_task_reward'])
+    orchestrator = TeachingOrchestrator(
+        task=task,
+        user=user,
+        assistant=assistant,
+        random_reset=False,
+        seed=1234,
+        **config_example.teaching_orchestrator_kwargs,
+    )
+    orchestrator.reset(start_after=2, go_to=3)
 
 
 if __name__ == "__main__":

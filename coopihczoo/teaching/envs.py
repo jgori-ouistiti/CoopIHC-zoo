@@ -114,7 +114,7 @@ class TeachingTask(InteractionTask):
 
         reward = 0
         is_done = False
-        self.state["timestamp"] += self.inter_trial
+        # self.state["timestamp"] += self.inter_trial
 
         return self.state, reward, is_done
 
@@ -125,6 +125,7 @@ class TeachingTask(InteractionTask):
         item = int(assistant_action)
         self.state["item"] = item
         self.state["n_pres"][item] += 1
+        self.state["timestamp"] += self.inter_trial
         self.state["last_pres"][item] = self.state["timestamp"][...]
 
         return self.state, reward, is_done
