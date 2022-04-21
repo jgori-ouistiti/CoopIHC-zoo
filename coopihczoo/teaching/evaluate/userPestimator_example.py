@@ -25,11 +25,13 @@ def run_userpestimator():
     )
     # Bundle them together
     orchestrator = TeachingOrchestrator(
-        task=task,
-        user=user,
-        assistant=assistant,
-        random_reset=False,
-        seed=1234,
+        Bundle(
+            task=task,
+            user=user,
+            assistant=assistant,
+            random_reset=False,
+            seed=1234,
+        ),
         **config_example.teaching_orchestrator_kwargs,
     )
     orchestrator.reset(start_after=2, go_to=3)
@@ -61,11 +63,13 @@ def run_userpestimator_mismatch():
     )
     # Bundle them together
     orchestrator = TeachingOrchestrator(
-        task=task,
-        user=user,
-        assistant=assistant,
-        random_reset=False,
-        seed=1234,
+        Bundle(
+            task=task,
+            user=user,
+            assistant=assistant,
+            random_reset=False,
+            seed=1234,
+        ),
         **config_example.teaching_orchestrator_kwargs,
     )
     orchestrator.reset(start_after=2, go_to=3)

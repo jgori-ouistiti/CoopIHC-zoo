@@ -13,44 +13,30 @@ from coopihc import (
 import numpy as np
 
 from coopihczoo.teaching.assistants.myopic import MyopicPolicy
+from coopihczoo.teaching.assistants.userPestimator import UserPEstimator
+from coopihczoo.teaching.envs import TeachingOrchestrator
+
 import copy
 
 
-class ConservativeSampling(BaseAgent):
+class ConservativeSampling(UserPEstimator):
     def __init__(
-        self, task_class, user_class, task_kwargs={}, user_kwargs={}, **kwargs
+        self,
+        task_class,
+        user_class,
+        teaching_orchestrator_kwargs,
+        task_kwargs={},
+        user_kwargs={},
+        **kwargs,
     ):
-        class NewInferenceEngine(BaseInferenceEngine):
-            def __init__(self, *args, **kwargs):
-                super().__init__(*args, **kwargs)
-
-            @BaseInferenceEngine.default_value
-            def infer(self, agent_observation=None):
-                return super().infer(agent_observation=agent_observation)
-
-        inference_engine = DualInferenceEngine(
-            primary_inference_engine=InferUserPRecall(),
-            dual_inference_engine=NewInferenceEngine(),
-            primary_kwargs={},
-            dual_kwargs={},
-            buffer_depth=2,
+        super().__init__(
+            task_class,
+            user_class,
+            task_kwargs=task_kwargs,
+            user_kwargs=user_kwargs,
+            **kwargs,
         )
-
-        super().__init__("assistant", agent_inference_engine=inference_engine, **kwargs)
-
-        self.task_class = task_class
-        self.user_class = user_class
-        self.task_kwargs = task_kwargs
-        self.user_kwargs = user_kwargs
-
-        self.task_model = task_class(**task_kwargs)
-        self.user_model = user_class(**user_kwargs)
-
-        self.simulator = Simulator(
-            task_model=self.task_model,
-            user_model=self.user_model,
-            assistant=self,
-        )
+        self.parameters = teaching_orchestrator_kwargs
 
     def finit(self, *args, **kwargs):
 
@@ -65,16 +51,19 @@ class ConservativeSampling(BaseAgent):
         action_state = State()
         action_state["action"] = cat_element(N=n_item)
 
-        agent_policy = BasePolicy(action_state=action_state)
+        # agent_policy = BasePolicy(action_state=action_state)
 
-        # agent_policy = DualPolicy(
-        #     primary_policy=ConservativeSamplingPolicy(
-        #         self.task_class, self.user_class, action_state
-        #     ),
-        #     dual_policy=MyopicPolicy(copy.deepcopy(action_state)),
-        # )
-
-        # ================= Inference Engine =========
+        agent_policy = DualPolicy(
+            # primary_policy=MyopicPolicy(action_state=copy.deepcopy(action_state)),
+            primary_policy=ConservativeSamplingPolicy(
+                self.task_class,
+                self.user_class,
+                action_state,
+                task_class_kwargs=self.task_kwargs,
+                user_class_kwargs=self.user_kwargs,
+            ),
+            dual_policy=MyopicPolicy(action_state=copy.deepcopy(action_state)),
+        )
 
         self._attach_policy(agent_policy)
 
@@ -82,88 +71,132 @@ class ConservativeSampling(BaseAgent):
         pass
 
 
-class InferUserPRecall(BaseInferenceEngine):
+class ConservativeSamplingPolicy(BasePolicy):
     def __init__(
         self,
+        task_class,
+        user_class,
+        action_state,
+        task_class_kwargs={},
+        user_class_kwargs={},
         **kwargs,
     ):
-        super().__init__(buffer_depth=2, **kwargs)
+        super().__init__(action_state=action_state, **kwargs)
+        self.task_class = task_class
+        self.user_class = user_class
+        self.task_class_kwargs = task_class_kwargs
+        self.user_class_kwargs = user_class_kwargs
 
-        self._inference_count = 0
+    @BasePolicy.default_value
+    def sample(self, agent_observation=None, agent_state=None):
+        current_iteration = int(agent_observation.game_info.round_index)
+        if current_iteration == 0:  # First item
+            return 0, 0
 
-    @property
-    def simulator(self):
-        return self.host.simulator
+        # ============   Creating orchestrator schedule
+        # use the original schedule, and modify it by removing the current iteration from it (respecting breaks as well)
+        iterations_in_schedule = np.cumsum(self.n_iter_per_ss).tolist()
+        _appended_iterations_in_schedule = iterations_in_schedule + [current_iteration]
+        index = sorted(_appended_iterations_in_schedule).index(current_iteration)
+        new_n_iter_per_ss = [
+            iterations_in_schedule[index] - current_iteration
+        ] + self.n_iter_per_ss[index + 1 :]
+        new_breaks = self.breaks[index:]
 
-    @BaseInferenceEngine.default_value
-    def infer(self, agent_observation=None):
+        orchestrator_kwargs = {
+            "n_iter_per_ss": new_n_iter_per_ss,
+            "breaks": new_breaks,
+            "time_before_exam": self.time_before_exam,
+            "exam_threshold": self.exam_threshold,
+        }
+        # ============ Create game_state to which the game will be reset the first time
+        game_reset_state = copy.deepcopy(
+            agent_observation
+        )  # Deepcopy just to be sure there is no interaction
 
-        # First time, nothing do no
-        self._inference_count += 1
-        if self._inference_count == 1:
-            return self.state, 0
-
-        agent_state = getattr(agent_observation, f"{self.role}_state")
-
-        # ========== Set the simulator in the state just before user inference by the user model
-        reset_dic = copy.deepcopy(agent_observation)
-        reset_dic["game_info"][
-            "turn_index"
-        ] = 0  # Set turn to just before user observation and inference
-        reset_dic["user_state"] = {}
-        reset_dic["user_state"]["recall_probabilities"] = copy.deepcopy(
-            agent_state["user_estimated_recall_probabilities"]
-        )  # Plug in the assistant's estimated probabilities
-
-        # ----------- fill in user n pres and last pres based on second last observation (i.e. on the assistant observation that was just before the user's observation)
-        try:
-            reset_dic["user_state"]["n_pres"] = self.buffer[-2]["task_state"]["n_pres"]
-            reset_dic["user_state"]["last_pres"] = self.buffer[-2]["task_state"][
-                "last_pres"
-            ]
-        except BufferNotFilledError:  # Deal with start edge case
-            reset_dic["user_state"]["n_pres"] = np.zeros((self.n_item,))
-            reset_dic["user_state"]["last_pres"] = 0
-
-        # Open simulator (switch do duals)
-        self.simulator.open()
-        self.simulator.reset(dic=reset_dic)
-        self.simulator.quarter_step()  # just perform observation and inference by user model
-        recall_probs = self.simulator.state.user_state["recall_probabilities"]
-        self.simulator.close()
-        # close simulator (switch to primaries)
-
-        self.state[
+        # Since user state is not observable, recreate it here from the assistant's knowledge ================
+        game_reset_state["user_state"] = State()
+        user_probs = game_reset_state.pop("assistant_state").pop(
             "user_estimated_recall_probabilities"
-        ] = recall_probs  # update assistant internal state
-        return self.state, 0
+        )
+        game_reset_state["user_state"]["recall_probabilities"] = user_probs
+        try:
+            last_item = int(agent_observation["task_state"]["item"])
+            past_observation = self.host.inference_engine.buffer[-2]
+            user_last_pres_before_obs = past_observation["task_state"]["last_pres"][
+                last_item
+            ]
+            user_n_pres_before_obs = past_observation["task_state"]["n_pres"][last_item]
+        except BufferNotFilledError:  # Deal with start edge case
+            user_n_pres_before_obs = 0
+            user_last_pres_before_obs = 0
 
+        game_reset_state["user_state"]["n_pres_before_obs"] = user_n_pres_before_obs
+        game_reset_state["user_state"][
+            "last_pres_before_obs"
+        ] = user_last_pres_before_obs
+        # ============================= End recreating user state
 
-# class ConservativeSamplingPolicy(BasePolicy):
-#     def __init__(
-#         self,
-#         task_class,
-#         user_model,
-#         action_state,
-#         task_class_kwargs={},
-#         user_class_kwargs={},
-#         **kwargs
-#     ):
-#         super().__init__(action_state=action_state, **kwargs)
-#         self.task_class = task_class
-#         self.user_model = user_model
-#         self.task_class_kwargs = task_class_kwargs
-#         self.user_class_kwargs = user_class_kwargs
+        # =============== Init for conservative sampling
+        new_task_class_kwargs = copy.deepcopy(self.task_class_kwargs)
+        new_user_class_kwargs = copy.deepcopy(self.user_class_kwargs)
+        n_item = self.n_item
+        while True:
+            simulator = Simulator(
+                task_model=self.task_class(**new_task_class_kwargs),
+                user_model=self.user_class(**new_user_class_kwargs),
+                assistant=self.host,
+                use_primary_inference=False,
+                seed=1234,
+                random_reset=False,
+            )
+            simulator.open()
+            orchestrator = TeachingOrchestrator(simulator, **orchestrator_kwargs)
+            orchestrator.reset(dic=copy.deepcopy(game_reset_state))
+            if (
+                orchestrator.raw_bundle.assistant.policy.mode != "dual"
+                and orchestrator.raw_bundle.assistant.policy.dual_policy.__class__.__name__
+                == "MyopicPolicy"
+            ):
+                raise RuntimeError(
+                    f"The orchestrator is not using the correct policy. Should be in dual mode with MyopicPolicy, but it is in {orchestrator.raw_bundle.assistant.policy.mode} mode instead"
+                )
+            k = 0
+            while True:
+                k += 1
+                state, rewards, is_done = orchestrator.step()
+                if k == 1:  # Remember which item was chosen as first item
+                    item_selected = state["assistant_action"]["action"]
+                if is_done:
+                    break
+            if int(np.sum(list(rewards.values()))) == n_item:
+                break
+            else:
+                n_pres_tmp = copy.deepcopy(game_reset_state["task_state"]["n_pres"])
 
-#     @BasePolicy.default_value
-#     def sample(self, agent_observation=None, agent_state=None):
-#         current_trial = agent_observation.game_info.round_index
-#         current_game_state =
-#         new_task_class_kwargs = self.task_class_kwargs
+                indices_keep = np.arange(n_item) != item_selected
 
-#         while True:
-#             task = self.task_class(**new_task_class_kwargs)
-#             user = self.user_class(**self.user_class_kwargs)
+                del game_reset_state["task_state"]["n_pres"]
+                game_reset_state["task_state"]["n_pres"] = discrete_array_element(
+                    init=n_pres_tmp[indices_keep]
+                )
+                n_item += -1
+                new_task_class_kwargs["n_item"] = n_item
+                new_user_class_kwargs["param"] = new_user_class_kwargs["param"][
+                    indices_keep, :
+                ]
+        # while True:
+        # Create simulator
+        # -
+        # Create orchestrator
+
+        # run
+        # if all items learned: break
+
+        # new_task_class_kwargs = self.task_class_kwargs
+
+        #     task = self.task_class(**new_task_class_kwargs)
+        #     user = self.user_class(**self.user_class_kwargs)
 
 
 # class ConservativeSamplingPolicy(BasePolicy):

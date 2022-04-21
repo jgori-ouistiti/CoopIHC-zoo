@@ -40,6 +40,7 @@ class UserPEstimator(BaseAgent):
         self.user_model = user_class(**user_kwargs)
 
         self.simulator = Simulator(
+            name="Simulator >> UserPEstimator",
             task_model=self.task_model,
             user_model=self.user_model,
             assistant=self,
@@ -47,7 +48,7 @@ class UserPEstimator(BaseAgent):
 
     def finit(self, *args, **kwargs):
 
-        n_item = self.parameters["n_item"]
+        n_item = self.n_item
         self.state["user_estimated_recall_probabilities"] = array_element(
             init=np.zeros((n_item,)), low=0, high=1, dtype=np.float64
         )

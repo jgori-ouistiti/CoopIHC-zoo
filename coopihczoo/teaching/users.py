@@ -96,12 +96,11 @@ class ExponentialUser(BaseAgent):
         )
 
     def finit(self):
-
         # update params ---------
         self.update_parameters({"retention_params": self.param})
 
         # get params --------------
-        n_item = self.parameters["n_item"]
+        n_item = self.n_item
 
         # Set user state -------------
         self.state["n_pres_before_obs"] = discrete_array_element(low=-1, high=np.inf)

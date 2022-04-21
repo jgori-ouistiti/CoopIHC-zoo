@@ -9,16 +9,13 @@ from coopihczoo.teaching.memory_models import ExponentialDecayMemory
 class TeachingOrchestrator:
     def __init__(
         self,
-        task=None,
-        user=None,
-        assistant=None,
+        object,
         n_iter_per_ss=None,  # list of n_iter e.g. [10,20,20] (length N)
         breaks=None,  # list of break durations e.g. [30,20] (should be of length N-1 where)
         time_before_exam=None,
         exam_threshold=None,
-        **kwargs,
     ):
-        self.raw_bundle = Bundle(task=task, user=user, assistant=assistant, **kwargs)
+        self.raw_bundle = object
 
         self.n_iter_per_ss = n_iter_per_ss
         self.breaks = breaks

@@ -15,11 +15,13 @@ def run_random():
     assistant = RandomTeacher()
 
     orchestrator = TeachingOrchestrator(
-        task=task,
-        user=user,
-        assistant=assistant,
-        random_reset=False,
-        seed=1234,
+        Bundle(
+            task=task,
+            user=user,
+            assistant=assistant,
+            random_reset=False,
+            seed=1234,
+        ),
         **config_example.teaching_orchestrator_kwargs,
     )
 

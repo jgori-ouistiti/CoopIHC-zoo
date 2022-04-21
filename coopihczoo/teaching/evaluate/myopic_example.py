@@ -4,6 +4,7 @@ from coopihczoo.teaching.users import ExponentialUser
 from coopihczoo.teaching.envs import TeachingTask, TeachingOrchestrator
 from coopihczoo.teaching.config import config_example
 
+from coopihc import Bundle
 import numpy
 
 
@@ -18,11 +19,13 @@ def run_myopic():
     # Bundle them together
 
     orchestrator = TeachingOrchestrator(
-        task=task,
-        user=user,
-        assistant=assistant,
-        random_reset=False,
-        seed=1234,
+        Bundle(
+            task=task,
+            user=user,
+            assistant=assistant,
+            random_reset=False,
+            seed=1234,
+        ),
         **config_example.teaching_orchestrator_kwargs,
     )
     orchestrator.reset(start_after=2, go_to=3)
