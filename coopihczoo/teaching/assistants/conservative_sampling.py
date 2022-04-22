@@ -1,3 +1,4 @@
+from cgitb import reset
 from coopihc import (
     BaseAgent,
     State,
@@ -9,10 +10,11 @@ from coopihc import (
     array_element,
     BufferNotFilledError,
     DualPolicy,
+    discrete_array_element,
 )
 import numpy as np
 
-from coopihczoo.teaching.assistants.myopic import MyopicPolicy
+from coopihczoo.teaching.assistants.myopic import MyopicPolicy, Myopic
 from coopihczoo.teaching.assistants.userPestimator import UserPEstimator
 from coopihczoo.teaching.envs import TeachingOrchestrator
 
@@ -53,16 +55,12 @@ class ConservativeSampling(UserPEstimator):
 
         # agent_policy = BasePolicy(action_state=action_state)
 
-        agent_policy = DualPolicy(
-            # primary_policy=MyopicPolicy(action_state=copy.deepcopy(action_state)),
-            primary_policy=ConservativeSamplingPolicy(
-                self.task_class,
-                self.user_class,
-                action_state,
-                task_class_kwargs=self.task_kwargs,
-                user_class_kwargs=self.user_kwargs,
-            ),
-            dual_policy=MyopicPolicy(action_state=copy.deepcopy(action_state)),
+        agent_policy = ConservativeSamplingPolicy(
+            self.task_class,
+            self.user_class,
+            action_state,
+            task_class_kwargs=self.task_kwargs,
+            user_class_kwargs=self.user_kwargs,
         )
 
         self._attach_policy(agent_policy)
@@ -86,42 +84,105 @@ class ConservativeSamplingPolicy(BasePolicy):
         self.user_class = user_class
         self.task_class_kwargs = task_class_kwargs
         self.user_class_kwargs = user_class_kwargs
+        self.presented_items = set()
 
-    @BasePolicy.default_value
-    def sample(self, agent_observation=None, agent_state=None):
-        current_iteration = int(agent_observation.game_info.round_index)
-        if current_iteration == 0:  # First item
-            return 0, 0
+    def _reduce(
+        self,
+        indices,
+        game_reset_state_unreduced,
+        task_args,
+        user_args,
+    ):
+        reset_dic = self._reduce_reset_dic(indices, game_reset_state_unreduced)
+        task_args, user_args = self._reduce_models(
+            indices, task_args=task_args, user_args=user_args
+        )
+        n_item = len(indices)
 
-        # ============   Creating orchestrator schedule
-        # use the original schedule, and modify it by removing the current iteration from it (respecting breaks as well)
-        iterations_in_schedule = np.cumsum(self.n_iter_per_ss).tolist()
-        _appended_iterations_in_schedule = iterations_in_schedule + [current_iteration]
-        index = sorted(_appended_iterations_in_schedule).index(current_iteration)
-        new_n_iter_per_ss = [
-            iterations_in_schedule[index] - current_iteration
-        ] + self.n_iter_per_ss[index + 1 :]
-        new_breaks = self.breaks[index:]
+        return reset_dic, n_item, task_args, user_args
 
-        orchestrator_kwargs = {
-            "n_iter_per_ss": new_n_iter_per_ss,
-            "breaks": new_breaks,
-            "time_before_exam": self.time_before_exam,
-            "exam_threshold": self.exam_threshold,
-        }
-        # ============ Create game_state to which the game will be reset the first time
-        game_reset_state = copy.deepcopy(
-            agent_observation
-        )  # Deepcopy just to be sure there is no interaction
+    def _reduce_reset_dic(self, indices_keep, reset_dic):
+        n_pres_tmp = np.asarray(reset_dic["task_state"]["n_pres"])
+        last_pres_tmp = np.asarray(reset_dic["task_state"]["last_pres"])
+        recall_probs = np.asarray(reset_dic["user_state"]["recall_probabilities"])
 
-        # Since user state is not observable, recreate it here from the assistant's knowledge ================
-        game_reset_state["user_state"] = State()
-        user_probs = game_reset_state.pop("assistant_state").pop(
+        del reset_dic["task_state"]["n_pres"]
+        del reset_dic["task_state"]["last_pres"]
+        del reset_dic["user_state"]["recall_probabilities"]
+
+        reset_dic["task_state"]["n_pres"] = discrete_array_element(
+            init=n_pres_tmp[indices_keep],
+            low=-1,
+        )
+        reset_dic["task_state"]["last_pres"] = discrete_array_element(
+            init=last_pres_tmp[indices_keep],
+        )
+        reset_dic["user_state"]["recall_probabilities"] = array_element(
+            init=recall_probs[indices_keep], low=0, high=1, dtype=np.float64
+        )
+        return reset_dic
+
+    def _reduce_models(self, indices_keep, task_args={}, user_args={}):
+        # reduce the input arguments for the task and user classes
+        task_args["n_item"] = len(indices_keep)
+        user_args["param"] = user_args["param"][indices_keep, :]
+        return task_args, user_args
+
+    # def _reduce(self, item_selected, n_item, reset_dic, task_args, user_args):
+    #     indices_keep = np.arange(n_item) != item_selected
+
+    #     reset_dic = self._reduce_reset_dic(indices_keep, reset_dic)
+    #     n_item, task_args, user_args = self._reduce_models(
+    #         indices_keep, n_item, task_args=task_args, user_args=user_args
+    #     )
+    #     return n_item, reset_dic, task_args, user_args
+
+    # def _reduce_models(self, indices_keep, n_item, task_args={}, user_args={}):
+    #     # reduce the input arguments for the task and user classes
+    #     n_item += -1
+    #     task_args["n_item"] = n_item
+    #     user_args["param"] = user_args["param"][indices_keep, :]
+    #     return n_item, task_args, user_args
+
+    # def _reduce_reset_dic(self, indices_keep, reset_dic):
+    #     n_pres_tmp = np.asarray(reset_dic["task_state"]["n_pres"])
+    #     last_pres_tmp = np.asarray(reset_dic["task_state"]["last_pres"])
+    #     recall_probs = np.asarray(reset_dic["user_state"]["recall_probabilities"])
+
+    #     del reset_dic["task_state"]["n_pres"]
+    #     del reset_dic["task_state"]["last_pres"]
+    #     del reset_dic["user_state"]["recall_probabilities"]
+
+    #     reset_dic["task_state"]["n_pres"] = discrete_array_element(
+    #         init=n_pres_tmp[indices_keep],
+    #         low=-1,
+    #     )
+    #     reset_dic["task_state"]["last_pres"] = discrete_array_element(
+    #         init=last_pres_tmp[indices_keep],
+    #     )
+    #     reset_dic["user_state"]["recall_probabilities"] = array_element(
+    #         init=recall_probs[indices_keep], low=0, high=1, dtype=np.float64
+    #     )
+    #     return reset_dic
+
+    def construct_reset_state_for_simu(self, agent_observation_copy):
+        # Remove user and assistant actions, since not needed and to be sure there is no interaction
+        del agent_observation_copy["user_action"]
+        del agent_observation_copy["assistant_action"]
+        # load estimated probs into user state
+        agent_observation_copy["user_state"] = State()
+        user_probs = agent_observation_copy.pop("assistant_state").pop(
             "user_estimated_recall_probabilities"
         )
-        game_reset_state["user_state"]["recall_probabilities"] = user_probs
+        # agent_observation_copy["user_state"]["recall_probabilities"] = user_probs
+        ### ====== BIG HACK ======
+        agent_observation_copy["user_state"][
+            "recall_probabilities"
+        ] = self.host.bundle.user.state.recall_probabilities
+
+        # load n_pres and last_pres into user state
         try:
-            last_item = int(agent_observation["task_state"]["item"])
+            last_item = int(agent_observation_copy["task_state"]["item"])
             past_observation = self.host.inference_engine.buffer[-2]
             user_last_pres_before_obs = past_observation["task_state"]["last_pres"][
                 last_item
@@ -131,72 +192,114 @@ class ConservativeSamplingPolicy(BasePolicy):
             user_n_pres_before_obs = 0
             user_last_pres_before_obs = 0
 
-        game_reset_state["user_state"]["n_pres_before_obs"] = user_n_pres_before_obs
-        game_reset_state["user_state"][
+        agent_observation_copy["user_state"][
+            "n_pres_before_obs"
+        ] = user_n_pres_before_obs
+        agent_observation_copy["user_state"][
             "last_pres_before_obs"
         ] = user_last_pres_before_obs
-        # ============================= End recreating user state
 
-        # =============== Init for conservative sampling
-        new_task_class_kwargs = copy.deepcopy(self.task_class_kwargs)
-        new_user_class_kwargs = copy.deepcopy(self.user_class_kwargs)
+        return agent_observation_copy
+
+    @BasePolicy.default_value
+    def sample(self, agent_observation=None, agent_state=None):
+        current_iteration = int(agent_observation.game_info.round_index)
+        if current_iteration == 0:  # First item
+            self.presented_items.add(0)
+            return 0, 0
+
+        # ============   new (reduced) schedule
+        new_n_iter_per_ss, new_breaks = TeachingOrchestrator.reduce_schedule(
+            self.n_iter_per_ss, self.breaks, current_iteration
+        )
+        print(current_iteration, new_n_iter_per_ss, new_breaks)
+        orchestrator_kwargs = {
+            "n_iter_per_ss": new_n_iter_per_ss,
+            "breaks": new_breaks,
+            "time_before_exam": self.time_before_exam,
+            "exam_threshold": self.exam_threshold,
+            "inter_trial": self.inter_trial,
+        }
+        # orchestrator_kwargs = {
+        #     "n_iter_per_ss": self.n_iter_per_ss,
+        #     "breaks": self.breaks,
+        #     "time_before_exam": self.time_before_exam,
+        #     "exam_threshold": self.exam_threshold,
+        #     "inter_trial": self.inter_trial,
+        # }
+        # ============ Create game_state to which the simulation will be reset to
+        game_reset_state = self.construct_reset_state_for_simu(
+            copy.deepcopy(agent_observation)
+        )  # Deepcopy just to be sure there is no interaction
+
+        # start simulation to check if myopic policy will lead to all items preented being learned
         n_item = self.n_item
+        simulator = Simulator(
+            task_model=self.task_class(**self.task_class_kwargs),
+            user_model=self.user_class(**self.user_class_kwargs),
+            assistant=Myopic(
+                override_agent_policy=MyopicPolicy(
+                    action_state=State(**{"action": cat_element(n_item)})
+                )
+            ),
+            use_primary_inference=False,
+            seed=1234,
+            random_reset=False,
+        )
+        simulator.open()
+        orchestrator = TeachingOrchestrator(simulator, **orchestrator_kwargs)
+        orchestrator.reset(dic=copy.deepcopy(game_reset_state))
+        print(
+            f"simulator round: {int(orchestrator.raw_bundle.state.game_info.round_index)}"
+        )
+        k = 0
         while True:
+            # print(k + current_iteration)
+            k += 1
+            state, rewards, is_done = orchestrator.step()
+            if k == 1:  # Remember which item was chosen as first item
+                item_selected = int(state["assistant_action"]["action"])
+            if is_done:
+                break
+        simulator.close()
+
+        if int(np.sum(list(rewards.values()))) >= len(
+            self.presented_items & set([item_selected])
+        ):  # if all presented items (new one included) are remembered
+            self.presented_items.add(item_selected)
+            print(f"student can learn items presented{self.presented_items}")
+
+        else:  # select item using myopic from the presented_items
+            print("will not be able to learn")
+            # make reduced model using only presented items
+            reset_dic, n_item, task_args, user_args = self._reduce(
+                list(self.presented_items),
+                game_reset_state,
+                copy.deepcopy(self.task_class_kwargs),
+                copy.deepcopy(self.user_class_kwargs),
+            )
+            # create simulator, (no need for orchestrator since Myopic doesn't plan)
             simulator = Simulator(
-                task_model=self.task_class(**new_task_class_kwargs),
-                user_model=self.user_class(**new_user_class_kwargs),
-                assistant=self.host,
+                task_model=self.task_class(**task_args),
+                user_model=self.user_class(**user_args),
+                assistant=Myopic(
+                    override_agent_policy=MyopicPolicy(
+                        action_state=State(**{"action": cat_element(n_item)})
+                    )
+                ),
                 use_primary_inference=False,
                 seed=1234,
                 random_reset=False,
             )
             simulator.open()
-            orchestrator = TeachingOrchestrator(simulator, **orchestrator_kwargs)
-            orchestrator.reset(dic=copy.deepcopy(game_reset_state))
-            if (
-                orchestrator.raw_bundle.assistant.policy.mode != "dual"
-                and orchestrator.raw_bundle.assistant.policy.dual_policy.__class__.__name__
-                == "MyopicPolicy"
-            ):
-                raise RuntimeError(
-                    f"The orchestrator is not using the correct policy. Should be in dual mode with MyopicPolicy, but it is in {orchestrator.raw_bundle.assistant.policy.mode} mode instead"
-                )
-            k = 0
-            while True:
-                k += 1
-                state, rewards, is_done = orchestrator.step()
-                if k == 1:  # Remember which item was chosen as first item
-                    item_selected = state["assistant_action"]["action"]
-                if is_done:
-                    break
-            if int(np.sum(list(rewards.values()))) == n_item:
-                break
-            else:
-                n_pres_tmp = copy.deepcopy(game_reset_state["task_state"]["n_pres"])
 
-                indices_keep = np.arange(n_item) != item_selected
+            simulator.reset(dic=copy.deepcopy(reset_dic))
+            # single step
+            state, rewards, is_done = simulator.step()
+            simulator.close()
+            item_selected = int(state["assistant_action"]["action"])
 
-                del game_reset_state["task_state"]["n_pres"]
-                game_reset_state["task_state"]["n_pres"] = discrete_array_element(
-                    init=n_pres_tmp[indices_keep]
-                )
-                n_item += -1
-                new_task_class_kwargs["n_item"] = n_item
-                new_user_class_kwargs["param"] = new_user_class_kwargs["param"][
-                    indices_keep, :
-                ]
-        # while True:
-        # Create simulator
-        # -
-        # Create orchestrator
-
-        # run
-        # if all items learned: break
-
-        # new_task_class_kwargs = self.task_class_kwargs
-
-        #     task = self.task_class(**new_task_class_kwargs)
-        #     user = self.user_class(**self.user_class_kwargs)
+        return item_selected, 0
 
 
 # class ConservativeSamplingPolicy(BasePolicy):
