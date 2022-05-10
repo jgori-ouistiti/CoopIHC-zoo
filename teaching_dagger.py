@@ -1,14 +1,9 @@
-import torch
 import numpy as np
 
-from stable_baselines3 import PPO, A2C
-from stable_baselines3.common.evaluation import evaluate_policy
+from stable_baselines3 import A2C
 from stable_baselines3.common.monitor import Monitor
 
-import os
-
 from gym.wrappers import FilterObservation
-from stable_baselines3.common.vec_env import SubprocVecEnv, VecMonitor
 
 from coopihc import Bundle, TrainGym
 
@@ -21,9 +16,7 @@ from coopihczoo.teaching.action_wrapper.action_wrapper import AssistantActionWra
 import torch
 
 from stable_baselines3.common.evaluation import evaluate_policy
-from stable_baselines3 import PPO
 
-from coopihczoo.teaching.rl.behavioral_cloning import BC
 from coopihczoo.teaching.rl.dagger import DAgger
 
 

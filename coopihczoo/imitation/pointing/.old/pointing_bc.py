@@ -1,3 +1,5 @@
+import os
+
 import torch
 import numpy as np
 
@@ -5,17 +7,10 @@ from stable_baselines3 import PPO
 from stable_baselines3.common.evaluation import evaluate_policy
 from stable_baselines3.common.monitor import Monitor
 
-import os
-
 from gym.wrappers import FilterObservation
 
 from coopihc import Bundle, TrainGym
 
-# from coopihczoo.teaching.users import User
-# from coopihczoo.teaching.envs import Task
-# from coopihczoo.teaching.assistants.rl import Teacher
-# from coopihczoo.teaching.config import config_example
-# from coopihczoo.teaching.assistants.conservative_sampling_expert import ConservativeSamplingExpert
 from coopihczoo.imitation.core.behavioral_cloning import BC
 
 from coopihc.examples.simplepointing.users import CarefulPointer

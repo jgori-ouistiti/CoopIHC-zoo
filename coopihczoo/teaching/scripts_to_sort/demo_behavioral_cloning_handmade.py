@@ -4,13 +4,11 @@ import gym
 
 from stable_baselines3 import PPO
 from stable_baselines3.common.evaluation import evaluate_policy
-from stable_baselines3.common.vec_env import DummyVecEnv
 
 from stable_baselines3.ppo import MlpPolicy
-from stable_baselines3.common.vec_env import VecMonitor
 from stable_baselines3.common.monitor import Monitor
 
-from coopihczoo.teaching.rl.behavioral_cloning import \
+from coopihczoo.imitation.core.behavioral_cloning import \
     BC, FeedForward32Policy, ConstantLRSchedule, sample_expert
 
 

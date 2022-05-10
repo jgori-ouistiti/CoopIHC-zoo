@@ -1,9 +1,8 @@
 import numpy as np
 import torch
 
-from stable_baselines3.common.vec_env import DummyVecEnv, VecMonitor
 import coopihc
-from coopihczoo.teaching.rl.behavioral_cloning import BC
+from coopihczoo.imitation.core.behavioral_cloning import BC
 
 
 class LinearBetaSchedule:

@@ -6,7 +6,7 @@ from stable_baselines3.common.evaluation import evaluate_policy
 from stable_baselines3 import PPO
 from stable_baselines3.ppo import MlpPolicy
 
-from coopihczoo.teaching.rl.behavioral_cloning import BC
+from coopihczoo.imitation.core.behavioral_cloning import BC
 from coopihczoo.teaching.rl.dagger import DAgger
 
 
