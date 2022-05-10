@@ -19,6 +19,8 @@ def main():
 
     seed = 123
     expert_total_timesteps = 10000
+    sample_expert_n_episode = 50
+    sample_expert_n_timestep = None
 
     expert_kwargs = dict(
             seed=seed,
@@ -45,7 +47,9 @@ def main():
     reward, _ = evaluate_policy(expert.policy, Monitor(env), n_eval_episodes=50)
     print(f"Reward expert after training: {reward}")
 
-    expert_data = sample_expert(env=env, expert=expert)
+    expert_data = sample_expert(env=env, expert=expert,
+                                n_episode=sample_expert_n_episode,
+                                n_timestep=sample_expert_n_timestep)
 
     env = make_env(seed=seed)
     novice = PPO(env=env, **expert_kwargs)

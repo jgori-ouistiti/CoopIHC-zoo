@@ -79,6 +79,8 @@ def make_env(seed):
 def main():
 
     seed = 123
+    expert_total_timesteps = 10000
+
     expert_kwargs = dict(
             seed=seed,
             policy='MlpPolicy',
@@ -99,7 +101,7 @@ def main():
     print(f"Reward expert before training: {reward}")
 
     print("Training the expert...")
-    expert.learn(10000)  # Note: set to 100000 to train a proficient expert
+    expert.learn(expert_total_timesteps)  # Note: set to 100000 to train a proficient expert
 
     reward, _ = evaluate_policy(expert.policy, Monitor(env), n_eval_episodes=50)
     print(f"Reward expert after training: {reward}")

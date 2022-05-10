@@ -8,7 +8,7 @@ from stable_baselines3.common import policies, utils
 from stable_baselines3.common.vec_env import VecMonitor, DummyVecEnv
 
 
-def sample_expert(env, expert, n_episode=50, n_timesteps=None, deterministic=False):
+def sample_expert(env, expert, n_episode=50, n_timestep=None, deterministic=False):
 
     if isinstance(env.observation_space, gym.spaces.Dict):
         raise ValueError("Gym observation space should NOT be a dictionary "
@@ -46,7 +46,7 @@ def sample_expert(env, expert, n_episode=50, n_timesteps=None, deterministic=Fal
             if n_episode is not None and ep < n_episode:
                 continue
 
-            if n_timesteps is not None and n_steps < n_timesteps:
+            if n_timestep is not None and n_steps < n_timestep:
                 continue
 
             break
