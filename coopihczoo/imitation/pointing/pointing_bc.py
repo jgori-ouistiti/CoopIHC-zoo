@@ -81,9 +81,9 @@ def make_env(seed):
 
 def main():
 
+    seed = 123
     expert_sampling_n_episode = 50
 
-    seed = 123
     expert_kwargs = dict(
             seed=seed,
             policy='MlpPolicy',
