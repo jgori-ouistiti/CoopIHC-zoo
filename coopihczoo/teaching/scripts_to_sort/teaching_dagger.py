@@ -18,7 +18,7 @@ from stable_baselines3.common.evaluation import evaluate_policy
 from stable_baselines3 import PPO
 
 from coopihczoo.imitation.core.behavioral_cloning import BC
-from coopihczoo.teaching.rl.dagger import DAgger
+from coopihczoo.imitation.core.dagger import DAgger
 
 
 def make_env():

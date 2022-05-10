@@ -17,7 +17,7 @@ import torch
 
 from stable_baselines3.common.evaluation import evaluate_policy
 
-from coopihczoo.teaching.rl.dagger import DAgger
+from coopihczoo.imitation.core.dagger import DAgger
 
 
 def make_env():

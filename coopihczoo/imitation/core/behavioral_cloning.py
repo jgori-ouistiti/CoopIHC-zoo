@@ -10,6 +10,10 @@ from stable_baselines3.common.vec_env import VecMonitor, DummyVecEnv
 
 def sample_expert(env, expert, n_episode=50, n_timesteps=None, deterministic=False):
 
+    if isinstance(env.observation_space, gym.spaces.Dict):
+        raise ValueError("Gym observation space should NOT be a dictionary "
+                         "(use the filter 'FlattenObservation' from Gym)")
+
     env = VecMonitor(DummyVecEnv([lambda: env]))
 
     obs = env.reset()

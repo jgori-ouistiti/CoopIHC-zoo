@@ -1,6 +1,10 @@
+import numpy as np
+
 from gym import ActionWrapper
 from gym.spaces import Box
 from gym.wrappers import FilterObservation, FlattenObservation
+
+from stable_baselines3.common.env_checker import check_env
 
 from stable_baselines3 import PPO
 from stable_baselines3.common.evaluation import evaluate_policy
@@ -16,8 +20,8 @@ from coopihc.examples.simplepointing.envs import SimplePointingTask
 from coopihc.examples.simplepointing.assistants import BIGGain
 
 
-config_task = dict(gridsize=31, number_of_targets=8, mode="position")
-config_user = dict(error_rate=0.05)
+config_task = dict(gridsize=4, number_of_targets=1, mode="position")
+config_user = dict(error_rate=0.01)
 
 obs_keys = (
     "assistant_state__beliefs",
@@ -32,14 +36,18 @@ class AssistantActionWrapper(ActionWrapper):
         super().__init__(env)
         _as = env.action_space["assistant_action__action"]
         self.action_space = Box(
-            low=_as.low, high=_as.high, shape=_as.shape, dtype=_as.dtype
+            low=-1, high=1, shape=_as.shape, dtype=np.float32
         )
+        self.low, self.high = _as.low, _as.high
+        self.half_amp = (self.high - self.low) / 2
+        self.mean = (self.high + self.low) / 2
 
     def action(self, action):
-        return {"assistant_action__action": int(action)}
+        return {"assistant_action__action": int(action*self.half_amp + self.mean)}
 
     def reverse_action(self, action):
-        return action["assistant_action__action"]
+        raw = action["assistant_action__action"]
+        return (raw - self.mean) / self.half_amp
 
 
 def make_env(seed):
@@ -59,31 +67,26 @@ def make_env(seed):
 
     env = TrainGym(bundle, train_user=False, train_assistant=True)
 
-    # # Use env_checker from stable_baselines3 to verify that the env adheres to the Gym API
-    # check_env(env, warn=False)
-
     env = FlattenObservation(FilterObservation(env, obs_keys))
+    # env = FilterObservation(env, obs_keys)
     env = AssistantActionWrapper(env)
-
+    print(env.bundle.state)
     print(env.action_space)
+    print(env.observation_space)
 
+    # Use env_checker from stable_baselines3 to verify that the env adheres to the Gym API
+    check_env(env)
     return env
 
 
 def main():
 
+    expert_sampling_n_episode = 50
+
     seed = 123
     expert_kwargs = dict(
             seed=seed,
             policy='MlpPolicy',
-            n_steps=32,
-            batch_size=32,
-            gae_lambda=0.8,
-            gamma=0.98,
-            n_epochs=20,
-            ent_coef=0.0,
-            learning_rate=0.001,
-            clip_range=0.2
     )
 
     env = make_env(seed=seed)
@@ -98,7 +101,7 @@ def main():
     reward, _ = evaluate_policy(expert.policy, Monitor(env), n_eval_episodes=50)
     print(f"Reward expert after training: {reward}")
 
-    expert_data = sample_expert(env=env, expert=expert)
+    expert_data = sample_expert(env=env, expert=expert, n_episode=expert_sampling_n_episode)
 
     env = make_env(seed=seed)
     novice = PPO(env=env, **expert_kwargs)

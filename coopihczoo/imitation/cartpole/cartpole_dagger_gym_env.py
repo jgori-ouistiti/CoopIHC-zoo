@@ -5,8 +5,7 @@ from stable_baselines3.common.evaluation import evaluate_policy
 
 from stable_baselines3.common.monitor import Monitor
 
-from coopihczoo.imitation.core.behavioral_cloning import \
-    BC, sample_expert
+from coopihczoo.imitation.core.dagger import DAgger
 
 
 def make_env(seed):
@@ -43,22 +42,20 @@ def main():
     reward, _ = evaluate_policy(expert.policy, Monitor(env), n_eval_episodes=50)
     print(f"Reward expert after training: {reward}")
 
-    expert_data = sample_expert(env=env, expert=expert)
-
     env = make_env(seed=seed)
     novice = PPO(env=env, **expert_kwargs)
 
     reward, _ = evaluate_policy(novice.policy, Monitor(env), n_eval_episodes=50)
     print(f"Reward novice before training: {reward}")
 
-    bc_trainer = BC(
-        observation_space=env.observation_space,
-        action_space=env.action_space,
-        demonstrations=expert_data,
-        policy=novice.policy)
+    dagger_trainer = DAgger(
+        env=env,
+        expert=expert,
+        policy=novice.policy,
+        batch_size=32)
 
     print("Training the novice's policy using behavior cloning...")
-    bc_trainer.train()
+    dagger_trainer.train(2000)
 
     reward, _ = evaluate_policy(novice.policy, Monitor(env), n_eval_episodes=50)
     print(f"Reward novice after training: {reward}")
