@@ -68,11 +68,7 @@ def make_env(seed):
     env = TrainGym(bundle, train_user=False, train_assistant=True)
 
     env = FlattenObservation(FilterObservation(env, obs_keys))
-    # env = FilterObservation(env, obs_keys)
     env = AssistantActionWrapper(env)
-    print(env.bundle.state)
-    print(env.action_space)
-    print(env.observation_space)
 
     # Use env_checker from stable_baselines3 to verify that the env adheres to the Gym API
     check_env(env)
@@ -81,9 +77,9 @@ def make_env(seed):
 
 def main():
 
+    seed = 123
     expert_sampling_n_episode = 50
 
-    seed = 123
     expert_kwargs = dict(
             seed=seed,
             policy='MlpPolicy',
