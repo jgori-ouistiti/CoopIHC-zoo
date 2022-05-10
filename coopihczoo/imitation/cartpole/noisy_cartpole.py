@@ -1,7 +1,3 @@
-# -*- coding: utf-8 -*-
-
-# https://github.com/AadityaPatanjali/gym-cartpolemod/blob/master/gym_cartpolemod/envs/cartpolemod_env.py
-
 """
 Classic cart-pole system implemented by Rich Sutton et al.
 Copied from http://incompleteideas.net/sutton/book/code/pole.c
@@ -9,34 +5,13 @@ permalink: https://perma.cc/C9ZM-652R
 Modified by Aaditya Ravindran to include friction and random sensor & actuator noise
 """
 
-import logging
 import math
-import random
+import warnings
+
 import gym
 from gym import spaces
 from gym.utils import seeding
 import numpy as np
-
-logger = logging.getLogger(__name__)
-
-
-# -*- coding: utf-8 -*-
-"""
-Classic cart-pole system implemented by Rich Sutton et al.
-Copied from http://incompleteideas.net/sutton/book/code/pole.c
-permalink: https://perma.cc/C9ZM-652R
-Modified by Aaditya Ravindran to include friction and random sensor & actuator noise
-"""
-
-import logging
-import math
-import random
-import gym
-from gym import spaces
-from gym.utils import seeding
-import numpy as np
-
-logger = logging.getLogger(__name__)
 
 
 class CartPoleModEnv(gym.Env):
@@ -175,7 +150,7 @@ class CartPoleModEnv(gym.Env):
             reward = 1.0
         else:
             if self.steps_beyond_done == 0:
-                logger.warning(
+                warnings.warn(
                     "You are calling 'step()' even though this environment has already returned done = True. You should always call 'reset()' once you receive 'done = True' -- any further steps are undefined behavior."
                 )
             self.steps_beyond_done += 1

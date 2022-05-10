@@ -29,7 +29,7 @@ def make_env(seed):
 def main():
 
     seed = 123
-    expert_total_timesteps = 10000
+    expert_total_timesteps = 2000
     sample_expert_n_episode = 50
     sample_expert_n_timestep = None
 
