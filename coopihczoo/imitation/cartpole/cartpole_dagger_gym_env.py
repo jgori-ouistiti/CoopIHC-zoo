@@ -17,6 +17,9 @@ def make_env(seed):
 def main():
 
     seed = 123
+    expert_total_timesteps = 10000
+    dagger_training_n_episode = 5000
+
     expert_kwargs = dict(
             seed=seed,
             policy='MlpPolicy',
@@ -37,7 +40,7 @@ def main():
     print(f"Reward expert before training: {reward}")
 
     print("Training the expert...")
-    expert.learn(10000)  # Note: set to 100000 to train a proficient expert
+    expert.learn(total_timesteps=expert_total_timesteps)  # Note: set to 100000 to train a proficient expert
 
     reward, _ = evaluate_policy(expert.policy, Monitor(env), n_eval_episodes=50)
     print(f"Reward expert after training: {reward}")
@@ -51,11 +54,10 @@ def main():
     dagger_trainer = DAgger(
         env=env,
         expert=expert,
-        policy=novice.policy,
-        batch_size=32)
+        policy=novice.policy)
 
-    print("Training the novice's policy using behavior cloning...")
-    dagger_trainer.train(2000)
+    print("Training the novice's policy using dagger...")
+    dagger_trainer.train(total_timesteps=dagger_training_n_episode)
 
     reward, _ = evaluate_policy(novice.policy, Monitor(env), n_eval_episodes=50)
     print(f"Reward novice after training: {reward}")

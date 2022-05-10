@@ -37,12 +37,11 @@ def main():
 
     dagger_trainer = DAgger(
         env=env,
-        expert=expert,
-        bc_trainer=bc_trainer)
+        expert=expert)
 
     dagger_trainer.train(2000)
 
-    reward, _ = evaluate_policy(bc_trainer.policy, env, n_eval_episodes=10, render=False)
+    reward, _ = evaluate_policy(dagger_trainer.policy, env, n_eval_episodes=10, render=False)
     print(f"Reward after training: {reward}")
 
 

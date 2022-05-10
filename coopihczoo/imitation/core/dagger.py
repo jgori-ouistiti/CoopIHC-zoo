@@ -40,8 +40,8 @@ class DAgger:
         self,
         env,
         expert,
-        policy,
-        batch_size,
+        policy=None,
+        batch_size: int = 32,
         expert_trajs=None,
         beta_schedule=None
     ):
@@ -210,3 +210,7 @@ class DAgger:
         expert_data = flatten_expert_data
 
         return expert_data
+
+    @property
+    def policy(self):
+        return self.bc_trainer.policy
