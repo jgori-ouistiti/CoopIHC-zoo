@@ -32,10 +32,9 @@ def sample_expert(env, expert, n_episode=50, n_timestep=None, deterministic=Fals
             if isinstance(expert, coopihc.BaseAgent):
 
                 _action, _reward = env.unwrapped.bundle.assistant.take_action(increment_turn=False)[0]
-                # from coopihc.bundle.wrappers.Train import apply_wrappers
-                #
-                # action = apply_wrappers(action, modified_env)
-                action = _action
+                from coopihc.bundle.wrappers.Train import apply_wrappers
+                action = apply_wrappers(action, env)
+
             else:
                 action, _states = expert.predict(obs, deterministic=deterministic)
 
