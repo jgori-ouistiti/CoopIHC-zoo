@@ -104,7 +104,7 @@ class CartPoleModEnv(gym.Env):
 
     def addnoise(self, x):
         return {
-            1: 0,
+            1: np.array(0).reshape((1,)),
             2: self.np_random.uniform(
                 low=-0.05, high=0.05, size=(1,)
             ),  #  5% actuator noise
@@ -156,9 +156,9 @@ class CartPoleModEnv(gym.Env):
         noise = self.addnoise(self.case)
         x = x + self.tau * x_dot
         x_dot = x_dot + self.tau * xacc
-        theta = (theta + self.tau * theta_dot) * (1 + noise)
+        theta = (theta + self.tau * theta_dot) * (1 + noise.squeeze().tolist())
         theta_dot = theta_dot + self.tau * thetaacc
-        self.state = (x, x_dot, theta, theta_dot)
+        self.state = [x, float(x_dot), theta, float(theta_dot)]
         done = (
             x < -self.x_threshold
             or x > self.x_threshold

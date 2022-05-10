@@ -21,7 +21,7 @@ def make_env(seed):
     # 5 : # 10% sensor noise
     # 6 : # 0.1 var sensor noise
     # 7 : # 0.2 var sensor noise
-    env = CartPoleModEnv(case=1)
+    env = CartPoleModEnv(case=3)
     env.seed(seed=seed)
     return env
 
