@@ -2,41 +2,13 @@
 
 # https://github.com/AadityaPatanjali/gym-cartpolemod/blob/master/gym_cartpolemod/envs/cartpolemod_env.py
 
-"""
-Classic cart-pole system implemented by Rich Sutton et al.
-Copied from http://incompleteideas.net/sutton/book/code/pole.c
-permalink: https://perma.cc/C9ZM-652R
-Modified by Aaditya Ravindran to include friction and random sensor & actuator noise
-"""
 
-import logging
 import math
 import random
 import gym
 from gym import spaces
 from gym.utils import seeding
 import numpy as np
-
-logger = logging.getLogger(__name__)
-
-
-# -*- coding: utf-8 -*-
-"""
-Classic cart-pole system implemented by Rich Sutton et al.
-Copied from http://incompleteideas.net/sutton/book/code/pole.c
-permalink: https://perma.cc/C9ZM-652R
-Modified by Aaditya Ravindran to include friction and random sensor & actuator noise
-"""
-
-import logging
-import math
-import random
-import gym
-from gym import spaces
-from gym.utils import seeding
-import numpy as np
-
-logger = logging.getLogger(__name__)
 
 
 class CartPoleModEnv(gym.Env):
@@ -103,27 +75,28 @@ class CartPoleModEnv(gym.Env):
         return self._close(*args, **kwargs)
 
     def addnoise(self, x):
-        return {
-            1: np.array(0).reshape((1,)),
-            2: self.np_random.uniform(
-                low=-0.05, high=0.05, size=(1,)
-            ),  #  5% actuator noise
-            3: self.np_random.uniform(
-                low=-0.10, high=0.10, size=(1,)
-            ),  # 10% actuator noise
-            4: self.np_random.uniform(
-                low=-0.05, high=0.05, size=(1,)
-            ),  #  5% sensor noise
-            5: self.np_random.uniform(
-                low=-0.10, high=0.10, size=(1,)
-            ),  # 10% sensor noise
-            6: self.np_random.normal(
-                loc=0, scale=np.sqrt(0.10), size=(1,)
-            ),  # 0.1 var sensor noise
-            7: self.np_random.normal(
-                loc=0, scale=np.sqrt(0.20), size=(1,)
-            ),  # 0.2 var sensor noise
-        }.get(x, 1)
+        return np.array(0).reshape((1,))
+        # return {
+        #     1: np.array(0).reshape((1,)),
+        #     2: self.np_random.uniform(
+        #         low=-0.05, high=0.05, size=(1,)
+        #     ),  #  5% actuator noise
+        #     3: self.np_random.uniform(
+        #         low=-0.10, high=0.10, size=(1,)
+        #     ),  # 10% actuator noise
+        #     4: self.np_random.uniform(
+        #         low=-0.05, high=0.05, size=(1,)
+        #     ),  #  5% sensor noise
+        #     5: self.np_random.uniform(
+        #         low=-0.10, high=0.10, size=(1,)
+        #     ),  # 10% sensor noise
+        #     6: self.np_random.normal(
+        #         loc=0, scale=np.sqrt(0.10), size=(1,)
+        #     ),  # 0.1 var sensor noise
+        #     7: self.np_random.normal(
+        #         loc=0, scale=np.sqrt(0.20), size=(1,)
+        #     ),  # 0.2 var sensor noise
+        # }.get(x, 1)
 
     def _seed(self, seed=None):  # Set appropriate seed value
         self.np_random, seed = seeding.np_random(seed)
@@ -188,60 +161,14 @@ class CartPoleModEnv(gym.Env):
         self.steps_beyond_done = None
         return np.array(self.state)
 
-    def _render(self, mode="human", close=False):
-        if close:
-            if self.viewer is not None:
-                self.viewer.close()
-                self.viewer = None
-            return
 
-        screen_width = 600
-        screen_height = 400
+from gym.envs.registration import register
 
-        world_width = self.x_threshold * 2
-        scale = screen_width / world_width
-        carty = 100  # TOP OF CART
-        polewidth = 10.0
-        polelen = scale * 1.0
-        cartwidth = 50.0
-        cartheight = 30.0
-
-        if self.viewer is None:
-            from gym.envs.classic_control import rendering
-
-            self.viewer = rendering.Viewer(screen_width, screen_height)
-            l, r, t, b = -cartwidth / 2, cartwidth / 2, cartheight / 2, -cartheight / 2
-            axleoffset = cartheight / 4.0
-            cart = rendering.FilledPolygon([(l, b), (l, t), (r, t), (r, b)])
-            self.carttrans = rendering.Transform()
-            cart.add_attr(self.carttrans)
-            self.viewer.add_geom(cart)
-            l, r, t, b = (
-                -polewidth / 2,
-                polewidth / 2,
-                polelen - polewidth / 2,
-                -polewidth / 2,
-            )
-            pole = rendering.FilledPolygon([(l, b), (l, t), (r, t), (r, b)])
-            pole.set_color(0.8, 0.6, 0.4)
-            self.poletrans = rendering.Transform(translation=(0, axleoffset))
-            pole.add_attr(self.poletrans)
-            pole.add_attr(self.carttrans)
-            self.viewer.add_geom(pole)
-            self.axle = rendering.make_circle(polewidth / 2)
-            self.axle.add_attr(self.poletrans)
-            self.axle.add_attr(self.carttrans)
-            self.axle.set_color(0.5, 0.5, 0.8)
-            self.viewer.add_geom(self.axle)
-            self.track = rendering.Line((0, carty), (screen_width, carty))
-            self.track.set_color(0, 0, 0)
-            self.viewer.add_geom(self.track)
-
-        if self.state is None:
-            return None
-
-        x = self.state
-        cartx = x[0] * scale + screen_width / 2.0  # MIDDLE OF CART
-        self.carttrans.set_translation(cartx, carty)
-        self.poletrans.set_rotation(-x[2])
-        return self.viewer.render(return_rgb_array=mode == "rgb_array")
+for i in range(7):
+    register(
+        id=f"CartPole-v{i-1}",
+        entry_point="gym.envs.classic_control:CartPoleEnv",
+        max_episode_steps=200,
+        reward_threshold=195.0,
+        kwargs={"case": i},
+    )
