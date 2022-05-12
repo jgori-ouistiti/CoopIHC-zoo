@@ -7,8 +7,8 @@ task_kwargs = dict(
     n_item=20,
     inter_trial=3,
     n_iter_per_ss=100,
-    break_length=3,  # 4000,  # 24*60**2 - inter_trial*n_iter_per_ss
-    time_before_exam=30,  # 4000,
+    break_length=60 * 15,  # 4000,  # 24*60**2 - inter_trial*n_iter_per_ss
+    time_before_exam=60 * 60,  # 4000,
     is_item_specific=False,
     n_session=2,
     thr=0.9,
@@ -23,8 +23,8 @@ user_per_item_kwargs = dict(
 
 teaching_orchestrator_kwargs = dict(
     n_iter_per_ss=[100, 100],
-    breaks=[3],
-    time_before_exam=0,
+    breaks=[30],
+    time_before_exam=60,
     inter_trial=3,
     exam_threshold=0.9,
 )
