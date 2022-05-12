@@ -131,11 +131,7 @@ class ConservativeSamplingPolicy(BasePolicy):
         user_probs = agent_observation_copy.pop("assistant_state").pop(
             "user_estimated_recall_probabilities"
         )
-        # agent_observation_copy["user_state"]["recall_probabilities"] = user_probs
-        ### ====== BIG HACK ======
-        agent_observation_copy["user_state"][
-            "recall_probabilities"
-        ] = self.host.bundle.user.state.recall_probabilities
+        agent_observation_copy["user_state"]["recall_probabilities"] = user_probs
 
         # load n_pres and last_pres into user state
         try:
@@ -245,5 +241,4 @@ class ConservativeSamplingPolicy(BasePolicy):
                     user_class_kwargs,
                 )
 
-        print(f"selected item {item_selected}")
         return item_selected, 0
