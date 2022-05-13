@@ -3,12 +3,19 @@ import numpy as np
 import torch
 import torch.utils.data as th_data
 import gym
+
 from stable_baselines3.common.policies import ActorCriticPolicy
 from stable_baselines3.common import policies, utils
 from stable_baselines3.common.vec_env import VecMonitor, DummyVecEnv
 
+import coopihc
 
-def sample_expert(env, expert, n_episode=50, n_timesteps=None, deterministic=False):
+
+def sample_expert(env, expert, n_episode=50, n_timestep=None, deterministic=False):
+
+    if isinstance(env.observation_space, gym.spaces.Dict):
+        raise ValueError("Gym observation space should NOT be a dictionary "
+                         "(use the filter 'FlattenObservation' from Gym)")
 
     env = VecMonitor(DummyVecEnv([lambda: env]))
 
@@ -22,7 +29,14 @@ def sample_expert(env, expert, n_episode=50, n_timesteps=None, deterministic=Fal
     with torch.no_grad():
         while True:
 
-            action, _states = expert.predict(obs, deterministic=deterministic)
+            if isinstance(expert, coopihc.BaseAgent):
+
+                _action, _reward = env.unwrapped.bundle.assistant.take_action(increment_turn=False)[0]
+                from coopihc.bundle.wrappers.Train import apply_wrappers
+                action = apply_wrappers(action, env)
+
+            else:
+                action, _states = expert.predict(obs, deterministic=deterministic)
 
             new_obs, rewards, dones, info = env.step(action)
 
@@ -42,7 +56,7 @@ def sample_expert(env, expert, n_episode=50, n_timesteps=None, deterministic=Fal
             if n_episode is not None and ep < n_episode:
                 continue
 
-            if n_timesteps is not None and n_steps < n_timesteps:
+            if n_timestep is not None and n_steps < n_timestep:
                 continue
 
             break

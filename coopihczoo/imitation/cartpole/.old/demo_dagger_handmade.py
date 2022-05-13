@@ -6,8 +6,8 @@ from stable_baselines3.common.evaluation import evaluate_policy
 from stable_baselines3 import PPO
 from stable_baselines3.ppo import MlpPolicy
 
-from coopihczoo.teaching.rl.behavioral_cloning import BC
-from coopihczoo.teaching.rl.dagger import DAgger
+from coopihczoo.imitation.core.behavioral_cloning import BC
+from coopihczoo.imitation.core.dagger import DAgger
 
 
 def main():
@@ -37,12 +37,11 @@ def main():
 
     dagger_trainer = DAgger(
         env=env,
-        expert=expert,
-        bc_trainer=bc_trainer)
+        expert=expert)
 
     dagger_trainer.train(2000)
 
-    reward, _ = evaluate_policy(bc_trainer.policy, env, n_eval_episodes=10, render=False)
+    reward, _ = evaluate_policy(dagger_trainer.policy, env, n_eval_episodes=10, render=False)
     print(f"Reward after training: {reward}")
 
 

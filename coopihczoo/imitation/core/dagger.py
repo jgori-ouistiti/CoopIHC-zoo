@@ -1,9 +1,8 @@
 import numpy as np
 import torch
 
-from stable_baselines3.common.vec_env import DummyVecEnv, VecMonitor
 import coopihc
-from coopihczoo.teaching.rl.behavioral_cloning import BC
+from coopihczoo.imitation.core.behavioral_cloning import BC
 
 
 class LinearBetaSchedule:
@@ -41,8 +40,8 @@ class DAgger:
         self,
         env,
         expert,
-        policy,
-        batch_size,
+        policy=None,
+        batch_size: int = 32,
         expert_trajs=None,
         beta_schedule=None
     ):
@@ -155,8 +154,16 @@ class DAgger:
                     # Expert takes the decision
                     # expert_chose = True
                     if isinstance(expert, coopihc.BaseAgent):
-                        action, _reward = env.unwrapped.bundle.assistant.take_action(increment_turn=False)
-                        action = int(action)
+
+                        _action, _reward = env.unwrapped.bundle.assistant.take_action( agent_observation = None, agent_state = None, increment_turn=False)
+
+                        # Collect action_wrappers.action
+
+
+                        # Should be a gym-compatible action with wrappers applied
+
+                        print(type(_action))
+                        action = _action
                     else:
                         action, _state = expert.predict(obs, deterministic=deterministic)
 
@@ -164,23 +171,8 @@ class DAgger:
 
                 n_steps += 1
 
-                # action = action.squeeze()
-
-                # if isinstance(obs, torch.Tensor) or isinstance(obs, np.ndarray):
-                #     obs = obs.squeeze()
-                # else:
-                #     for k, v in obs.items():
-                #         if len(v.squeeze().shape):
-                #             obs[k] = v.squeeze()
-                #         else:
-                #             obs[k] = v.squeeze(-1).squeeze(-1)
-                            # print(v.squeeze(-1).squeeze(-1).shape)
-
                 # if expert_chose:
                 expert_data[-1].append({"acts": action, "obs": obs})
-
-                # Handle timeout by bootstraping with value function
-                # see GitHub issue #633
 
                 if done:
                     env.reset()
@@ -211,3 +203,7 @@ class DAgger:
         expert_data = flatten_expert_data
 
         return expert_data
+
+    @property
+    def policy(self):
+        return self.bc_trainer.policy
