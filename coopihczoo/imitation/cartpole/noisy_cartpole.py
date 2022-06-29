@@ -70,7 +70,7 @@ class NoisyCartPoleEnv(gym.Env):
         self.force_mag = 10.0
         self.tau = 0.02  # seconds between state updates
         self.kinematics_integrator = "euler"
-        self.rng = np.random.default_rng()
+        self.rng = np.random.default_rng(seed)
         self.noise_scale = 1 if scale is None else scale
 
         # Angle at which to fail the episode
@@ -122,7 +122,7 @@ class NoisyCartPoleEnv(gym.Env):
         xacc = (
             temp
             - self.polemass_length * thetaacc * costheta / self.total_mass
-            + self.scale * self.rng.random()
+            + self.noise_scale * self.rng.random()
         )
 
         if self.kinematics_integrator == "euler":
