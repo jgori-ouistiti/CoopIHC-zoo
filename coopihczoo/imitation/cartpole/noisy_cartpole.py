@@ -11,7 +11,7 @@ from gym.utils import seeding
 import numpy as np
 
 
-class CartPoleEnv(gym.Env):
+class NoisyCartPoleEnv(gym.Env):
     """
     Description:
         A pole is attached by an un-actuated joint to a cart, which moves along
