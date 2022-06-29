@@ -13,7 +13,7 @@ from stable_baselines3 import PPO
 from stable_baselines3.common.monitor import Monitor
 
 from coopihc import Bundle, TrainGym
-from coopihc.bundle.wrappers.Train import apply_wrappers
+from coopihc.bundle.wrappers.Train import apply_wrappers, WrapperReferencer
 
 from coopihczoo.imitation.core.behavioral_cloning import BC, sample_expert
 
@@ -33,15 +33,6 @@ obs_keys = (
     "task_state__targets",
     "user_action__action",
 )
-
-
-class WrapperReferencer:
-    @property
-    def upper_env(self):
-        return self.upper_env
-
-    def __init__(self, env):
-        env.upper_env = self
 
 
 class AssistantActionWrapper(ActionWrapper, WrapperReferencer):
@@ -78,53 +69,12 @@ def make_env(seed):
     )
 
     env = TrainGym(bundle, train_user=False, train_assistant=True)
-    print(env.outer_env)
-    # env = FlattenObservation(FilterObservation(env, obs_keys))
+    env = FlattenObservation(FilterObservation(env, obs_keys))
     env = AssistantActionWrapper(env)
-    print(env.outer_env)
 
     # Use env_checker from stable_baselines3 to verify that the env adheres to the Gym API
     check_env(env)
     return env
-
-
-# task = SimplePointingTask(**config_task)
-# user = CarefulPointer(**config_user)
-# assistant = BIGGain()
-# bundle = Bundle(
-#     seed=None,
-#     task=task,
-#     user=user,
-#     assistant=assistant,
-#     random_reset=True,
-#     reset_turn=3,
-#     reset_skip_user_step=False,
-# )
-
-# env = TrainGym(bundle, train_user=False, train_assistant=True)
-# new_env = AssistantActionWrapper(env)
-
-env = make_env(None)
-exit()
-obs = env.reset()
-_action, reward = env.bundle.assistant.take_action(increment_turn=False)
-assistant = env.bundle.assistant
-
-wrapped_action = apply_wrappers(_action, env)
-self = assistant
-take_action = self.take_action(agent_observation=obs, increment_turn=False)[0]
-another_action = apply_wrappers(take_action, self.bundle.trainer.outer_env)
-other_action, state = assistant.predict(obs, increment_turn=False)
-
-# env = make_env(None)
-# obs = env.reset()
-# _action, reward = env.bundle.assistant.take_action(increment_turn=False)
-# assistant = env.bundle.assistant
-
-# action = apply_wrappers(_action, env)
-
-# other_action, state = assistant.predict(obs, increment_turn=False)
-exit()
 
 
 def main():
