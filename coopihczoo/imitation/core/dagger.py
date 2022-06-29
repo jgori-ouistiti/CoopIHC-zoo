@@ -153,21 +153,19 @@ class DAgger:
                 else:
                     # Expert takes the decision
                     # expert_chose = True
-                    if isinstance(expert, coopihc.BaseAgent):
-
-                        _action, _reward = env.unwrapped.bundle.assistant.take_action(agent_observation=None,
-                                                                                      agent_state=None,
-                                                                                      increment_turn=False)
-
-                        # Collect action_wrappers.action
-
-
-                        # Should be a gym-compatible action with wrappers applied
-
-                        print(type(_action))
-                        action = _action
-                    else:
-                        action, _state = expert.predict(obs, deterministic=deterministic)
+                    # if isinstance(expert, coopihc.BaseAgent):
+                    #
+                    #     _action, _reward = env.unwrapped.bundle.assistant.take_action(agent_observation=None,
+                    #                                                                   agent_state=None,
+                    #                                                                   increment_turn=False)
+                    #
+                    #     # Collect action_wrappers.action
+                    #     # Should be a gym-compatible action with wrappers applied
+                    #
+                    #     print(type(_action))
+                    #     action = _action
+                    # else:
+                    action, _state = expert.predict(obs, deterministic=deterministic)
 
                 new_obs, reward, done, info = env.step(action)
 

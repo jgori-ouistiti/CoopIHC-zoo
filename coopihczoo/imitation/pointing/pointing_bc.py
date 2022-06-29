@@ -65,7 +65,7 @@ def make_env(seed):
         reset_skip_user_step=False,
     )
 
-    env = TrainGym(bundle, train_user=False, train_assistant=True)
+    env = bundle.convert_to_gym_env(train_user=False, train_assistant=True)
 
     env = FlattenObservation(FilterObservation(env, obs_keys))
     env = AssistantActionWrapper(env)
@@ -78,7 +78,7 @@ def make_env(seed):
 def main():
 
     seed = 123
-    expert_sampling_n_episode = 50
+    expert_sampling_n_episode = 1e4
 
     expert_kwargs = dict(
             seed=seed,
