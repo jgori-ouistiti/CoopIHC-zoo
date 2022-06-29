@@ -1,3 +1,5 @@
+import os
+
 import gym
 
 from stable_baselines3 import PPO
@@ -6,34 +8,20 @@ from stable_baselines3.common.evaluation import evaluate_policy
 from stable_baselines3.common.monitor import Monitor
 
 from coopihczoo.imitation.core.dagger import DAgger
-
-
-def make_env(seed):
-    env = gym.make("CartPole-v1")
-    env.seed(seed=seed)
-    return env
+from cartpole_bc_wo_coopihc import make_env, get_expert_config
 
 
 def main():
 
     seed = 123
-    expert_total_timesteps = 10000
+    expert_total_timesteps = 1e6
     dagger_training_n_episode = 5000
 
-    expert_kwargs = dict(
-            seed=seed,
-            policy='MlpPolicy',
-            n_steps=32,
-            batch_size=32,
-            gae_lambda=0.8,
-            gamma=0.98,
-            n_epochs=20,
-            ent_coef=0.0,
-            learning_rate=0.001,
-            clip_range=0.2
-    )
+    env_name = "LunarLander-v2"
 
-    env = make_env(seed=seed)
+    expert_kwargs = get_expert_config(seed=seed, env_name=env_name)
+
+    env = make_env(seed=seed, env_name=env_name)
     expert = PPO(env=env, **expert_kwargs)
 
     reward, _ = evaluate_policy(expert.policy, Monitor(env), n_eval_episodes=50)
@@ -45,7 +33,12 @@ def main():
     reward, _ = evaluate_policy(expert.policy, Monitor(env), n_eval_episodes=50)
     print(f"Reward expert after training: {reward}")
 
-    env = make_env(seed=seed)
+    print("Saving the expert...")
+    os.makedirs("tmp", exist_ok=True)
+    expert.save(f"tmp/lunar_lander_expert_{int(expert_total_timesteps)}")
+    # expert.load(f"tmp/lunar_lander_expert_{int(expert_total_timesteps)}")
+
+    env = make_env(seed=seed, env_name=env_name)
     novice = PPO(env=env, **expert_kwargs)
 
     reward, _ = evaluate_policy(novice.policy, Monitor(env), n_eval_episodes=50)

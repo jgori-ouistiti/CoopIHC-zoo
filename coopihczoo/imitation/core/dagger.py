@@ -155,7 +155,9 @@ class DAgger:
                     # expert_chose = True
                     if isinstance(expert, coopihc.BaseAgent):
 
-                        _action, _reward = env.unwrapped.bundle.assistant.take_action( agent_observation = None, agent_state = None, increment_turn=False)
+                        _action, _reward = env.unwrapped.bundle.assistant.take_action(agent_observation=None,
+                                                                                      agent_state=None,
+                                                                                      increment_turn=False)
 
                         # Collect action_wrappers.action
 

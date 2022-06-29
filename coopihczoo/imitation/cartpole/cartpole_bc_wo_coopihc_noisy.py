@@ -8,7 +8,7 @@ from stable_baselines3.common.monitor import Monitor
 from coopihczoo.imitation.core.behavioral_cloning import BC, sample_expert
 
 
-from noisy_cartpole import CartPoleModEnv
+from noisy_cartpole import NoisyCartPoleEnv
 
 
 def make_env(seed):
@@ -21,7 +21,7 @@ def make_env(seed):
     # 5 : # 10% sensor noise
     # 6 : # 0.1 var sensor noise
     # 7 : # 0.2 var sensor noise
-    env = CartPoleModEnv(case=3)
+    env = NoisyCartPoleEnv(scale=1.5)
     env.seed(seed=seed)
     return env
 
@@ -29,7 +29,7 @@ def make_env(seed):
 def main():
 
     seed = 123
-    expert_total_timesteps = 2000
+    expert_total_timesteps = 10000
     sample_expert_n_episode = 50
     sample_expert_n_timestep = None
 

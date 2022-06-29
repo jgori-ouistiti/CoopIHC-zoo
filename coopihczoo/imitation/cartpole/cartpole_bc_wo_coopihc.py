@@ -10,33 +10,59 @@ from coopihczoo.imitation.core.behavioral_cloning import \
     BC, sample_expert
 
 
-def make_env(seed):
-    env = gym.make("CartPole-v1")
+def make_env(seed, env_name):
+    env = gym.make(env_name)
     env.seed(seed=seed)
     return env
 
 
+def get_expert_config(seed, env_name):
+
+    if env_name == "CartPole-v1":
+
+        expert_kwargs = dict(
+                seed=seed,
+                policy='MlpPolicy',
+                n_steps=32,
+                batch_size=32,
+                gae_lambda=0.8,
+                gamma=0.98,
+                n_epochs=20,
+                ent_coef=0.0,
+                learning_rate=0.001,
+                clip_range=0.2
+        )
+
+    elif env_name == "LunarLander-v2":
+        expert_kwargs = dict(
+            seed=seed,
+            policy='MlpPolicy',
+            batch_size=32,
+            gae_lambda=0.95,
+            gamma=0.99,
+            n_epochs=10,
+            ent_coef=0.0,
+            learning_rate=3e-4,
+            clip_range=0.2
+        )
+
+    else:
+        raise ValueError
+
+    return expert_kwargs
+
 def main():
 
     seed = 123
-    expert_total_timesteps = 10000
+    expert_total_timesteps = 1e5
     sample_expert_n_episode = 50
     sample_expert_n_timestep = None
 
-    expert_kwargs = dict(
-            seed=seed,
-            policy='MlpPolicy',
-            n_steps=32,
-            batch_size=32,
-            gae_lambda=0.8,
-            gamma=0.98,
-            n_epochs=20,
-            ent_coef=0.0,
-            learning_rate=0.001,
-            clip_range=0.2
-    )
+    env_name = "LunarLander-v2"
 
-    env = make_env(seed=seed)
+    expert_kwargs = get_expert_config(seed, env_name)
+
+    env = make_env(seed=seed, env_name=env_name)
     expert = PPO(env=env, **expert_kwargs)
 
     reward, _ = evaluate_policy(expert.policy, Monitor(env), n_eval_episodes=50)
@@ -52,7 +78,7 @@ def main():
                                 n_episode=sample_expert_n_episode,
                                 n_timestep=sample_expert_n_timestep)
 
-    env = make_env(seed=seed)
+    env = make_env(seed=seed, env_name=env_name)
     novice = PPO(env=env, **expert_kwargs)
 
     reward, _ = evaluate_policy(novice.policy, Monitor(env), n_eval_episodes=50)
