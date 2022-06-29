@@ -15,7 +15,9 @@ def main():
 
     seed = 123
     expert_total_timesteps = 1e6
-    dagger_training_n_episode = 5000
+    dagger_training_n_episode = 1e4
+
+    eval_expert = True
 
     env_name = "LunarLander-v2"
 
@@ -24,19 +26,29 @@ def main():
     env = make_env(seed=seed, env_name=env_name)
     expert = PPO(env=env, **expert_kwargs)
 
-    reward, _ = evaluate_policy(expert.policy, Monitor(env), n_eval_episodes=50)
-    print(f"Reward expert before training: {reward}")
+    saving_path = f"tmp/lunar_lander_expert_{int(expert_total_timesteps)}"
 
-    print("Training the expert...")
-    expert.learn(total_timesteps=expert_total_timesteps)  # Note: set to 100000 to train a proficient expert
+    if os.path.exists(f"{saving_path}.zip"):
 
-    reward, _ = evaluate_policy(expert.policy, Monitor(env), n_eval_episodes=50)
-    print(f"Reward expert after training: {reward}")
+        print("Loading the model...")
+        expert = PPO.load(saving_path)
 
-    print("Saving the expert...")
-    os.makedirs("tmp", exist_ok=True)
-    expert.save(f"tmp/lunar_lander_expert_{int(expert_total_timesteps)}")
-    # expert.load(f"tmp/lunar_lander_expert_{int(expert_total_timesteps)}")
+    else:
+        reward, _ = evaluate_policy(expert.policy, Monitor(env), n_eval_episodes=50)
+        print(f"Reward expert before training: {reward}")
+
+        print("Training the expert...")
+        expert.learn(total_timesteps=expert_total_timesteps)  # Note: set to 100000 to train a proficient expert
+
+        print("Saving the expert...")
+        os.makedirs("tmp", exist_ok=True)
+        expert.save(saving_path)
+        # expert.load(f"tmp/lunar_lander_expert_{int(expert_total_timesteps)}")
+
+    if eval_expert:
+        print("Evaluating expert...")
+        reward, _ = evaluate_policy(expert.policy, Monitor(env), n_eval_episodes=50)
+        print(f"Reward expert after training: {reward}")
 
     env = make_env(seed=seed, env_name=env_name)
     novice = PPO(env=env, **expert_kwargs)
