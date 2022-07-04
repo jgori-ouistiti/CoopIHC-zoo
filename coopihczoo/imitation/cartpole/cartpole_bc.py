@@ -72,8 +72,10 @@ def make_env(seed):
     env = FlattenObservation(CustomActionWrapper(env))
 
     # Not necessary in the general case but here, we want the same seed
+    #######################################
     env.bundle.task.env = gym.make("CartPole-v1")
     env.bundle.task.env.seed(seed)
+    #######################################
     return env
 
 
