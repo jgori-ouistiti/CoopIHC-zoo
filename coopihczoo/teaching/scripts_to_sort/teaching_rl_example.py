@@ -29,8 +29,8 @@ def make_env():
         train_user=False,
         train_assistant=True)
 
-    # # Use env_checker from stable_baselines3 to verify that the env adheres to the Gym API
-    # check_env(env, warn=False)
+    # # Use env_checker from stable_baselines3 to verify that the make_env adheres to the Gym API
+    # check_env(make_env, warn=False)
 
     env = FilterObservation(
         env,
@@ -44,8 +44,8 @@ def run_rl():
 
     os.makedirs("tmp", exist_ok=True)
 
-    # env = Monitor(env, filename="tmp/log")
-    # env = make_env()
+    # make_env = Monitor(make_env, filename="tmp/log")
+    # make_env = make_env()
 
     envs = [make_env for _ in range(4)]
 

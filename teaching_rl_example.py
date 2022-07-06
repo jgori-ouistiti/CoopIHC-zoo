@@ -40,12 +40,12 @@ def make_env():
 
     env = AssistantActionWrapper(env)
 
-    # env = FilterObservation(
-    #     env,
+    # make_env = FilterObservation(
+    #     make_env,
     #     ("memory", "progress", ))
 
-    # # Use env_checker from stable_baselines3 to verify that the env adheres to the Gym API
-    # check_env(env, warn=False)
+    # # Use env_checker from stable_baselines3 to verify that the make_env adheres to the Gym API
+    # check_env(make_env, warn=False)
 
     return env
 
@@ -54,7 +54,7 @@ def run_rl():
 
     os.makedirs("tmp", exist_ok=True)
 
-    # env = Monitor(env, filename="tmp/log")
+    # make_env = Monitor(make_env, filename="tmp/log")
     env = make_env()
     ts = env.bundle.task.state
     total_n_iter = int(ts.n_iter_per_ss * ts.n_session)
@@ -63,7 +63,7 @@ def run_rl():
     envs = [make_env for _ in range(n_env)]
     env = SubprocVecEnv(envs)
 
-    # env = DummyVecEnv([make_env])
+    # make_env = DummyVecEnv([make_env])
 
     env = VecMonitor(env, filename="tmp/log")
 

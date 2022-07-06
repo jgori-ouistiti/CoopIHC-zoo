@@ -1,11 +1,12 @@
 from coopihczoo.imitation.core.run import run_dagger_ppo
-from coopihczoo.imitation.pointing.pointing_bc import make_env
+
+from coopihczoo.imitation.pointing.make_env.make_env import make_env
 
 
 def main():
 
     seed = 123
-    dagger_training_n_episode = 1e5
+    dagger_total_timesteps = 1e5
     expert_total_timesteps = 1e5
 
     config_task = dict(gridsize=4, number_of_targets=1, mode="position")
@@ -24,7 +25,7 @@ def main():
         make_env=lambda: make_env(config_task=config_task,
                                   config_user=config_user,
                                   seed=seed),
-        dagger_training_n_episode=dagger_training_n_episode,
+        dagger_total_timesteps=dagger_total_timesteps,
         expert_total_timesteps=expert_total_timesteps
     )
 

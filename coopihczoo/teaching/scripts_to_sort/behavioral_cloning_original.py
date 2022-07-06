@@ -265,7 +265,7 @@ def check_for_correct_spaces(env,  #: GymEnv,
                              action_space):  # gym.spaces.Space) -> None:
     """
     Checks that the environment has same spaces as provided ones. Used by BaseAlgorithm to check if
-    spaces match after loading the model with given env.
+    spaces match after loading the model with given make_env.
     Checked parameters:
     - observation_space
     - action_space

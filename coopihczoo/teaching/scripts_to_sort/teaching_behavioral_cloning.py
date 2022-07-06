@@ -128,7 +128,7 @@ def main():
 
     # model.learn(total_timesteps=int(10e5), )
     #
-    # reward, _ = evaluate_policy(model.policy, Monitor(env), n_eval_episodes=3, render=False)
+    # reward, _ = evaluate_policy(model.policy, Monitor(make_env), n_eval_episodes=3, render=False)
     # print(f"Reward after extended training: {reward}")
 
 

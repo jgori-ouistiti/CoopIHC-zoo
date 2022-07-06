@@ -103,23 +103,14 @@ def run_behavioral_cloning_ppo(
     return novice
 
 
-def run_dagger_ppo(
-        saving_path,
+def train_novice_dagger_ppo(
+        total_timesteps,
         make_env,
-        eval_expert=True,
-        expert_total_timesteps=100000,
-        dagger_training_n_episode=5000,
-        expert_kwargs=None):
-
-    expert = _get_expert(
-        saving_path=saving_path,
-        make_env=make_env,
-        expert_kwargs=expert_kwargs,
-        expert_total_timesteps=expert_total_timesteps,
-        eval_expert=eval_expert)
+        novice_kwargs,
+        expert):
 
     env = make_env()
-    novice = PPO(env=env, **expert_kwargs)
+    novice = PPO(env=env, **novice_kwargs)
 
     reward, _ = evaluate_policy(novice.policy, Monitor(env), n_eval_episodes=50)
     print(f"Reward novice before training: {reward}")
@@ -130,7 +121,37 @@ def run_dagger_ppo(
         policy=novice.policy)
 
     print("Training the novice's policy using dagger...")
-    dagger_trainer.train(total_timesteps=dagger_training_n_episode)
+    dagger_trainer.train(total_timesteps=total_timesteps)
 
     reward, _ = evaluate_policy(novice.policy, Monitor(env), n_eval_episodes=50)
     print(f"Reward novice after training: {reward}")
+
+    return novice
+
+
+def run_dagger_ppo(
+        saving_path,
+        make_env,
+        eval_expert=True,
+        expert_total_timesteps=100000,
+        dagger_total_timesteps=5000,
+        expert_kwargs=None,
+        novice_kwargs=None):
+
+    if novice_kwargs is None:
+        novice_kwargs = expert_kwargs
+
+    expert = _get_expert(
+        saving_path=saving_path,
+        make_env=make_env,
+        expert_kwargs=expert_kwargs,
+        expert_total_timesteps=expert_total_timesteps,
+        eval_expert=eval_expert)
+
+    novice = train_novice_dagger_ppo(
+        total_timesteps=dagger_total_timesteps,
+        expert=expert,
+        novice_kwargs=novice_kwargs,
+        make_env=make_env)
+
+    return novice

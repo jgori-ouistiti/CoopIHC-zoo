@@ -34,7 +34,7 @@ def main():
 
     # novice = PPO(
     #     policy=MlpPolicy,
-    #     env=env,
+    #     make_env=make_env,
     #     # seed=0,
     #     # batch_size=64,
     #     # ent_coef=0.0,

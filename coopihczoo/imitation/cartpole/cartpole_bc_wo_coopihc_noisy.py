@@ -12,7 +12,7 @@ from noisy_cartpole import NoisyCartPoleEnv
 
 
 def make_env(seed):
-    # env = gym.make("CartPole-v1")
+    # make_env = gym.make("CartPole-v1")
 
     # 1 : # v-0 / no noise,
     # 2 : #  5% actuator noise

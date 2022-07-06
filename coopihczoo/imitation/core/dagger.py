@@ -46,11 +46,11 @@ class DAgger:
     ):
         self.env = env
         self.expert = expert
-        # if expert.observation_space != self.env.observation_space:
+        # if expert.observation_space != self.make_env.observation_space:
         #     raise ValueError(
         #         "Mismatched observation space between expert_policy and venv",
         #     )
-        # if expert.action_space != self.env.action_space:
+        # if expert.action_space != self.make_env.action_space:
         #     raise ValueError("Mismatched action space between expert_policy and venv")
 
         if expert_trajs is None:
@@ -132,7 +132,7 @@ class DAgger:
 
         beta = self.beta_schedule(self.round_num)
 
-        # env = VecMonitor(DummyVecEnv([lambda: env]))
+        # make_env = VecMonitor(DummyVecEnv([lambda: make_env]))
 
         obs = env.reset()
 
@@ -154,7 +154,7 @@ class DAgger:
                     # expert_chose = True
                     # if isinstance(expert, coopihc.BaseAgent):
                     #
-                    #     _action, _reward = env.unwrapped.bundle.assistant.take_action(agent_observation=None,
+                    #     _action, _reward = make_env.unwrapped.bundle.assistant.take_action(agent_observation=None,
                     #                                                                   agent_state=None,
                     #                                                                   increment_turn=False)
                     #

@@ -1,23 +1,11 @@
-import numpy as np
-
-from gym import ActionWrapper
-from gym.spaces import Box
-from gym.wrappers import FilterObservation, FlattenObservation
-
 from stable_baselines3.common.evaluation import evaluate_policy
 from stable_baselines3.common.monitor import Monitor
 
-
-from coopihc import Bundle, WrapperReferencer
-
-from coopihc.examples.simplepointing.users import CarefulPointer
-from coopihc.examples.simplepointing.envs import SimplePointingTask
-from coopihc.examples.simplepointing.assistants import BIGGain
-
-from coopihczoo.imitation.core.run import run_behavioral_cloning_ppo
-from coopihczoo.imitation.pointing.pointing_bc import make_env
 from coopihczoo.imitation.core.run import train_novice_behavioral_cloning_ppo
 from coopihczoo.imitation.core.behavioral_cloning import sample_expert
+
+from coopihczoo.imitation.pointing.make_env.make_env import make_env
+
 
 def main():
 
@@ -63,8 +51,7 @@ def main():
                                   config_task=config_task,
                                   config_user=config_user),
         expert_data=expert_data,
-        novice_kwargs=novice_kwargs
-    )
+        novice_kwargs=novice_kwargs)
 
 
 if __name__ == "__main__":

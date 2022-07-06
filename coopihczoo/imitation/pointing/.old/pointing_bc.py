@@ -63,9 +63,9 @@ def make_env():
 
     env = TrainGym(bundle, train_user=False, train_assistant=True)
 
-    # # Use env_checker from stable_baselines3 to verify that the env adheres to the Gym API
+    # # Use env_checker from stable_baselines3 to verify that the make_env adheres to the Gym API
 
-    # check_env(env, warn=False)
+    # check_env(make_env, warn=False)
 
     env = FilterObservation(env, obs_keys)
 
