@@ -12,8 +12,7 @@ from stable_baselines3.common.monitor import Monitor
 
 from coopihc import Bundle, TrainGym
 
-from coopihczoo.imitation.core.behavioral_cloning import \
-    BC, sample_expert
+from coopihczoo.imitation.core.behavioral_cloning import BC, sample_expert
 
 from coopihc.examples.simplepointing.users import CarefulPointer
 from coopihc.examples.simplepointing.envs import SimplePointingTask
@@ -35,15 +34,13 @@ class AssistantActionWrapper(ActionWrapper):
     def __init__(self, env):
         super().__init__(env)
         _as = env.action_space["assistant_action__action"]
-        self.action_space = Box(
-            low=-1, high=1, shape=_as.shape, dtype=np.float32
-        )
+        self.action_space = Box(low=-1, high=1, shape=_as.shape, dtype=np.float32)
         self.low, self.high = _as.low, _as.high
         self.half_amp = (self.high - self.low) / 2
         self.mean = (self.high + self.low) / 2
 
     def action(self, action):
-        return {"assistant_action__action": int(action*self.half_amp + self.mean)}
+        return {"assistant_action__action": int(action * self.half_amp + self.mean)}
 
     def reverse_action(self, action):
         raw = action["assistant_action__action"]
@@ -81,8 +78,8 @@ def main():
     expert_sampling_n_episode = 1e4
 
     expert_kwargs = dict(
-            seed=seed,
-            policy='MlpPolicy',
+        seed=seed,
+        policy="MlpPolicy",
     )
 
     env = make_env(seed=seed)
@@ -97,7 +94,9 @@ def main():
     reward, _ = evaluate_policy(expert.policy, Monitor(env), n_eval_episodes=50)
     print(f"Reward expert after training: {reward}")
 
-    expert_data = sample_expert(env=env, expert=expert, n_episode=expert_sampling_n_episode)
+    expert_data = sample_expert(
+        env=env, expert=expert, n_episode=expert_sampling_n_episode
+    )
 
     env = make_env(seed=seed)
     novice = PPO(env=env, **expert_kwargs)
@@ -109,7 +108,8 @@ def main():
         observation_space=env.observation_space,
         action_space=env.action_space,
         demonstrations=expert_data,
-        policy=novice.policy)
+        policy=novice.policy,
+    )
 
     print("Training the novice's policy using behavior cloning...")
     bc_trainer.train()
