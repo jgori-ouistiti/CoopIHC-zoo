@@ -6,7 +6,7 @@ from gym.wrappers import FilterObservation, FlattenObservation
 
 from stable_baselines3.common.env_checker import check_env
 
-from coopihc import Bundle
+from coopihc import Bundle, WrapperReferencer
 
 from coopihc.examples.simplepointing.users import CarefulPointer
 from coopihc.examples.simplepointing.envs import SimplePointingTask
@@ -19,17 +19,37 @@ def make_env(seed,
              config_task,
              config_user):
 
-    class AssistantActionWrapper(ActionWrapper):
+    # class AssistantActionWrapper(ActionWrapper):
+    #     def __init__(self, env):
+    #         super().__init__(env)
+    #         _as = env.action_space["assistant_action__action"]
+    #         self.action_space = Box(low=-1, high=1, shape=_as.shape, dtype=np.float32)
+    #         self.low, self.high = _as.low, _as.high
+    #         self.half_amp = (self.high - self.low) / 2
+    #         self.mean = (self.high + self.low) / 2
+    #
+    #     def action(self, action):
+    #         return {"assistant_action__action": int(action * self.half_amp + self.mean)}
+    #
+    #     def reverse_action(self, action):
+    #         raw = action["assistant_action__action"]
+    #         return (raw - self.mean) / self.half_amp
+
+    class AssistantActionWrapper(ActionWrapper, WrapperReferencer):
         def __init__(self, env):
-            super().__init__(env)
+            ActionWrapper.__init__(self, env)
+            WrapperReferencer.__init__(self, env)
+
             _as = env.action_space["assistant_action__action"]
-            self.action_space = Box(low=-1, high=1, shape=_as.shape, dtype=np.float32)
+            self.action_space = Box(low=-1, high=1, shape=_as.shape,
+                                    dtype=np.float32)
             self.low, self.high = _as.low, _as.high
             self.half_amp = (self.high - self.low) / 2
             self.mean = (self.high + self.low) / 2
 
         def action(self, action):
-            return {"assistant_action__action": int(action * self.half_amp + self.mean)}
+            return {"assistant_action__action": int(action * self.half_amp
+                                                    + self.mean)}
 
         def reverse_action(self, action):
             raw = action["assistant_action__action"]
@@ -68,10 +88,10 @@ def make_env(seed,
 def main():
 
     seed = 123
-    sample_expert_n_episode = 1e4
+    sample_expert_n_episode = 1e5
     expert_total_timesteps = 1e5
 
-    config_task = dict(gridsize=4, number_of_targets=1, mode="position")
+    config_task = dict(gridsize=12, number_of_targets=3, mode="position")
     config_user = dict(error_rate=0.01)
 
     expert_kwargs = dict(

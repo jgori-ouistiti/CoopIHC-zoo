@@ -1,7 +1,6 @@
 import numpy as np
 import torch
 
-import coopihc.agents.BaseAgent
 from coopihczoo.imitation.core.behavioral_cloning import BC
 
 

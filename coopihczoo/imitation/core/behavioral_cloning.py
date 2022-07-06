@@ -8,8 +8,6 @@ from stable_baselines3.common.policies import ActorCriticPolicy
 from stable_baselines3.common import policies, utils
 from stable_baselines3.common.vec_env import VecMonitor, DummyVecEnv
 
-import coopihc
-
 
 def sample_expert(env, expert, n_episode=50, n_timestep=None, deterministic=False):
 

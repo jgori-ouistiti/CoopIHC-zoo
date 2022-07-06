@@ -1,5 +1,4 @@
 import os
-import pickle
 
 from stable_baselines3 import PPO
 from stable_baselines3.common.evaluation import evaluate_policy
@@ -102,7 +101,6 @@ def run_behavioral_cloning_ppo(
         expert_data=expert_data)
 
     return novice
-
 
 
 def run_dagger_ppo(
