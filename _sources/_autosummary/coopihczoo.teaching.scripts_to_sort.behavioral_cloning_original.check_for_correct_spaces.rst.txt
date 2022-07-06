@@ -1,0 +1,6 @@
+coopihczoo.teaching.scripts\_to\_sort.behavioral\_cloning\_original.check\_for\_correct\_spaces
+===============================================================================================
+
+.. currentmodule:: coopihczoo.teaching.scripts_to_sort.behavioral_cloning_original
+
+.. autofunction:: check_for_correct_spaces

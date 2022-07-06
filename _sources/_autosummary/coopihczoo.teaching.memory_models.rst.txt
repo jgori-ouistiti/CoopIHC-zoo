@@ -1,0 +1,30 @@
+coopihczoo.teaching.memory\_models
+==================================
+
+.. automodule:: coopihczoo.teaching.memory_models
+
+   
+   
+   
+
+   
+   
+   
+
+   
+   
+   
+
+   
+   
+   
+
+
+
+.. autosummary::
+   :toctree:
+   :template: custom-module-template.rst
+   :recursive:
+
+   coopihczoo.teaching.memory_models.memory_models
+

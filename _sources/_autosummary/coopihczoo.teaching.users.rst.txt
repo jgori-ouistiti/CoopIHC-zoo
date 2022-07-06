@@ -1,0 +1,30 @@
+coopihczoo.teaching.users
+=========================
+
+.. automodule:: coopihczoo.teaching.users
+
+   
+   
+   
+
+   
+   
+   
+
+   
+   
+   
+
+   
+   
+   
+
+
+
+.. autosummary::
+   :toctree:
+   :template: custom-module-template.rst
+   :recursive:
+
+   coopihczoo.teaching.users.users
+

@@ -1,0 +1,33 @@
+coopihczoo.imitation.pointing
+=============================
+
+.. automodule:: coopihczoo.imitation.pointing
+
+   
+   
+   
+
+   
+   
+   
+
+   
+   
+   
+
+   
+   
+   
+
+
+
+.. autosummary::
+   :toctree:
+   :template: custom-module-template.rst
+   :recursive:
+
+   coopihczoo.imitation.pointing.pointing_bc
+   coopihczoo.imitation.pointing.pointing_bc_big_is_expert
+   coopihczoo.imitation.pointing.pointing_dagger
+   coopihczoo.imitation.pointing.pointing_dagger_big
+

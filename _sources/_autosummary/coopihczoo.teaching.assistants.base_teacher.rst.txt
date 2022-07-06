@@ -1,0 +1,23 @@
+coopihczoo.teaching.assistants.base\_teacher
+============================================
+
+.. automodule:: coopihczoo.teaching.assistants.base_teacher
+
+   
+   
+   
+
+   
+   
+   
+
+   
+   
+   
+
+   
+   
+   
+
+
+

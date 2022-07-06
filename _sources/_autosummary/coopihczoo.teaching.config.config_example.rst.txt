@@ -1,0 +1,23 @@
+coopihczoo.teaching.config.config\_example
+==========================================
+
+.. automodule:: coopihczoo.teaching.config.config_example
+
+   
+   
+   
+
+   
+   
+   
+
+   
+   
+   
+
+   
+   
+   
+
+
+

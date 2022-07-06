@@ -1,0 +1,44 @@
+coopihczoo.teaching.action\_wrapper.action\_wrapper.AssistantActionWrapper
+==========================================================================
+
+.. currentmodule:: coopihczoo.teaching.action_wrapper.action_wrapper
+
+.. autoclass:: AssistantActionWrapper
+   :members:
+   :show-inheritance:
+   :inherited-members:
+   :special-members: __call__, __add__, __mul__
+
+   
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+      :nosignatures:
+   
+      ~AssistantActionWrapper.action
+      ~AssistantActionWrapper.class_name
+      ~AssistantActionWrapper.close
+      ~AssistantActionWrapper.compute_reward
+      ~AssistantActionWrapper.render
+      ~AssistantActionWrapper.reset
+      ~AssistantActionWrapper.reverse_action
+      ~AssistantActionWrapper.seed
+      ~AssistantActionWrapper.step
+   
+   
+
+   
+   
+   .. rubric:: Attributes
+
+   .. autosummary::
+   
+      ~AssistantActionWrapper.action_space
+      ~AssistantActionWrapper.metadata
+      ~AssistantActionWrapper.observation_space
+      ~AssistantActionWrapper.reward_range
+      ~AssistantActionWrapper.spec
+      ~AssistantActionWrapper.unwrapped
+   
+   

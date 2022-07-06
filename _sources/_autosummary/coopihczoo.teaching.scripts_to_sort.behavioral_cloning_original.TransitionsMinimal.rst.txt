@@ -1,0 +1,35 @@
+coopihczoo.teaching.scripts\_to\_sort.behavioral\_cloning\_original.TransitionsMinimal
+======================================================================================
+
+.. currentmodule:: coopihczoo.teaching.scripts_to_sort.behavioral_cloning_original
+
+.. autoclass:: TransitionsMinimal
+   :members:
+   :show-inheritance:
+   :inherited-members:
+   :special-members: __call__, __add__, __mul__
+
+   
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+      :nosignatures:
+   
+      ~TransitionsMinimal.register_datapipe_as_function
+      ~TransitionsMinimal.register_function
+   
+   
+
+   
+   
+   .. rubric:: Attributes
+
+   .. autosummary::
+   
+      ~TransitionsMinimal.functions
+      ~TransitionsMinimal.obs
+      ~TransitionsMinimal.acts
+      ~TransitionsMinimal.infos
+   
+   

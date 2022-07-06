@@ -1,0 +1,6 @@
+coopihczoo.teaching.scripts\_to\_sort.behavioral\_cloning\_original.dataclass\_quick\_asdict
+============================================================================================
+
+.. currentmodule:: coopihczoo.teaching.scripts_to_sort.behavioral_cloning_original
+
+.. autofunction:: dataclass_quick_asdict

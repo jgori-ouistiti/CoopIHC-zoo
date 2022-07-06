@@ -1,0 +1,37 @@
+coopihczoo.teaching.scripts\_to\_sort.behavioral\_cloning\_original.Transitions
+===============================================================================
+
+.. currentmodule:: coopihczoo.teaching.scripts_to_sort.behavioral_cloning_original
+
+.. autoclass:: Transitions
+   :members:
+   :show-inheritance:
+   :inherited-members:
+   :special-members: __call__, __add__, __mul__
+
+   
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+      :nosignatures:
+   
+      ~Transitions.register_datapipe_as_function
+      ~Transitions.register_function
+   
+   
+
+   
+   
+   .. rubric:: Attributes
+
+   .. autosummary::
+   
+      ~Transitions.functions
+      ~Transitions.next_obs
+      ~Transitions.dones
+      ~Transitions.obs
+      ~Transitions.acts
+      ~Transitions.infos
+   
+   

@@ -1,0 +1,30 @@
+coopihczoo.teaching.action\_wrapper
+===================================
+
+.. automodule:: coopihczoo.teaching.action_wrapper
+
+   
+   
+   
+
+   
+   
+   
+
+   
+   
+   
+
+   
+   
+   
+
+
+
+.. autosummary::
+   :toctree:
+   :template: custom-module-template.rst
+   :recursive:
+
+   coopihczoo.teaching.action_wrapper.action_wrapper
+

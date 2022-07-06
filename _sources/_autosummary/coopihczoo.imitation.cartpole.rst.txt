@@ -1,0 +1,34 @@
+coopihczoo.imitation.cartpole
+=============================
+
+.. automodule:: coopihczoo.imitation.cartpole
+
+   
+   
+   
+
+   
+   
+   
+
+   
+   
+   
+
+   
+   
+   
+
+
+
+.. autosummary::
+   :toctree:
+   :template: custom-module-template.rst
+   :recursive:
+
+   coopihczoo.imitation.cartpole.cartpole_bc
+   coopihczoo.imitation.cartpole.cartpole_bc_wo_coopihc
+   coopihczoo.imitation.cartpole.cartpole_bc_wo_coopihc_noisy
+   coopihczoo.imitation.cartpole.cartpole_dagger_wo_coopihc
+   coopihczoo.imitation.cartpole.noisy_cartpole
+

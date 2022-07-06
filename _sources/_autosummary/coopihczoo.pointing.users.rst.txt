@@ -1,0 +1,31 @@
+coopihczoo.pointing.users
+=========================
+
+.. automodule:: coopihczoo.pointing.users
+
+   
+   
+   
+
+   
+   
+   
+
+   
+   
+   
+
+   
+   
+   
+
+
+
+.. autosummary::
+   :toctree:
+   :template: custom-module-template.rst
+   :recursive:
+
+   coopihczoo.pointing.users.old_zoo_users
+   coopihczoo.pointing.users.users
+

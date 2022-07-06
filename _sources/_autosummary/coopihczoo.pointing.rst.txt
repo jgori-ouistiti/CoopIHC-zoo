@@ -1,0 +1,33 @@
+coopihczoo.pointing
+===================
+
+.. automodule:: coopihczoo.pointing
+
+   
+   
+   
+
+   
+   
+   
+
+   
+   
+   
+
+   
+   
+   
+
+
+
+.. autosummary::
+   :toctree:
+   :template: custom-module-template.rst
+   :recursive:
+
+   coopihczoo.pointing.assistants
+   coopihczoo.pointing.envs
+   coopihczoo.pointing.examples
+   coopihczoo.pointing.users
+

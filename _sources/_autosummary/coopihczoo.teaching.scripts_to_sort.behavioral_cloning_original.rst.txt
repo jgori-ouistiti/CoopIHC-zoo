@@ -1,0 +1,58 @@
+coopihczoo.teaching.scripts\_to\_sort.behavioral\_cloning\_original
+===================================================================
+
+.. automodule:: coopihczoo.teaching.scripts_to_sort.behavioral_cloning_original
+
+   
+   
+   
+
+   
+   
+   .. rubric:: Functions
+
+   .. autosummary::
+      :toctree:
+      :nosignatures:
+   
+      check_for_correct_spaces
+      dataclass_quick_asdict
+      flatten_trajectories
+      generate_trajectories
+      make_min_episodes
+      make_min_timesteps
+      make_sample_until
+      rollout
+      transitions_collate_fn
+      unwrap_traj
+   
+   
+
+   
+   
+   .. rubric:: Classes
+
+   .. autosummary::
+      :toctree:
+      :template: custom-class-template.rst
+      :nosignatures:
+   
+      BC
+      ConstantLRSchedule
+      EpochOrBatchIteratorWithProgress
+      FeedForward32Policy
+      RolloutInfoWrapper
+      Trajectory
+      TrajectoryAccumulator
+      TrajectoryWithRew
+      Transitions
+      TransitionsMinimal
+   
+   
+
+   
+   
+   
+
+
+

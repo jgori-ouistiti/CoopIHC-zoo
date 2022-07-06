@@ -1,0 +1,34 @@
+coopihczoo.imitation
+====================
+
+.. automodule:: coopihczoo.imitation
+
+   
+   
+   
+
+   
+   
+   
+
+   
+   
+   
+
+   
+   
+   
+
+
+
+.. autosummary::
+   :toctree:
+   :template: custom-module-template.rst
+   :recursive:
+
+   coopihczoo.imitation.cartpole
+   coopihczoo.imitation.core
+   coopihczoo.imitation.demo_behavioral_cloning
+   coopihczoo.imitation.demo_behavioral_cloning_handmade
+   coopihczoo.imitation.pointing
+

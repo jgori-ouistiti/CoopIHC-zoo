@@ -1,0 +1,42 @@
+coopihczoo.teaching.scripts\_to\_sort.behavioral\_cloning\_original.RolloutInfoWrapper
+======================================================================================
+
+.. currentmodule:: coopihczoo.teaching.scripts_to_sort.behavioral_cloning_original
+
+.. autoclass:: RolloutInfoWrapper
+   :members:
+   :show-inheritance:
+   :inherited-members:
+   :special-members: __call__, __add__, __mul__
+
+   
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+      :nosignatures:
+   
+      ~RolloutInfoWrapper.class_name
+      ~RolloutInfoWrapper.close
+      ~RolloutInfoWrapper.compute_reward
+      ~RolloutInfoWrapper.render
+      ~RolloutInfoWrapper.reset
+      ~RolloutInfoWrapper.seed
+      ~RolloutInfoWrapper.step
+   
+   
+
+   
+   
+   .. rubric:: Attributes
+
+   .. autosummary::
+   
+      ~RolloutInfoWrapper.action_space
+      ~RolloutInfoWrapper.metadata
+      ~RolloutInfoWrapper.observation_space
+      ~RolloutInfoWrapper.reward_range
+      ~RolloutInfoWrapper.spec
+      ~RolloutInfoWrapper.unwrapped
+   
+   

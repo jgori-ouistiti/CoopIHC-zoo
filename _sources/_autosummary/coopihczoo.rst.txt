@@ -1,0 +1,33 @@
+﻿coopihczoo
+==========
+
+.. automodule:: coopihczoo
+
+   
+   
+   
+
+   
+   
+   
+
+   
+   
+   
+
+   
+   
+   
+
+
+
+.. autosummary::
+   :toctree:
+   :template: custom-module-template.rst
+   :recursive:
+
+   coopihczoo.eye
+   coopihczoo.imitation
+   coopihczoo.pointing
+   coopihczoo.teaching
+

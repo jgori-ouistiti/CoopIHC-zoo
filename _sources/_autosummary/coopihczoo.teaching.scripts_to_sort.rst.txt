@@ -1,0 +1,37 @@
+coopihczoo.teaching.scripts\_to\_sort
+=====================================
+
+.. automodule:: coopihczoo.teaching.scripts_to_sort
+
+   
+   
+   
+
+   
+   
+   
+
+   
+   
+   
+
+   
+   
+   
+
+
+
+.. autosummary::
+   :toctree:
+   :template: custom-module-template.rst
+   :recursive:
+
+   coopihczoo.teaching.scripts_to_sort.behavioral_cloning_original
+   coopihczoo.teaching.scripts_to_sort.demo_behavioral_cloning
+   coopihczoo.teaching.scripts_to_sort.demo_behavioral_cloning_handmade
+   coopihczoo.teaching.scripts_to_sort.demo_dagger
+   coopihczoo.teaching.scripts_to_sort.demo_dagger_handmade
+   coopihczoo.teaching.scripts_to_sort.teaching_behavioral_cloning
+   coopihczoo.teaching.scripts_to_sort.teaching_dagger
+   coopihczoo.teaching.scripts_to_sort.teaching_rl_example
+

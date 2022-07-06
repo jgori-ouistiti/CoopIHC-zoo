@@ -1,0 +1,40 @@
+coopihczoo.imitation.cartpole.noisy\_cartpole.NoisyCartPoleEnv
+==============================================================
+
+.. currentmodule:: coopihczoo.imitation.cartpole.noisy_cartpole
+
+.. autoclass:: NoisyCartPoleEnv
+   :members:
+   :show-inheritance:
+   :inherited-members:
+   :special-members: __call__, __add__, __mul__
+
+   
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+      :nosignatures:
+   
+      ~NoisyCartPoleEnv.close
+      ~NoisyCartPoleEnv.render
+      ~NoisyCartPoleEnv.reset
+      ~NoisyCartPoleEnv.seed
+      ~NoisyCartPoleEnv.step
+   
+   
+
+   
+   
+   .. rubric:: Attributes
+
+   .. autosummary::
+   
+      ~NoisyCartPoleEnv.action_space
+      ~NoisyCartPoleEnv.metadata
+      ~NoisyCartPoleEnv.observation_space
+      ~NoisyCartPoleEnv.reward_range
+      ~NoisyCartPoleEnv.spec
+      ~NoisyCartPoleEnv.unwrapped
+   
+   

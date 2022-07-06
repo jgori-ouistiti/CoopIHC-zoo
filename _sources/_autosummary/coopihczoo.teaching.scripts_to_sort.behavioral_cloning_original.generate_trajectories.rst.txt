@@ -1,0 +1,6 @@
+coopihczoo.teaching.scripts\_to\_sort.behavioral\_cloning\_original.generate\_trajectories
+==========================================================================================
+
+.. currentmodule:: coopihczoo.teaching.scripts_to_sort.behavioral_cloning_original
+
+.. autofunction:: generate_trajectories

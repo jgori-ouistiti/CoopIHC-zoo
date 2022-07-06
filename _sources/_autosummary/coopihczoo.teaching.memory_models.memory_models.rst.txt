@@ -1,0 +1,32 @@
+coopihczoo.teaching.memory\_models.memory\_models
+=================================================
+
+.. automodule:: coopihczoo.teaching.memory_models.memory_models
+
+   
+   
+   
+
+   
+   
+   
+
+   
+   
+   .. rubric:: Classes
+
+   .. autosummary::
+      :toctree:
+      :template: custom-class-template.rst
+      :nosignatures:
+   
+      ExponentialDecayMemory
+   
+   
+
+   
+   
+   
+
+
+

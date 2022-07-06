@@ -1,0 +1,26 @@
+coopihczoo.teaching.memory\_models.memory\_models.ExponentialDecayMemory
+========================================================================
+
+.. currentmodule:: coopihczoo.teaching.memory_models.memory_models
+
+.. autoclass:: ExponentialDecayMemory
+   :members:
+   :show-inheritance:
+   :inherited-members:
+   :special-members: __call__, __add__, __mul__
+
+   
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+      :nosignatures:
+   
+      ~ExponentialDecayMemory.decay
+      ~ExponentialDecayMemory.log_like_grid
+   
+   
+
+   
+   
+   

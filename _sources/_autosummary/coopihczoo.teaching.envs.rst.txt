@@ -1,0 +1,30 @@
+coopihczoo.teaching.envs
+========================
+
+.. automodule:: coopihczoo.teaching.envs
+
+   
+   
+   
+
+   
+   
+   
+
+   
+   
+   
+
+   
+   
+   
+
+
+
+.. autosummary::
+   :toctree:
+   :template: custom-module-template.rst
+   :recursive:
+
+   coopihczoo.teaching.envs.envs
+

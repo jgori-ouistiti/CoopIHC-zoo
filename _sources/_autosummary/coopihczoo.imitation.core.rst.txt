@@ -1,0 +1,32 @@
+coopihczoo.imitation.core
+=========================
+
+.. automodule:: coopihczoo.imitation.core
+
+   
+   
+   
+
+   
+   
+   
+
+   
+   
+   
+
+   
+   
+   
+
+
+
+.. autosummary::
+   :toctree:
+   :template: custom-module-template.rst
+   :recursive:
+
+   coopihczoo.imitation.core.behavioral_cloning
+   coopihczoo.imitation.core.dagger
+   coopihczoo.imitation.core.evaluation
+

@@ -1,0 +1,32 @@
+coopihczoo.eye
+==============
+
+.. automodule:: coopihczoo.eye
+
+   
+   
+   
+
+   
+   
+   
+
+   
+   
+   
+
+   
+   
+   
+
+
+
+.. autosummary::
+   :toctree:
+   :template: custom-module-template.rst
+   :recursive:
+
+   coopihczoo.eye.envs
+   coopihczoo.eye.users
+   coopihczoo.eye.utils
+

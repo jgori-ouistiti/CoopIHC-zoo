@@ -1,0 +1,36 @@
+coopihczoo.teaching
+===================
+
+.. automodule:: coopihczoo.teaching
+
+   
+   
+   
+
+   
+   
+   
+
+   
+   
+   
+
+   
+   
+   
+
+
+
+.. autosummary::
+   :toctree:
+   :template: custom-module-template.rst
+   :recursive:
+
+   coopihczoo.teaching.action_wrapper
+   coopihczoo.teaching.assistants
+   coopihczoo.teaching.config
+   coopihczoo.teaching.envs
+   coopihczoo.teaching.memory_models
+   coopihczoo.teaching.scripts_to_sort
+   coopihczoo.teaching.users
+

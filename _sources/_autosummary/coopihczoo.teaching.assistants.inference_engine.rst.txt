@@ -1,0 +1,30 @@
+coopihczoo.teaching.assistants.inference\_engine
+================================================
+
+.. automodule:: coopihczoo.teaching.assistants.inference_engine
+
+   
+   
+   
+
+   
+   
+   
+
+   
+   
+   
+
+   
+   
+   
+
+
+
+.. autosummary::
+   :toctree:
+   :template: custom-module-template.rst
+   :recursive:
+
+   coopihczoo.teaching.assistants.inference_engine.psychologist_grid
+

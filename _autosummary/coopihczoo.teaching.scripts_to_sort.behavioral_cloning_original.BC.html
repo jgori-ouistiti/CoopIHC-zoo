@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>coopihczoo.teaching.scripts_to_sort.behavioral_cloning_original.BC &mdash; coopoihczoo 0.0.1 documentation</title>
+      <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+        <script src="../_static/jquery.js"></script>
+        <script src="../_static/underscore.js"></script>
+        <script src="../_static/doctools.js"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="coopihczoo.teaching.scripts_to_sort.behavioral_cloning_original.ConstantLRSchedule" href="coopihczoo.teaching.scripts_to_sort.behavioral_cloning_original.ConstantLRSchedule.html" />
+    <link rel="prev" title="coopihczoo.teaching.scripts_to_sort.behavioral_cloning_original.unwrap_traj" href="coopihczoo.teaching.scripts_to_sort.behavioral_cloning_original.unwrap_traj.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+            <a href="../index.html" class="icon icon-home"> coopoihczoo
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../modules/eye.html">Eye</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../modules/pointing.html">Pointing</a></li>
+</ul>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../index.html">Home page</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="coopihczoo.html">API reference</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="coopihczoo.eye.html">coopihczoo.eye</a></li>
+<li class="toctree-l2"><a class="reference internal" href="coopihczoo.imitation.html">coopihczoo.imitation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="coopihczoo.pointing.html">coopihczoo.pointing</a></li>
+<li class="toctree-l2 current"><a class="reference internal" href="coopihczoo.teaching.html">coopihczoo.teaching</a><ul class="current">
+<li class="toctree-l3"><a class="reference internal" href="coopihczoo.teaching.action_wrapper.html">coopihczoo.teaching.action_wrapper</a></li>
+<li class="toctree-l3"><a class="reference internal" href="coopihczoo.teaching.assistants.html">coopihczoo.teaching.assistants</a></li>
+<li class="toctree-l3"><a class="reference internal" href="coopihczoo.teaching.config.html">coopihczoo.teaching.config</a></li>
+<li class="toctree-l3"><a class="reference internal" href="coopihczoo.teaching.envs.html">coopihczoo.teaching.envs</a></li>
+<li class="toctree-l3"><a class="reference internal" href="coopihczoo.teaching.memory_models.html">coopihczoo.teaching.memory_models</a></li>
+<li class="toctree-l3 current"><a class="reference internal" href="coopihczoo.teaching.scripts_to_sort.html">coopihczoo.teaching.scripts_to_sort</a><ul class="current">
+<li class="toctree-l4 current"><a class="reference internal" href="coopihczoo.teaching.scripts_to_sort.behavioral_cloning_original.html">coopihczoo.teaching.scripts_to_sort.behavioral_cloning_original</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="coopihczoo.teaching.users.html">coopihczoo.teaching.users</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">coopoihczoo</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home"></a> &raquo;</li>
+          <li><a href="coopihczoo.html">coopihczoo</a> &raquo;</li>
+          <li><a href="coopihczoo.teaching.html">coopihczoo.teaching</a> &raquo;</li>
+          <li><a href="coopihczoo.teaching.scripts_to_sort.html">coopihczoo.teaching.scripts_to_sort</a> &raquo;</li>
+          <li><a href="coopihczoo.teaching.scripts_to_sort.behavioral_cloning_original.html">coopihczoo.teaching.scripts_to_sort.behavioral_cloning_original</a> &raquo;</li>
+      <li>coopihczoo.teaching.scripts_to_sort.behavioral_cloning_original.BC</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/_autosummary/coopihczoo.teaching.scripts_to_sort.behavioral_cloning_original.BC.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="coopihczoo-teaching-scripts-to-sort-behavioral-cloning-original-bc">
+<h1>coopihczoo.teaching.scripts_to_sort.behavioral_cloning_original.BC<a class="headerlink" href="#coopihczoo-teaching-scripts-to-sort-behavioral-cloning-original-bc" title="Permalink to this headline">¶</a></h1>
+<dl class="py class">
+<dt class="sig sig-object py" id="coopihczoo.teaching.scripts_to_sort.behavioral_cloning_original.BC">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">coopihczoo.teaching.scripts_to_sort.behavioral_cloning_original.</span></span><span class="sig-name descname"><span class="pre">BC</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">observation_space:</span> <span class="pre">gym.spaces.space.Space</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">action_space:</span> <span class="pre">gym.spaces.space.Space</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">policy:</span> <span class="pre">Optional[stable_baselines3.common.policies.ActorCriticPolicy]</span> <span class="pre">=</span> <span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">demonstrations=None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">batch_size:</span> <span class="pre">int</span> <span class="pre">=</span> <span class="pre">32</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">optimizer_cls:</span> <span class="pre">Type[torch.optim.optimizer.Optimizer]</span> <span class="pre">=</span> <span class="pre">&lt;class</span> <span class="pre">'torch.optim.adam.Adam'&gt;</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">optimizer_kwargs:</span> <span class="pre">Optional[Mapping[str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Any]]</span> <span class="pre">=</span> <span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ent_weight:</span> <span class="pre">float</span> <span class="pre">=</span> <span class="pre">0.001</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">l2_weight:</span> <span class="pre">float</span> <span class="pre">=</span> <span class="pre">0.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">device:</span> <span class="pre">Union[str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">torch.device]</span> <span class="pre">=</span> <span class="pre">'auto'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/coopihczoo/teaching/scripts_to_sort/behavioral_cloning_original.html#BC"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#coopihczoo.teaching.scripts_to_sort.behavioral_cloning_original.BC" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Behavioral cloning (BC).</p>
+<p>Recovers a policy via supervised learning from observation-action pairs.</p>
+<p class="rubric">Methods</p>
+<table class="longtable docutils align-default">
+<colgroup>
+<col style="width: 10%" />
+<col style="width: 90%" />
+</colgroup>
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#coopihczoo.teaching.scripts_to_sort.behavioral_cloning_original.BC.make_data_loader" title="coopihczoo.teaching.scripts_to_sort.behavioral_cloning_original.BC.make_data_loader"><code class="xref py py-obj docutils literal notranslate"><span class="pre">make_data_loader</span></code></a></p></td>
+<td><p>Converts demonstration data to Torch data loader.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#coopihczoo.teaching.scripts_to_sort.behavioral_cloning_original.BC.save_policy" title="coopihczoo.teaching.scripts_to_sort.behavioral_cloning_original.BC.save_policy"><code class="xref py py-obj docutils literal notranslate"><span class="pre">save_policy</span></code></a></p></td>
+<td><p>Save policy to a path.</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">set_demonstrations</span></code></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#coopihczoo.teaching.scripts_to_sort.behavioral_cloning_original.BC.train" title="coopihczoo.teaching.scripts_to_sort.behavioral_cloning_original.BC.train"><code class="xref py py-obj docutils literal notranslate"><span class="pre">train</span></code></a></p></td>
+<td><p>Train with supervised learning for some number of epochs.</p></td>
+</tr>
+</tbody>
+</table>
+<p class="rubric">Attributes</p>
+<table class="longtable docutils align-default">
+<colgroup>
+<col style="width: 10%" />
+<col style="width: 90%" />
+</colgroup>
+<tbody>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">policy</span></code></p></td>
+<td><p></p></td>
+</tr>
+</tbody>
+</table>
+<dl class="py method">
+<dt class="sig sig-object py" id="coopihczoo.teaching.scripts_to_sort.behavioral_cloning_original.BC.make_data_loader">
+<em class="property"><span class="pre">static</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">make_data_loader</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">transitions</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">batch_size</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">data_loader_kwargs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">Mapping</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/coopihczoo/teaching/scripts_to_sort/behavioral_cloning_original.html#BC.make_data_loader"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#coopihczoo.teaching.scripts_to_sort.behavioral_cloning_original.BC.make_data_loader" title="Permalink to this definition">¶</a></dt>
+<dd><p>Converts demonstration data to Torch data loader.</p>
+<dl>
+<dt>Args:</dt><dd><dl class="simple">
+<dt>transitions: Transitions expressed directly as a <cite>types.TransitionsMinimal</cite></dt><dd><p>object, a sequence of trajectories, or an iterable of transition
+batches (mappings from keywords to arrays containing observations, etc).</p>
+</dd>
+<dt>batch_size: The size of the batch to create. Does not change the batch size</dt><dd><p>if <cite>transitions</cite> is already an iterable of transition batches.</p>
+</dd>
+</dl>
+<p>data_loader_kwargs: Arguments to pass to <cite>th_data.DataLoader</cite>.</p>
+</dd>
+<dt>Returns:</dt><dd><p>An iterable of transition batches.</p>
+</dd>
+<dt>Raises:</dt><dd><dl class="simple">
+<dt>ValueError: if <cite>transitions</cite> is an iterable over transition batches with batch</dt><dd><p>size not equal to <cite>batch_size</cite>; or if <cite>transitions</cite> is transitions or a
+sequence of trajectories with total timesteps less than <cite>batch_size</cite>.</p>
+</dd>
+</dl>
+<p>TypeError: if <cite>transitions</cite> is an unsupported type.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="coopihczoo.teaching.scripts_to_sort.behavioral_cloning_original.BC.save_policy">
+<span class="sig-name descname"><span class="pre">save_policy</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">policy_path</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/coopihczoo/teaching/scripts_to_sort/behavioral_cloning_original.html#BC.save_policy"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#coopihczoo.teaching.scripts_to_sort.behavioral_cloning_original.BC.save_policy" title="Permalink to this definition">¶</a></dt>
+<dd><p>Save policy to a path. Can be reloaded by <cite>.reconstruct_policy()</cite>.</p>
+<dl class="simple">
+<dt>Args:</dt><dd><p>policy_path: path to save policy to.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="coopihczoo.teaching.scripts_to_sort.behavioral_cloning_original.BC.train">
+<span class="sig-name descname"><span class="pre">train</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_epochs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_batches</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">on_epoch_end</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">Callable</span><span class="p"><span class="pre">[</span></span><span class="p"><span class="pre">[</span></span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">None</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">on_batch_end</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">Callable</span><span class="p"><span class="pre">[</span></span><span class="p"><span class="pre">[</span></span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">None</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">log_interval</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">500</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">log_rollouts_venv</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">stable_baselines3.common.vec_env.base_vec_env.VecEnv</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">log_rollouts_n_episodes</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">5</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">progress_bar</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">reset_tensorboard</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/coopihczoo/teaching/scripts_to_sort/behavioral_cloning_original.html#BC.train"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#coopihczoo.teaching.scripts_to_sort.behavioral_cloning_original.BC.train" title="Permalink to this definition">¶</a></dt>
+<dd><p>Train with supervised learning for some number of epochs.</p>
+<p>Here an ‘epoch’ is just a complete pass through the expert data loader,
+as set by <cite>self.set_expert_data_loader()</cite>.</p>
+<dl>
+<dt>Args:</dt><dd><dl class="simple">
+<dt>n_epochs: Number of complete passes made through expert data before ending</dt><dd><p>training. Provide exactly one of <cite>n_epochs</cite> and <cite>n_batches</cite>.</p>
+</dd>
+<dt>n_batches: Number of batches loaded from dataset before ending training.</dt><dd><p>Provide exactly one of <cite>n_epochs</cite> and <cite>n_batches</cite>.</p>
+</dd>
+<dt>on_epoch_end: Optional callback with no parameters to run at the end of each</dt><dd><p>epoch.</p>
+</dd>
+<dt>on_batch_end: Optional callback with no parameters to run at the end of each</dt><dd><p>batch.</p>
+</dd>
+</dl>
+<p>log_interval: Log stats after every log_interval batches.
+log_rollouts_venv: If not None, then this VecEnv (whose observation and</p>
+<blockquote>
+<div><p>actions spaces must match <cite>self.observation_space</cite> and
+<cite>self.action_space</cite>) is used to generate rollout stats, including
+average return and average episode length. If None, then no rollouts
+are generated.</p>
+</div></blockquote>
+<dl class="simple">
+<dt>log_rollouts_n_episodes: Number of rollouts to generate when calculating</dt><dd><p>rollout stats. Non-positive number disables rollouts.</p>
+</dd>
+</dl>
+<p>progress_bar: If True, then show a progress bar during training.
+reset_tensorboard: If True, then start plotting to Tensorboard from x=0</p>
+<blockquote>
+<div><p>even if <cite>.train()</cite> logged to Tensorboard previously. Has no practical
+effect if <cite>.train()</cite> is being called for the first time.</p>
+</div></blockquote>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="coopihczoo.teaching.scripts_to_sort.behavioral_cloning_original.unwrap_traj.html" class="btn btn-neutral float-left" title="coopihczoo.teaching.scripts_to_sort.behavioral_cloning_original.unwrap_traj" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="coopihczoo.teaching.scripts_to_sort.behavioral_cloning_original.ConstantLRSchedule.html" class="btn btn-neutral float-right" title="coopihczoo.teaching.scripts_to_sort.behavioral_cloning_original.ConstantLRSchedule" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2021, Julien Gori.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

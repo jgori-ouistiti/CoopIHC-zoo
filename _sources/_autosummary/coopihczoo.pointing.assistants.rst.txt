@@ -1,0 +1,31 @@
+coopihczoo.pointing.assistants
+==============================
+
+.. automodule:: coopihczoo.pointing.assistants
+
+   
+   
+   
+
+   
+   
+   
+
+   
+   
+   
+
+   
+   
+   
+
+
+
+.. autosummary::
+   :toctree:
+   :template: custom-module-template.rst
+   :recursive:
+
+   coopihczoo.pointing.assistants.assistants
+   coopihczoo.pointing.assistants.old_zoo_assistants
+

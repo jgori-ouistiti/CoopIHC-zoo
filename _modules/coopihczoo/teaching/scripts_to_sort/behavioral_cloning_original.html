@@ -1,0 +1,1375 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>coopihczoo.teaching.scripts_to_sort.behavioral_cloning_original &mdash; coopoihczoo 0.0.1 documentation</title>
+      <link rel="stylesheet" href="../../../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../../../_static/css/theme.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../../../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="../../../../" id="documentation_options" src="../../../../_static/documentation_options.js"></script>
+        <script src="../../../../_static/jquery.js"></script>
+        <script src="../../../../_static/underscore.js"></script>
+        <script src="../../../../_static/doctools.js"></script>
+    <script src="../../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+            <a href="../../../../index.html" class="icon icon-home"> coopoihczoo
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/eye.html">Eye</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../modules/pointing.html">Pointing</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../index.html">Home page</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../_autosummary/coopihczoo.html">API reference</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../index.html">coopoihczoo</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../index.html" class="icon icon-home"></a> &raquo;</li>
+          <li><a href="../../../index.html">Module code</a> &raquo;</li>
+      <li>coopihczoo.teaching.scripts_to_sort.behavioral_cloning_original</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for coopihczoo.teaching.scripts_to_sort.behavioral_cloning_original</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span> <span class="nn">contextlib</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">Iterable</span><span class="p">,</span> <span class="n">Mapping</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">,</span> <span class="n">Type</span><span class="p">,</span> <span class="n">Union</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Sequence</span>
+<span class="kn">import</span> <span class="nn">collections</span>
+<span class="kn">import</span> <span class="nn">warnings</span>
+<span class="kn">import</span> <span class="nn">dataclasses</span>
+
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">torch</span>
+<span class="kn">import</span> <span class="nn">torch.utils.data</span> <span class="k">as</span> <span class="nn">th_data</span>
+<span class="kn">import</span> <span class="nn">gym</span>
+<span class="kn">import</span> <span class="nn">tqdm</span>
+<span class="kn">from</span> <span class="nn">stable_baselines3.common.policies</span> <span class="kn">import</span> <span class="n">ActorCriticPolicy</span>
+<span class="kn">from</span> <span class="nn">stable_baselines3.common</span> <span class="kn">import</span> <span class="n">vec_env</span><span class="p">,</span> <span class="n">policies</span><span class="p">,</span> <span class="n">utils</span>
+<span class="kn">from</span> <span class="nn">stable_baselines3.common.base_class</span> <span class="kn">import</span> <span class="n">BaseAlgorithm</span>
+<span class="kn">from</span> <span class="nn">stable_baselines3.common.policies</span> <span class="kn">import</span> <span class="n">BasePolicy</span>
+
+
+<div class="viewcode-block" id="unwrap_traj"><a class="viewcode-back" href="../../../../_autosummary/coopihczoo.teaching.scripts_to_sort.behavioral_cloning_original.unwrap_traj.html#coopihczoo.teaching.scripts_to_sort.behavioral_cloning_original.unwrap_traj">[docs]</a><span class="k">def</span> <span class="nf">unwrap_traj</span><span class="p">(</span><span class="n">traj</span><span class="p">):</span>  <span class="c1">#: types.TrajectoryWithRew) -&gt; types.TrajectoryWithRew:</span>
+    <span class="sd">&quot;&quot;&quot;Uses `RolloutInfoWrapper`-captured `obs` and `rews` to replace fields.</span>
+
+<span class="sd">    This can be useful for bypassing other wrappers to retrieve the original</span>
+<span class="sd">    `obs` and `rews`.</span>
+
+<span class="sd">    Fails if `infos` is None or if the trajectory was generated from an</span>
+<span class="sd">    environment without imitation.util.rollout.RolloutInfoWrapper</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        traj: A trajectory generated from `RolloutInfoWrapper`-wrapped Environments.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        A copy of `traj` with replaced `obs` and `rews` fields.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">ep_info</span> <span class="o">=</span> <span class="n">traj</span><span class="o">.</span><span class="n">infos</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">][</span><span class="s2">&quot;rollout&quot;</span><span class="p">]</span>
+    <span class="n">res</span> <span class="o">=</span> <span class="n">dataclasses</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="n">traj</span><span class="p">,</span> <span class="n">obs</span><span class="o">=</span><span class="n">ep_info</span><span class="p">[</span><span class="s2">&quot;obs&quot;</span><span class="p">],</span> <span class="n">rews</span><span class="o">=</span><span class="n">ep_info</span><span class="p">[</span><span class="s2">&quot;rews&quot;</span><span class="p">])</span>
+    <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="n">res</span><span class="o">.</span><span class="n">obs</span><span class="p">)</span> <span class="o">==</span> <span class="nb">len</span><span class="p">(</span><span class="n">res</span><span class="o">.</span><span class="n">acts</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span>
+    <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="n">res</span><span class="o">.</span><span class="n">rews</span><span class="p">)</span> <span class="o">==</span> <span class="nb">len</span><span class="p">(</span><span class="n">res</span><span class="o">.</span><span class="n">acts</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">res</span></div>
+
+
+<div class="viewcode-block" id="rollout"><a class="viewcode-back" href="../../../../_autosummary/coopihczoo.teaching.scripts_to_sort.behavioral_cloning_original.rollout.html#coopihczoo.teaching.scripts_to_sort.behavioral_cloning_original.rollout">[docs]</a><span class="k">def</span> <span class="nf">rollout</span><span class="p">(</span>
+    <span class="n">policy</span><span class="p">,</span> <span class="c1">#: AnyPolicy,</span>
+    <span class="n">venv</span><span class="p">,</span> <span class="c1">#,: VecEnv,</span>
+    <span class="n">sample_until</span><span class="p">,</span> <span class="c1">#: GenTrajTerminationFn,</span>
+    <span class="o">*</span><span class="p">,</span>
+    <span class="n">unwrap</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+    <span class="n">exclude_infos</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+    <span class="c1"># verbose: bool = True,</span>
+    <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
+<span class="p">):</span> <span class="c1">#-&gt; Sequence[types.TrajectoryWithRew]:</span>
+    <span class="sd">&quot;&quot;&quot;Generate policy rollouts.</span>
+
+<span class="sd">    The `.infos` field of each Trajectory is set to `None` to save space.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        policy: Can be any of the following:</span>
+<span class="sd">            1) A stable_baselines3 policy or algorithm trained on the gym environment.</span>
+<span class="sd">            2) A Callable that takes an ndarray of observations and returns an ndarray</span>
+<span class="sd">            of corresponding actions.</span>
+<span class="sd">            3) None, in which case actions will be sampled randomly.</span>
+<span class="sd">        venv: The vectorized environments.</span>
+<span class="sd">        sample_until: End condition for rollout sampling.</span>
+<span class="sd">        unwrap: If True, then save original observations and rewards (instead of</span>
+<span class="sd">            potentially wrapped observations and rewards) by calling</span>
+<span class="sd">            `unwrap_traj()`.</span>
+<span class="sd">        exclude_infos: If True, then exclude `infos` from pickle by setting</span>
+<span class="sd">            this field to None. Excluding `infos` can save a lot of space during</span>
+<span class="sd">            pickles.</span>
+<span class="sd">        verbose: If True, then print out rollout stats before saving.</span>
+<span class="sd">        **kwargs: Passed through to `generate_trajectories`.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        Sequence of trajectories, satisfying `sample_until`. Additional trajectories</span>
+<span class="sd">        may be collected to avoid biasing process towards short episodes; the user</span>
+<span class="sd">        should truncate if required.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">trajs</span> <span class="o">=</span> <span class="n">generate_trajectories</span><span class="p">(</span><span class="n">policy</span><span class="p">,</span> <span class="n">venv</span><span class="p">,</span> <span class="n">sample_until</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">unwrap</span><span class="p">:</span>
+        <span class="n">trajs</span> <span class="o">=</span> <span class="p">[</span><span class="n">unwrap_traj</span><span class="p">(</span><span class="n">traj</span><span class="p">)</span> <span class="k">for</span> <span class="n">traj</span> <span class="ow">in</span> <span class="n">trajs</span><span class="p">]</span>
+    <span class="k">if</span> <span class="n">exclude_infos</span><span class="p">:</span>
+        <span class="n">trajs</span> <span class="o">=</span> <span class="p">[</span><span class="n">dataclasses</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="n">traj</span><span class="p">,</span> <span class="n">infos</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span> <span class="k">for</span> <span class="n">traj</span> <span class="ow">in</span> <span class="n">trajs</span><span class="p">]</span>
+    <span class="c1"># if verbose:</span>
+    <span class="c1">#     stats = rollout_stats(trajs)</span>
+    <span class="c1">#     logging.info(f&quot;Rollout stats: {stats}&quot;)</span>
+    <span class="k">return</span> <span class="n">trajs</span></div>
+
+
+<div class="viewcode-block" id="RolloutInfoWrapper"><a class="viewcode-back" href="../../../../_autosummary/coopihczoo.teaching.scripts_to_sort.behavioral_cloning_original.RolloutInfoWrapper.html#coopihczoo.teaching.scripts_to_sort.behavioral_cloning_original.RolloutInfoWrapper">[docs]</a><span class="k">class</span> <span class="nc">RolloutInfoWrapper</span><span class="p">(</span><span class="n">gym</span><span class="o">.</span><span class="n">Wrapper</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Add the entire episode&#39;s rewards and observations to `info` at episode end.</span>
+
+<span class="sd">    Whenever done=True, `info[&quot;rollouts&quot;]` is a dict with keys &quot;obs&quot; and &quot;rews&quot;, whose</span>
+<span class="sd">    corresponding values hold the NumPy arrays containing the raw observations and</span>
+<span class="sd">    rewards seen during this episode.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">env</span><span class="p">:</span> <span class="n">gym</span><span class="o">.</span><span class="n">Env</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Builds RolloutInfoWrapper.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            env: Environment to wrap.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">env</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_obs</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_rews</span> <span class="o">=</span> <span class="kc">None</span>
+
+<div class="viewcode-block" id="RolloutInfoWrapper.reset"><a class="viewcode-back" href="../../../../_autosummary/coopihczoo.teaching.scripts_to_sort.behavioral_cloning_original.RolloutInfoWrapper.html#coopihczoo.teaching.scripts_to_sort.behavioral_cloning_original.RolloutInfoWrapper.reset">[docs]</a>    <span class="k">def</span> <span class="nf">reset</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="n">new_obs</span> <span class="o">=</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">reset</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_obs</span> <span class="o">=</span> <span class="p">[</span><span class="n">new_obs</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_rews</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">return</span> <span class="n">new_obs</span></div>
+
+<div class="viewcode-block" id="RolloutInfoWrapper.step"><a class="viewcode-back" href="../../../../_autosummary/coopihczoo.teaching.scripts_to_sort.behavioral_cloning_original.RolloutInfoWrapper.html#coopihczoo.teaching.scripts_to_sort.behavioral_cloning_original.RolloutInfoWrapper.step">[docs]</a>    <span class="k">def</span> <span class="nf">step</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">action</span><span class="p">):</span>
+        <span class="n">obs</span><span class="p">,</span> <span class="n">rew</span><span class="p">,</span> <span class="n">done</span><span class="p">,</span> <span class="n">info</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">env</span><span class="o">.</span><span class="n">step</span><span class="p">(</span><span class="n">action</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_obs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">obs</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_rews</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">rew</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">done</span><span class="p">:</span>
+            <span class="k">assert</span> <span class="s2">&quot;rollout&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">info</span>
+            <span class="n">info</span><span class="p">[</span><span class="s2">&quot;rollout&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+                <span class="s2">&quot;obs&quot;</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">stack</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_obs</span><span class="p">),</span>
+                <span class="s2">&quot;rews&quot;</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">stack</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_rews</span><span class="p">),</span>
+            <span class="p">}</span>
+        <span class="k">return</span> <span class="n">obs</span><span class="p">,</span> <span class="n">rew</span><span class="p">,</span> <span class="n">done</span><span class="p">,</span> <span class="n">info</span></div></div>
+
+
+<div class="viewcode-block" id="make_min_timesteps"><a class="viewcode-back" href="../../../../_autosummary/coopihczoo.teaching.scripts_to_sort.behavioral_cloning_original.make_min_timesteps.html#coopihczoo.teaching.scripts_to_sort.behavioral_cloning_original.make_min_timesteps">[docs]</a><span class="k">def</span> <span class="nf">make_min_timesteps</span><span class="p">(</span><span class="n">n</span><span class="p">:</span> <span class="nb">int</span><span class="p">):</span>  <span class="c1"># -&gt; GenTrajTerminationFn:</span>
+    <span class="sd">&quot;&quot;&quot;Terminate at the first episode after collecting n timesteps of data.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        n: Minimum number of timesteps of data to collect.</span>
+<span class="sd">            May overshoot to nearest episode boundary.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        A function implementing this termination condition.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">assert</span> <span class="n">n</span> <span class="o">&gt;=</span> <span class="mi">1</span>
+
+    <span class="k">def</span> <span class="nf">f</span><span class="p">(</span><span class="n">trajectories</span><span class="p">):</span>  <span class="c1"># : Sequence[types.TrajectoryWithRew]):</span>
+        <span class="n">timesteps</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">t</span><span class="o">.</span><span class="n">obs</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span> <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">trajectories</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">timesteps</span> <span class="o">&gt;=</span> <span class="n">n</span>
+
+    <span class="k">return</span> <span class="n">f</span></div>
+
+
+<div class="viewcode-block" id="make_sample_until"><a class="viewcode-back" href="../../../../_autosummary/coopihczoo.teaching.scripts_to_sort.behavioral_cloning_original.make_sample_until.html#coopihczoo.teaching.scripts_to_sort.behavioral_cloning_original.make_sample_until">[docs]</a><span class="k">def</span> <span class="nf">make_sample_until</span><span class="p">(</span>
+    <span class="n">min_timesteps</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span>
+    <span class="n">min_episodes</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span>
+<span class="p">):</span>  <span class="c1"># -&gt; GenTrajTerminationFn:</span>
+    <span class="sd">&quot;&quot;&quot;Returns a termination condition sampling for a number of timesteps and episodes.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        min_timesteps: Sampling will not stop until there are at least this many</span>
+<span class="sd">            timesteps.</span>
+<span class="sd">        min_episodes: Sampling will not stop until there are at least this many</span>
+<span class="sd">            episodes.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        A termination condition.</span>
+
+<span class="sd">    Raises:</span>
+<span class="sd">        ValueError: Neither of n_timesteps and n_episodes are set, or either are</span>
+<span class="sd">            non-positive.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">min_timesteps</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">min_episodes</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="s2">&quot;At least one of min_timesteps and min_episodes needs to be non-None&quot;</span><span class="p">,</span>
+        <span class="p">)</span>
+
+    <span class="n">conditions</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">if</span> <span class="n">min_timesteps</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">min_timesteps</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;min_timesteps=</span><span class="si">{</span><span class="n">min_timesteps</span><span class="si">}</span><span class="s2"> if provided must be positive&quot;</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="n">conditions</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">make_min_timesteps</span><span class="p">(</span><span class="n">min_timesteps</span><span class="p">))</span>
+
+    <span class="k">if</span> <span class="n">min_episodes</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">min_episodes</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;min_episodes=</span><span class="si">{</span><span class="n">min_episodes</span><span class="si">}</span><span class="s2"> if provided must be positive&quot;</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="n">conditions</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">make_min_episodes</span><span class="p">(</span><span class="n">min_episodes</span><span class="p">))</span>
+
+    <span class="k">def</span> <span class="nf">sample_until</span><span class="p">(</span><span class="n">trajs</span><span class="p">):</span>  <span class="c1"># : Sequence[types.TrajectoryWithRew]) -&gt; bool:</span>
+        <span class="k">for</span> <span class="n">cond</span> <span class="ow">in</span> <span class="n">conditions</span><span class="p">:</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">cond</span><span class="p">(</span><span class="n">trajs</span><span class="p">):</span>
+                <span class="k">return</span> <span class="kc">False</span>
+        <span class="k">return</span> <span class="kc">True</span>
+
+    <span class="k">return</span> <span class="n">sample_until</span></div>
+
+
+<div class="viewcode-block" id="dataclass_quick_asdict"><a class="viewcode-back" href="../../../../_autosummary/coopihczoo.teaching.scripts_to_sort.behavioral_cloning_original.dataclass_quick_asdict.html#coopihczoo.teaching.scripts_to_sort.behavioral_cloning_original.dataclass_quick_asdict">[docs]</a><span class="k">def</span> <span class="nf">dataclass_quick_asdict</span><span class="p">(</span><span class="n">obj</span><span class="p">):</span>  <span class="c1"># -&gt; Dict[str, Any]:</span>
+    <span class="sd">&quot;&quot;&quot;Extract dataclass to items using `dataclasses.fields` + dict comprehension.</span>
+
+<span class="sd">    This is a quick alternative to `dataclasses.asdict`, which expensively and</span>
+<span class="sd">    undocumentedly deep-copies every numpy array value.</span>
+<span class="sd">    See https://stackoverflow.com/a/52229565/1091722.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        obj: A dataclass instance.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        A dictionary mapping from `obj` field names to values.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">d</span> <span class="o">=</span> <span class="p">{</span><span class="n">f</span><span class="o">.</span><span class="n">name</span><span class="p">:</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">f</span><span class="o">.</span><span class="n">name</span><span class="p">)</span> <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">dataclasses</span><span class="o">.</span><span class="n">fields</span><span class="p">(</span><span class="n">obj</span><span class="p">)}</span>
+    <span class="k">return</span> <span class="n">d</span></div>
+
+
+<span class="k">class</span> <span class="nc">_NoopTqdm</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;Dummy replacement for tqdm.tqdm() when we don&#39;t want a progress bar visible.&quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">close</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">pass</span>
+
+    <span class="k">def</span> <span class="nf">set_description</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">s</span><span class="p">):</span>
+        <span class="k">pass</span>
+
+    <span class="k">def</span> <span class="nf">update</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">n</span><span class="p">):</span>
+        <span class="k">pass</span>
+
+
+<span class="k">class</span> <span class="nc">_WrappedDataLoader</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;Wraps a data loader (batch iterable) and checks for specified batch size.&quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">data_loader</span><span class="p">,</span>  <span class="c1">#: Iterable[TransitionMapping],</span>
+        <span class="n">expected_batch_size</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+    <span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Builds _WrapedDataLoader.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            data_loader: The data loader (batch iterable) to wrap.</span>
+<span class="sd">            expected_batch_size: The batch size to check for.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">data_loader</span> <span class="o">=</span> <span class="n">data_loader</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">expected_batch_size</span> <span class="o">=</span> <span class="n">expected_batch_size</span>
+
+    <span class="k">def</span> <span class="fm">__iter__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Iterator yielding data from `self.data_loader`, checking `self.expected_batch_size`.</span>
+
+<span class="sd">        Yields:</span>
+<span class="sd">            Identity -- yields same batches as from `self.data_loader`.</span>
+
+<span class="sd">        Raises:</span>
+<span class="sd">            ValueError: `self.data_loader` returns a batch of size not equal to</span>
+<span class="sd">                `self.expected_batch_size`.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">for</span> <span class="n">batch</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">data_loader</span><span class="p">:</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">batch</span><span class="p">[</span><span class="s2">&quot;obs&quot;</span><span class="p">])</span> <span class="o">!=</span> <span class="bp">self</span><span class="o">.</span><span class="n">expected_batch_size</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">&quot;Expected batch size </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">expected_batch_size</span><span class="si">}</span><span class="s2"> &quot;</span>
+                    <span class="sa">f</span><span class="s2">&quot;!= </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">batch</span><span class="p">[</span><span class="s1">&#39;obs&#39;</span><span class="p">])</span><span class="si">}</span><span class="s2"> = len(batch[&#39;obs&#39;])&quot;</span><span class="p">,</span>
+                <span class="p">)</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">batch</span><span class="p">[</span><span class="s2">&quot;acts&quot;</span><span class="p">])</span> <span class="o">!=</span> <span class="bp">self</span><span class="o">.</span><span class="n">expected_batch_size</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">&quot;Expected batch size </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">expected_batch_size</span><span class="si">}</span><span class="s2"> &quot;</span>
+                    <span class="sa">f</span><span class="s2">&quot;!= </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">batch</span><span class="p">[</span><span class="s1">&#39;acts&#39;</span><span class="p">])</span><span class="si">}</span><span class="s2"> = len(batch[&#39;acts&#39;])&quot;</span><span class="p">,</span>
+                <span class="p">)</span>
+            <span class="k">yield</span> <span class="n">batch</span>
+
+
+<div class="viewcode-block" id="check_for_correct_spaces"><a class="viewcode-back" href="../../../../_autosummary/coopihczoo.teaching.scripts_to_sort.behavioral_cloning_original.check_for_correct_spaces.html#coopihczoo.teaching.scripts_to_sort.behavioral_cloning_original.check_for_correct_spaces">[docs]</a><span class="k">def</span> <span class="nf">check_for_correct_spaces</span><span class="p">(</span><span class="n">env</span><span class="p">,</span>  <span class="c1">#: GymEnv,</span>
+                             <span class="n">observation_space</span><span class="p">,</span>  <span class="c1"># : gym.spaces.Space,</span>
+                             <span class="n">action_space</span><span class="p">):</span>  <span class="c1"># gym.spaces.Space) -&gt; None:</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Checks that the environment has same spaces as provided ones. Used by BaseAlgorithm to check if</span>
+<span class="sd">    spaces match after loading the model with given env.</span>
+<span class="sd">    Checked parameters:</span>
+<span class="sd">    - observation_space</span>
+<span class="sd">    - action_space</span>
+
+<span class="sd">    :param env: Environment to check for valid spaces</span>
+<span class="sd">    :param observation_space: Observation space to check against</span>
+<span class="sd">    :param action_space: Action space to check against</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">observation_space</span> <span class="o">!=</span> <span class="n">env</span><span class="o">.</span><span class="n">observation_space</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Observation spaces do not match: </span><span class="si">{</span><span class="n">observation_space</span><span class="si">}</span><span class="s2"> != </span><span class="si">{</span><span class="n">env</span><span class="o">.</span><span class="n">observation_space</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">action_space</span> <span class="o">!=</span> <span class="n">env</span><span class="o">.</span><span class="n">action_space</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Action spaces do not match: </span><span class="si">{</span><span class="n">action_space</span><span class="si">}</span><span class="s2"> != </span><span class="si">{</span><span class="n">env</span><span class="o">.</span><span class="n">action_space</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span></div>
+
+
+<span class="k">def</span> <span class="nf">_policy_to_callable</span><span class="p">(</span>
+    <span class="n">policy</span><span class="p">,</span>  <span class="c1"># : AnyPolicy,</span>
+    <span class="n">venv</span><span class="p">,</span>    <span class="c1"># : VecEnv,</span>
+    <span class="n">deterministic_policy</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span>
+<span class="p">):</span> <span class="c1">#  -&gt; PolicyCallable:</span>
+    <span class="sd">&quot;&quot;&quot;Converts any policy-like object into a function from observations to actions.&quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">policy</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+
+        <span class="k">def</span> <span class="nf">get_actions</span><span class="p">(</span><span class="n">states</span><span class="p">):</span>
+            <span class="n">acts</span> <span class="o">=</span> <span class="p">[</span><span class="n">venv</span><span class="o">.</span><span class="n">action_space</span><span class="o">.</span><span class="n">sample</span><span class="p">()</span> <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">states</span><span class="p">))]</span>
+            <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">stack</span><span class="p">(</span><span class="n">acts</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+
+    <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">policy</span><span class="p">,</span> <span class="p">(</span><span class="n">BaseAlgorithm</span><span class="p">,</span> <span class="n">BasePolicy</span><span class="p">)):</span>
+        <span class="c1"># There&#39;s an important subtlety here: BaseAlgorithm and BasePolicy</span>
+        <span class="c1"># are themselves Callable (which we check next). But in their case,</span>
+        <span class="c1"># we want to use the .predict() method, rather than __call__()</span>
+        <span class="c1"># (which would call .forward()). So this elif clause must come first!</span>
+
+        <span class="k">def</span> <span class="nf">get_actions</span><span class="p">(</span><span class="n">states</span><span class="p">):</span>
+            <span class="c1"># pytype doesn&#39;t seem to understand that policy is a BaseAlgorithm</span>
+            <span class="c1"># or BasePolicy here, rather than a Callable</span>
+            <span class="n">acts</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">policy</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span>  <span class="c1"># pytype: disable=attribute-error</span>
+                <span class="n">states</span><span class="p">,</span>
+                <span class="n">deterministic</span><span class="o">=</span><span class="n">deterministic_policy</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="k">return</span> <span class="n">acts</span>
+
+    <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">policy</span><span class="p">,</span> <span class="n">Callable</span><span class="p">):</span>
+        <span class="n">get_actions</span> <span class="o">=</span> <span class="n">policy</span>
+
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span>
+            <span class="s2">&quot;Policy must be None, a stable-baselines policy or algorithm, &quot;</span>
+            <span class="sa">f</span><span class="s2">&quot;or a Callable, got </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">policy</span><span class="p">)</span><span class="si">}</span><span class="s2"> instead&quot;</span><span class="p">,</span>
+        <span class="p">)</span>
+
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">policy</span><span class="p">,</span> <span class="n">BaseAlgorithm</span><span class="p">):</span>
+        <span class="c1"># check that the observation and action spaces of policy and environment match</span>
+        <span class="n">check_for_correct_spaces</span><span class="p">(</span><span class="n">venv</span><span class="p">,</span> <span class="n">policy</span><span class="o">.</span><span class="n">observation_space</span><span class="p">,</span> <span class="n">policy</span><span class="o">.</span><span class="n">action_space</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">get_actions</span>
+
+
+<div class="viewcode-block" id="TransitionsMinimal"><a class="viewcode-back" href="../../../../_autosummary/coopihczoo.teaching.scripts_to_sort.behavioral_cloning_original.TransitionsMinimal.html#coopihczoo.teaching.scripts_to_sort.behavioral_cloning_original.TransitionsMinimal">[docs]</a><span class="nd">@dataclasses</span><span class="o">.</span><span class="n">dataclass</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="k">class</span> <span class="nc">TransitionsMinimal</span><span class="p">(</span><span class="n">th_data</span><span class="o">.</span><span class="n">Dataset</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;A Torch-compatible `Dataset` of obs-act transitions.</span>
+
+<span class="sd">    This class and its subclasses are usually instantiated via</span>
+<span class="sd">    `imitation.data.rollout.flatten_trajectories`.</span>
+
+<span class="sd">    Indexing an instance `trans` of TransitionsMinimal with an integer `i`</span>
+<span class="sd">    returns the `i`th `Dict[str, np.ndarray]` sample, whose keys are the field</span>
+<span class="sd">    names of each dataclass field and whose values are the ith elements of each field</span>
+<span class="sd">    value.</span>
+
+<span class="sd">    Slicing returns a possibly empty instance of `TransitionsMinimal` where each</span>
+<span class="sd">    field has been sliced.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">obs</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Previous observations. Shape: (batch_size, ) + observation_shape.</span>
+
+<span class="sd">    The i&#39;th observation `obs[i]` in this array is the observation seen</span>
+<span class="sd">    by the agent when choosing action `acts[i]`. `obs[i]` is not required to</span>
+<span class="sd">    be from the timestep preceding `obs[i+1]`.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">acts</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span>
+    <span class="sd">&quot;&quot;&quot;Actions. Shape: (batch_size,) + action_shape.&quot;&quot;&quot;</span>
+
+    <span class="n">infos</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span>
+    <span class="sd">&quot;&quot;&quot;Array of info dicts. Shape: (batch_size,).&quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__len__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Returns number of transitions. Always positive.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">obs</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">__post_init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Performs input validation: check shapes &amp; dtypes match docstring.</span>
+
+<span class="sd">        Also make array values read-only.</span>
+
+<span class="sd">        Raises:</span>
+<span class="sd">            ValueError: if batch size (array length) is inconsistent</span>
+<span class="sd">                between `obs`, `acts` and `infos`.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">for</span> <span class="n">val</span> <span class="ow">in</span> <span class="nb">vars</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">values</span><span class="p">():</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">val</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">):</span>
+                <span class="n">val</span><span class="o">.</span><span class="n">setflags</span><span class="p">(</span><span class="n">write</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">obs</span><span class="p">)</span> <span class="o">!=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">acts</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="s2">&quot;obs and acts must have same number of timesteps: &quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">obs</span><span class="p">)</span><span class="si">}</span><span class="s2"> != </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">acts</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+            <span class="p">)</span>
+
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">infos</span><span class="p">)</span> <span class="o">!=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">obs</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="s2">&quot;obs and infos must have same number of timesteps: &quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">obs</span><span class="p">)</span><span class="si">}</span><span class="s2"> != </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">infos</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+            <span class="p">)</span>
+
+    <span class="c1"># TODO(adam): uncomment below once pytype bug fixed in</span>
+    <span class="c1"># issue https://github.com/google/pytype/issues/1108</span>
+    <span class="c1"># @overload</span>
+    <span class="c1"># def __getitem__(self: T, key: slice) -&gt; T:</span>
+    <span class="c1">#     pass  # pragma: no cover</span>
+    <span class="c1">#</span>
+    <span class="c1"># @overload</span>
+    <span class="c1"># def __getitem__(self, key: int) -&gt; Mapping[str, np.ndarray]:</span>
+    <span class="c1">#     pass  # pragma: no cover</span>
+
+    <span class="k">def</span> <span class="fm">__getitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;See TransitionsMinimal docstring for indexing and slicing semantics.&quot;&quot;&quot;</span>
+        <span class="n">d</span> <span class="o">=</span> <span class="n">dataclass_quick_asdict</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+        <span class="n">d_item</span> <span class="o">=</span> <span class="p">{</span><span class="n">k</span><span class="p">:</span> <span class="n">v</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">d</span><span class="o">.</span><span class="n">items</span><span class="p">()}</span>
+
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="nb">slice</span><span class="p">):</span>
+            <span class="c1"># Return type is the same as this dataclass. Replace field value with</span>
+            <span class="c1"># slices.</span>
+            <span class="k">return</span> <span class="n">dataclasses</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">d_item</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="nb">int</span><span class="p">)</span>
+            <span class="c1"># Return type is a dictionary. Array values have no batch dimension.</span>
+            <span class="c1">#</span>
+            <span class="c1"># Dictionary of np.ndarray values is a convenient</span>
+            <span class="c1"># torch.util.data.Dataset return type, as a torch.util.data.DataLoader</span>
+            <span class="c1"># taking in this `Dataset` as its first argument knows how to</span>
+            <span class="c1"># automatically concatenate several dictionaries together to make</span>
+            <span class="c1"># a single dictionary batch with `torch.Tensor` values.</span>
+            <span class="k">return</span> <span class="n">d_item</span></div>
+
+
+<div class="viewcode-block" id="Transitions"><a class="viewcode-back" href="../../../../_autosummary/coopihczoo.teaching.scripts_to_sort.behavioral_cloning_original.Transitions.html#coopihczoo.teaching.scripts_to_sort.behavioral_cloning_original.Transitions">[docs]</a><span class="nd">@dataclasses</span><span class="o">.</span><span class="n">dataclass</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="k">class</span> <span class="nc">Transitions</span><span class="p">(</span><span class="n">TransitionsMinimal</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;A batch of obs-act-obs-done transitions.&quot;&quot;&quot;</span>
+
+    <span class="n">next_obs</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span>
+    <span class="sd">&quot;&quot;&quot;New observation. Shape: (batch_size, ) + observation_shape.</span>
+
+<span class="sd">    The i&#39;th observation `next_obs[i]` in this array is the observation</span>
+<span class="sd">    after the agent has taken action `acts[i]`.</span>
+
+<span class="sd">    Invariants:</span>
+<span class="sd">        * `next_obs.dtype == obs.dtype`</span>
+<span class="sd">        * `len(next_obs) == len(obs)`</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">dones</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Boolean array indicating episode termination. Shape: (batch_size, ).</span>
+
+<span class="sd">    `done[i]` is true iff `next_obs[i]` the last observation of an episode.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">__post_init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Performs input validation: check shapes &amp; dtypes match docstring.&quot;&quot;&quot;</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">__post_init__</span><span class="p">()</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">obs</span><span class="o">.</span><span class="n">shape</span> <span class="o">!=</span> <span class="bp">self</span><span class="o">.</span><span class="n">next_obs</span><span class="o">.</span><span class="n">shape</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="s2">&quot;obs and next_obs must have same shape: &quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">obs</span><span class="o">.</span><span class="n">shape</span><span class="si">}</span><span class="s2"> != </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">next_obs</span><span class="o">.</span><span class="n">shape</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">obs</span><span class="o">.</span><span class="n">dtype</span> <span class="o">!=</span> <span class="bp">self</span><span class="o">.</span><span class="n">next_obs</span><span class="o">.</span><span class="n">dtype</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="s2">&quot;obs and next_obs must have the same dtype: &quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">obs</span><span class="o">.</span><span class="n">dtype</span><span class="si">}</span><span class="s2"> != </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">next_obs</span><span class="o">.</span><span class="n">dtype</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">dones</span><span class="o">.</span><span class="n">shape</span> <span class="o">!=</span> <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">acts</span><span class="p">),):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="s2">&quot;dones must be 1D array, one entry for each timestep: &quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">dones</span><span class="o">.</span><span class="n">shape</span><span class="si">}</span><span class="s2"> != (</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">acts</span><span class="p">)</span><span class="si">}</span><span class="s2">,)&quot;</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">dones</span><span class="o">.</span><span class="n">dtype</span> <span class="o">!=</span> <span class="nb">bool</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;dones must be boolean, not </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">dones</span><span class="o">.</span><span class="n">dtype</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="Trajectory"><a class="viewcode-back" href="../../../../_autosummary/coopihczoo.teaching.scripts_to_sort.behavioral_cloning_original.Trajectory.html#coopihczoo.teaching.scripts_to_sort.behavioral_cloning_original.Trajectory">[docs]</a><span class="nd">@dataclasses</span><span class="o">.</span><span class="n">dataclass</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="k">class</span> <span class="nc">Trajectory</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;A trajectory, e.g. a one episode rollout from an expert policy.&quot;&quot;&quot;</span>
+
+    <span class="n">obs</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span>
+    <span class="sd">&quot;&quot;&quot;Observations, shape (trajectory_len + 1, ) + observation_shape.&quot;&quot;&quot;</span>
+
+    <span class="n">acts</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span>
+    <span class="sd">&quot;&quot;&quot;Actions, shape (trajectory_len, ) + action_shape.&quot;&quot;&quot;</span>
+
+    <span class="n">infos</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]</span>
+    <span class="sd">&quot;&quot;&quot;An array of info dicts, length trajectory_len.&quot;&quot;&quot;</span>
+
+    <span class="n">terminal</span><span class="p">:</span> <span class="nb">bool</span>
+    <span class="sd">&quot;&quot;&quot;Does this trajectory (fragment) end in a terminal state?</span>
+
+<span class="sd">    Episodes are always terminal. Trajectory fragments are also terminal when they</span>
+<span class="sd">    contain the final state of an episode (even if missing the start of the episode).</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__len__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Returns number of transitions, equal to the number of actions.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">acts</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">__post_init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Performs input validation: check shapes are as specified in docstring.&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">obs</span><span class="p">)</span> <span class="o">!=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">acts</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="s2">&quot;expected one more observations than actions: &quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">obs</span><span class="p">)</span><span class="si">}</span><span class="s2"> != </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">acts</span><span class="p">)</span><span class="si">}</span><span class="s2"> + 1&quot;</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">infos</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">infos</span><span class="p">)</span> <span class="o">!=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">acts</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="s2">&quot;infos when present must be present for each action: &quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">infos</span><span class="p">)</span><span class="si">}</span><span class="s2"> != </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">acts</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">acts</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Degenerate trajectory: must have at least one action.&quot;</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">__setstate__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">state</span><span class="p">):</span>
+        <span class="k">if</span> <span class="s2">&quot;terminal&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">state</span><span class="p">:</span>
+            <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span>
+                <span class="s2">&quot;Loading old version of Trajectory.&quot;</span>
+                <span class="s2">&quot;Support for this will be removed in future versions.&quot;</span><span class="p">,</span>
+                <span class="ne">DeprecationWarning</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="n">state</span><span class="p">[</span><span class="s2">&quot;terminal&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span>
+        <span class="bp">self</span><span class="o">.</span><span class="vm">__dict__</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">state</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="TrajectoryWithRew"><a class="viewcode-back" href="../../../../_autosummary/coopihczoo.teaching.scripts_to_sort.behavioral_cloning_original.TrajectoryWithRew.html#coopihczoo.teaching.scripts_to_sort.behavioral_cloning_original.TrajectoryWithRew">[docs]</a><span class="nd">@dataclasses</span><span class="o">.</span><span class="n">dataclass</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="k">class</span> <span class="nc">TrajectoryWithRew</span><span class="p">(</span><span class="n">Trajectory</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;A `Trajectory` that additionally includes reward information.&quot;&quot;&quot;</span>
+
+    <span class="n">rews</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span>
+    <span class="sd">&quot;&quot;&quot;Reward, shape (trajectory_len, ). dtype float.&quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">__post_init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Performs input validation, including for rews.&quot;&quot;&quot;</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">__post_init__</span><span class="p">()</span>
+        <span class="n">_rews_validation</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">rews</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">acts</span><span class="p">)</span></div>
+
+
+<span class="k">def</span> <span class="nf">_rews_validation</span><span class="p">(</span><span class="n">rews</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">acts</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">):</span>
+    <span class="k">if</span> <span class="n">rews</span><span class="o">.</span><span class="n">shape</span> <span class="o">!=</span> <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">acts</span><span class="p">),):</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="s2">&quot;rewards must be 1D array, one entry for each action: &quot;</span>
+            <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">rews</span><span class="o">.</span><span class="n">shape</span><span class="si">}</span><span class="s2"> != (</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">acts</span><span class="p">)</span><span class="si">}</span><span class="s2">,)&quot;</span><span class="p">,</span>
+        <span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">np</span><span class="o">.</span><span class="n">issubdtype</span><span class="p">(</span><span class="n">rews</span><span class="o">.</span><span class="n">dtype</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">floating</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;rewards dtype </span><span class="si">{</span><span class="n">rews</span><span class="o">.</span><span class="n">dtype</span><span class="si">}</span><span class="s2"> not a float&quot;</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="TrajectoryAccumulator"><a class="viewcode-back" href="../../../../_autosummary/coopihczoo.teaching.scripts_to_sort.behavioral_cloning_original.TrajectoryAccumulator.html#coopihczoo.teaching.scripts_to_sort.behavioral_cloning_original.TrajectoryAccumulator">[docs]</a><span class="k">class</span> <span class="nc">TrajectoryAccumulator</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;Accumulates trajectories step-by-step.</span>
+
+<span class="sd">    Useful for collecting completed trajectories while ignoring partially-completed</span>
+<span class="sd">    trajectories (e.g. when rolling out a VecEnv to collect a set number of</span>
+<span class="sd">    transitions). Each in-progress trajectory is identified by a &#39;key&#39;, which enables</span>
+<span class="sd">    several independent trajectories to be collected at once. They key can also be left</span>
+<span class="sd">    at its default value of `None` if you only wish to collect one trajectory.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Initialise the trajectory accumulator.&quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">partial_trajectories</span> <span class="o">=</span> <span class="n">collections</span><span class="o">.</span><span class="n">defaultdict</span><span class="p">(</span><span class="nb">list</span><span class="p">)</span>
+
+<div class="viewcode-block" id="TrajectoryAccumulator.add_step"><a class="viewcode-back" href="../../../../_autosummary/coopihczoo.teaching.scripts_to_sort.behavioral_cloning_original.TrajectoryAccumulator.html#coopihczoo.teaching.scripts_to_sort.behavioral_cloning_original.TrajectoryAccumulator.add_step">[docs]</a>    <span class="k">def</span> <span class="nf">add_step</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">step_dict</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">],</span>
+        <span class="n">key</span>  <span class="c1">#: Hashable = None,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;Add a single step to the partial trajectory identified by `key`.</span>
+
+<span class="sd">        Generally a single step could correspond to, e.g., one environment managed</span>
+<span class="sd">        by a VecEnv.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            step_dict: dictionary containing information for the current step. Its</span>
+<span class="sd">                keys could include any (or all) attributes of a `TrajectoryWithRew`</span>
+<span class="sd">                (e.g. &quot;obs&quot;, &quot;acts&quot;, etc.).</span>
+<span class="sd">            key: key to uniquely identify the trajectory to append to, if working</span>
+<span class="sd">                with multiple partial trajectories.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">partial_trajectories</span><span class="p">[</span><span class="n">key</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">step_dict</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="TrajectoryAccumulator.finish_trajectory"><a class="viewcode-back" href="../../../../_autosummary/coopihczoo.teaching.scripts_to_sort.behavioral_cloning_original.TrajectoryAccumulator.html#coopihczoo.teaching.scripts_to_sort.behavioral_cloning_original.TrajectoryAccumulator.finish_trajectory">[docs]</a>    <span class="k">def</span> <span class="nf">finish_trajectory</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">key</span><span class="p">,</span> <span class="c1">#: Hashable,</span>
+        <span class="n">terminal</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span>
+    <span class="p">):</span>  <span class="c1"># -&gt; types.TrajectoryWithRew:</span>
+        <span class="sd">&quot;&quot;&quot;Complete the trajectory labelled with `key`.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            key: key uniquely identifying which in-progress trajectory to remove.</span>
+<span class="sd">            terminal: trajectory has naturally finished (i.e. includes terminal state).</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            traj: list of completed trajectories popped from</span>
+<span class="sd">                `self.partial_trajectories`.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">part_dicts</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">partial_trajectories</span><span class="p">[</span><span class="n">key</span><span class="p">]</span>
+        <span class="k">del</span> <span class="bp">self</span><span class="o">.</span><span class="n">partial_trajectories</span><span class="p">[</span><span class="n">key</span><span class="p">]</span>
+        <span class="n">out_dict_unstacked</span> <span class="o">=</span> <span class="n">collections</span><span class="o">.</span><span class="n">defaultdict</span><span class="p">(</span><span class="nb">list</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">part_dict</span> <span class="ow">in</span> <span class="n">part_dicts</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">array</span> <span class="ow">in</span> <span class="n">part_dict</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+                <span class="n">out_dict_unstacked</span><span class="p">[</span><span class="n">key</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">array</span><span class="p">)</span>
+        <span class="n">out_dict_stacked</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="n">key</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">stack</span><span class="p">(</span><span class="n">arr_list</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">arr_list</span> <span class="ow">in</span> <span class="n">out_dict_unstacked</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
+        <span class="p">}</span>
+        <span class="n">traj</span> <span class="o">=</span> <span class="n">TrajectoryWithRew</span><span class="p">(</span><span class="o">**</span><span class="n">out_dict_stacked</span><span class="p">,</span> <span class="n">terminal</span><span class="o">=</span><span class="n">terminal</span><span class="p">)</span>
+        <span class="k">assert</span> <span class="n">traj</span><span class="o">.</span><span class="n">rews</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="n">traj</span><span class="o">.</span><span class="n">acts</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="n">traj</span><span class="o">.</span><span class="n">obs</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">-</span> <span class="mi">1</span>
+        <span class="k">return</span> <span class="n">traj</span></div>
+
+<div class="viewcode-block" id="TrajectoryAccumulator.add_steps_and_auto_finish"><a class="viewcode-back" href="../../../../_autosummary/coopihczoo.teaching.scripts_to_sort.behavioral_cloning_original.TrajectoryAccumulator.html#coopihczoo.teaching.scripts_to_sort.behavioral_cloning_original.TrajectoryAccumulator.add_steps_and_auto_finish">[docs]</a>    <span class="k">def</span> <span class="nf">add_steps_and_auto_finish</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">acts</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+        <span class="n">obs</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+        <span class="n">rews</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+        <span class="n">dones</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+        <span class="n">infos</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">dict</span><span class="p">],</span>
+    <span class="p">):</span> <span class="c1">#-&gt; List[types.TrajectoryWithRew]:</span>
+        <span class="sd">&quot;&quot;&quot;Calls `add_step` repeatedly using acts and the returns from `venv.step`.</span>
+
+<span class="sd">        Also automatically calls `finish_trajectory()` for each `done == True`.</span>
+<span class="sd">        Before calling this method, each environment index key needs to be</span>
+<span class="sd">        initialized with the initial observation (usually from `venv.reset()`).</span>
+
+<span class="sd">        See the body of `util.rollout.generate_trajectory` for an example.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            acts: Actions passed into `VecEnv.step()`.</span>
+<span class="sd">            obs: Return value from `VecEnv.step(acts)`.</span>
+<span class="sd">            rews: Return value from `VecEnv.step(acts)`.</span>
+<span class="sd">            dones: Return value from `VecEnv.step(acts)`.</span>
+<span class="sd">            infos: Return value from `VecEnv.step(acts)`.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            A list of completed trajectories. There should be one trajectory for</span>
+<span class="sd">            each `True` in the `dones` argument.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">trajs</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">env_idx</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">obs</span><span class="p">)):</span>
+            <span class="k">assert</span> <span class="n">env_idx</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">partial_trajectories</span>
+            <span class="k">assert</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">partial_trajectories</span><span class="p">[</span><span class="n">env_idx</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span> <span class="o">==</span> <span class="p">[</span><span class="s2">&quot;obs&quot;</span><span class="p">],</span> <span class="p">(</span>
+                <span class="s2">&quot;Need to first initialize partial trajectory using &quot;</span>
+                <span class="s2">&quot;self._traj_accum.add_step({&#39;obs&#39;: ob}, key=env_idx)&quot;</span>
+            <span class="p">)</span>
+
+        <span class="n">zip_iter</span> <span class="o">=</span> <span class="nb">enumerate</span><span class="p">(</span><span class="nb">zip</span><span class="p">(</span><span class="n">acts</span><span class="p">,</span> <span class="n">obs</span><span class="p">,</span> <span class="n">rews</span><span class="p">,</span> <span class="n">dones</span><span class="p">,</span> <span class="n">infos</span><span class="p">))</span>
+        <span class="k">for</span> <span class="n">env_idx</span><span class="p">,</span> <span class="p">(</span><span class="n">act</span><span class="p">,</span> <span class="n">ob</span><span class="p">,</span> <span class="n">rew</span><span class="p">,</span> <span class="n">done</span><span class="p">,</span> <span class="n">info</span><span class="p">)</span> <span class="ow">in</span> <span class="n">zip_iter</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">done</span><span class="p">:</span>
+                <span class="c1"># When dones[i] from VecEnv.step() is True, obs[i] is the first</span>
+                <span class="c1"># observation following reset() of the ith VecEnv, and</span>
+                <span class="c1"># infos[i][&quot;terminal_observation&quot;] is the actual final observation.</span>
+                <span class="n">real_ob</span> <span class="o">=</span> <span class="n">info</span><span class="p">[</span><span class="s2">&quot;terminal_observation&quot;</span><span class="p">]</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">real_ob</span> <span class="o">=</span> <span class="n">ob</span>
+
+            <span class="bp">self</span><span class="o">.</span><span class="n">add_step</span><span class="p">(</span>
+                <span class="nb">dict</span><span class="p">(</span>
+                    <span class="n">acts</span><span class="o">=</span><span class="n">act</span><span class="p">,</span>
+                    <span class="c1"># rews=rew,</span>
+                    <span class="c1"># this is not the obs corresponding to `act`, but rather the obs</span>
+                    <span class="c1"># *after* `act` (see above)</span>
+                    <span class="n">obs</span><span class="o">=</span><span class="n">real_ob</span><span class="p">,</span>
+                    <span class="c1"># infos=info,</span>
+                <span class="p">),</span>
+                <span class="n">env_idx</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="k">if</span> <span class="n">done</span><span class="p">:</span>
+                <span class="c1"># finish env_idx-th trajectory</span>
+                <span class="n">new_traj</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">finish_trajectory</span><span class="p">(</span><span class="n">env_idx</span><span class="p">,</span> <span class="n">terminal</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+                <span class="n">trajs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">new_traj</span><span class="p">)</span>
+                <span class="c1"># When done[i] from VecEnv.step() is True, obs[i] is the first</span>
+                <span class="c1"># observation following reset() of the ith VecEnv.</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">add_step</span><span class="p">(</span><span class="nb">dict</span><span class="p">(</span><span class="n">obs</span><span class="o">=</span><span class="n">ob</span><span class="p">),</span> <span class="n">env_idx</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">trajs</span></div></div>
+
+
+<div class="viewcode-block" id="flatten_trajectories"><a class="viewcode-back" href="../../../../_autosummary/coopihczoo.teaching.scripts_to_sort.behavioral_cloning_original.flatten_trajectories.html#coopihczoo.teaching.scripts_to_sort.behavioral_cloning_original.flatten_trajectories">[docs]</a><span class="k">def</span> <span class="nf">flatten_trajectories</span><span class="p">(</span>
+    <span class="n">trajectories</span>  <span class="c1"># : Sequence[Trajectory],</span>
+<span class="p">):</span> <span class="c1">#-&gt; types.Transitions:</span>
+    <span class="sd">&quot;&quot;&quot;Flatten a series of trajectory dictionaries into arrays.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        trajectories: list of trajectories.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        The trajectories flattened into a single batch of Transitions.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">keys</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;obs&quot;</span><span class="p">,</span> <span class="s2">&quot;next_obs&quot;</span><span class="p">,</span> <span class="s2">&quot;acts&quot;</span><span class="p">,</span> <span class="s2">&quot;dones&quot;</span><span class="p">,</span> <span class="s2">&quot;infos&quot;</span><span class="p">]</span>
+    <span class="n">parts</span> <span class="o">=</span> <span class="p">{</span><span class="n">key</span><span class="p">:</span> <span class="p">[]</span> <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">keys</span><span class="p">}</span>
+    <span class="k">for</span> <span class="n">traj</span> <span class="ow">in</span> <span class="n">trajectories</span><span class="p">:</span>
+        <span class="n">parts</span><span class="p">[</span><span class="s2">&quot;acts&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">traj</span><span class="o">.</span><span class="n">acts</span><span class="p">)</span>
+
+        <span class="n">obs</span> <span class="o">=</span> <span class="n">traj</span><span class="o">.</span><span class="n">obs</span>
+        <span class="n">parts</span><span class="p">[</span><span class="s2">&quot;obs&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">obs</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span>
+        <span class="n">parts</span><span class="p">[</span><span class="s2">&quot;next_obs&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">obs</span><span class="p">[</span><span class="mi">1</span><span class="p">:])</span>
+
+        <span class="n">dones</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">traj</span><span class="o">.</span><span class="n">acts</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">bool</span><span class="p">)</span>
+        <span class="n">dones</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="n">traj</span><span class="o">.</span><span class="n">terminal</span>
+        <span class="n">parts</span><span class="p">[</span><span class="s2">&quot;dones&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">dones</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">traj</span><span class="o">.</span><span class="n">infos</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">infos</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([{}]</span> <span class="o">*</span> <span class="nb">len</span><span class="p">(</span><span class="n">traj</span><span class="p">))</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">infos</span> <span class="o">=</span> <span class="n">traj</span><span class="o">.</span><span class="n">infos</span>
+        <span class="n">parts</span><span class="p">[</span><span class="s2">&quot;infos&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">infos</span><span class="p">)</span>
+
+    <span class="n">cat_parts</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="n">key</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">(</span><span class="n">part_list</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span> <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">part_list</span> <span class="ow">in</span> <span class="n">parts</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
+    <span class="p">}</span>
+    <span class="n">lengths</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="nb">map</span><span class="p">(</span><span class="nb">len</span><span class="p">,</span> <span class="n">cat_parts</span><span class="o">.</span><span class="n">values</span><span class="p">()))</span>
+    <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="n">lengths</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;expected one length, got </span><span class="si">{</span><span class="n">lengths</span><span class="si">}</span><span class="s2">&quot;</span>
+    <span class="k">return</span> <span class="n">Transitions</span><span class="p">(</span><span class="o">**</span><span class="n">cat_parts</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="generate_trajectories"><a class="viewcode-back" href="../../../../_autosummary/coopihczoo.teaching.scripts_to_sort.behavioral_cloning_original.generate_trajectories.html#coopihczoo.teaching.scripts_to_sort.behavioral_cloning_original.generate_trajectories">[docs]</a><span class="k">def</span> <span class="nf">generate_trajectories</span><span class="p">(</span>
+    <span class="n">policy</span><span class="p">,</span>  <span class="c1">#: AnyPolicy,</span>
+    <span class="n">venv</span><span class="p">,</span>  <span class="c1">#: VecEnv,</span>
+    <span class="n">sample_until</span><span class="p">,</span>  <span class="c1">#: GenTrajTerminationFn,</span>
+    <span class="o">*</span><span class="p">,</span>
+    <span class="n">deterministic_policy</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+    <span class="n">rng</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">RandomState</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="p">,</span>
+<span class="p">):</span> <span class="c1">#-&gt; Sequence[types.TrajectoryWithRew]:</span>
+    <span class="sd">&quot;&quot;&quot;Generate trajectory dictionaries from a policy and an environment.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        policy: Can be any of the following:</span>
+<span class="sd">            1) A stable_baselines3 policy or algorithm trained on the gym environment.</span>
+<span class="sd">            2) A Callable that takes an ndarray of observations and returns an ndarray</span>
+<span class="sd">            of corresponding actions.</span>
+<span class="sd">            3) None, in which case actions will be sampled randomly.</span>
+<span class="sd">        venv: The vectorized environments to interact with.</span>
+<span class="sd">        sample_until: A function determining the termination condition.</span>
+<span class="sd">            It takes a sequence of trajectories, and returns a bool.</span>
+<span class="sd">            Most users will want to use one of `min_episodes` or `min_timesteps`.</span>
+<span class="sd">        deterministic_policy: If True, asks policy to deterministically return</span>
+<span class="sd">            action. Note the trajectories might still be non-deterministic if the</span>
+<span class="sd">            environment has non-determinism!</span>
+<span class="sd">        rng: used for shuffling trajectories.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        Sequence of trajectories, satisfying `sample_until`. Additional trajectories</span>
+<span class="sd">        may be collected to avoid biasing process towards short episodes; the user</span>
+<span class="sd">        should truncate if required.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">get_actions</span> <span class="o">=</span> <span class="n">_policy_to_callable</span><span class="p">(</span><span class="n">policy</span><span class="p">,</span> <span class="n">venv</span><span class="p">,</span> <span class="n">deterministic_policy</span><span class="p">)</span>
+
+    <span class="c1"># Collect rollout tuples.</span>
+    <span class="n">trajectories</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="c1"># accumulator for incomplete trajectories</span>
+    <span class="n">trajectories_accum</span> <span class="o">=</span> <span class="n">TrajectoryAccumulator</span><span class="p">()</span>
+    <span class="n">obs</span> <span class="o">=</span> <span class="n">venv</span><span class="o">.</span><span class="n">reset</span><span class="p">()</span>
+    <span class="k">for</span> <span class="n">env_idx</span><span class="p">,</span> <span class="n">ob</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">obs</span><span class="p">):</span>
+        <span class="c1"># Seed with first obs only. Inside loop, we&#39;ll only add second obs from</span>
+        <span class="c1"># each (s,a,r,s&#39;) tuple, under the same &quot;obs&quot; key again. That way we still</span>
+        <span class="c1"># get all observations, but they&#39;re not duplicated into &quot;next obs&quot; and</span>
+        <span class="c1"># &quot;previous obs&quot; (this matters for, e.g., Atari, where observations are</span>
+        <span class="c1"># really big).</span>
+        <span class="n">trajectories_accum</span><span class="o">.</span><span class="n">add_step</span><span class="p">(</span><span class="nb">dict</span><span class="p">(</span><span class="n">obs</span><span class="o">=</span><span class="n">ob</span><span class="p">),</span> <span class="n">env_idx</span><span class="p">)</span>
+
+    <span class="c1"># Now, we sample until `sample_until(trajectories)` is true.</span>
+    <span class="c1"># If we just stopped then this would introduce a bias towards shorter episodes,</span>
+    <span class="c1"># since longer episodes are more likely to still be active, i.e. in the process</span>
+    <span class="c1"># of being sampled from. To avoid this, we continue sampling until all epsiodes</span>
+    <span class="c1"># are complete.</span>
+    <span class="c1">#</span>
+    <span class="c1"># To start with, all environments are active.</span>
+    <span class="n">active</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="n">venv</span><span class="o">.</span><span class="n">num_envs</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">bool</span><span class="p">)</span>
+    <span class="k">while</span> <span class="n">np</span><span class="o">.</span><span class="n">any</span><span class="p">(</span><span class="n">active</span><span class="p">):</span>
+        <span class="n">acts</span> <span class="o">=</span> <span class="n">get_actions</span><span class="p">(</span><span class="n">obs</span><span class="p">)</span>
+        <span class="n">obs</span><span class="p">,</span> <span class="n">rews</span><span class="p">,</span> <span class="n">dones</span><span class="p">,</span> <span class="n">infos</span> <span class="o">=</span> <span class="n">venv</span><span class="o">.</span><span class="n">step</span><span class="p">(</span><span class="n">acts</span><span class="p">)</span>
+
+        <span class="c1"># If an environment is inactive, i.e. the episode completed for that</span>
+        <span class="c1"># environment after `sample_until(trajectories)` was true, then we do</span>
+        <span class="c1"># *not* want to add any subsequent trajectories from it. We avoid this</span>
+        <span class="c1"># by just making it never done.</span>
+        <span class="n">dones</span> <span class="o">&amp;=</span> <span class="n">active</span>
+
+        <span class="n">new_trajs</span> <span class="o">=</span> <span class="n">trajectories_accum</span><span class="o">.</span><span class="n">add_steps_and_auto_finish</span><span class="p">(</span>
+            <span class="n">acts</span><span class="p">,</span>
+            <span class="n">obs</span><span class="p">,</span>
+            <span class="n">rews</span><span class="p">,</span>
+            <span class="n">dones</span><span class="p">,</span>
+            <span class="n">infos</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="n">trajectories</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">new_trajs</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">sample_until</span><span class="p">(</span><span class="n">trajectories</span><span class="p">):</span>
+            <span class="c1"># Termination condition has been reached. Mark as inactive any environments</span>
+            <span class="c1"># where a trajectory was completed this timestep.</span>
+            <span class="n">active</span> <span class="o">&amp;=</span> <span class="o">~</span><span class="n">dones</span>
+
+    <span class="c1"># Note that we just drop partial trajectories. This is not ideal for some</span>
+    <span class="c1"># algos; e.g. BC can probably benefit from partial trajectories, too.</span>
+
+    <span class="c1"># Each trajectory is sampled i.i.d.; however, shorter episodes are added to</span>
+    <span class="c1"># `trajectories` sooner. Shuffle to avoid bias in order. This is important</span>
+    <span class="c1"># when callees end up truncating the number of trajectories or transitions.</span>
+    <span class="c1"># It is also cheap, since we&#39;re just shuffling pointers.</span>
+    <span class="n">rng</span><span class="o">.</span><span class="n">shuffle</span><span class="p">(</span><span class="n">trajectories</span><span class="p">)</span>
+
+    <span class="c1"># Sanity checks.</span>
+    <span class="k">for</span> <span class="n">trajectory</span> <span class="ow">in</span> <span class="n">trajectories</span><span class="p">:</span>
+        <span class="n">n_steps</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">trajectory</span><span class="o">.</span><span class="n">acts</span><span class="p">)</span>
+        <span class="c1"># extra 1 for the end</span>
+        <span class="n">exp_obs</span> <span class="o">=</span> <span class="p">(</span><span class="n">n_steps</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,)</span> <span class="o">+</span> <span class="n">venv</span><span class="o">.</span><span class="n">observation_space</span><span class="o">.</span><span class="n">shape</span>
+        <span class="n">real_obs</span> <span class="o">=</span> <span class="n">trajectory</span><span class="o">.</span><span class="n">obs</span><span class="o">.</span><span class="n">shape</span>
+        <span class="k">assert</span> <span class="n">real_obs</span> <span class="o">==</span> <span class="n">exp_obs</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;expected shape </span><span class="si">{</span><span class="n">exp_obs</span><span class="si">}</span><span class="s2">, got </span><span class="si">{</span><span class="n">real_obs</span><span class="si">}</span><span class="s2">&quot;</span>
+        <span class="n">exp_act</span> <span class="o">=</span> <span class="p">(</span><span class="n">n_steps</span><span class="p">,)</span> <span class="o">+</span> <span class="n">venv</span><span class="o">.</span><span class="n">action_space</span><span class="o">.</span><span class="n">shape</span>
+        <span class="n">real_act</span> <span class="o">=</span> <span class="n">trajectory</span><span class="o">.</span><span class="n">acts</span><span class="o">.</span><span class="n">shape</span>
+        <span class="k">assert</span> <span class="n">real_act</span> <span class="o">==</span> <span class="n">exp_act</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;expected shape </span><span class="si">{</span><span class="n">exp_act</span><span class="si">}</span><span class="s2">, got </span><span class="si">{</span><span class="n">real_act</span><span class="si">}</span><span class="s2">&quot;</span>
+        <span class="n">exp_rew</span> <span class="o">=</span> <span class="p">(</span><span class="n">n_steps</span><span class="p">,)</span>
+        <span class="n">real_rew</span> <span class="o">=</span> <span class="n">trajectory</span><span class="o">.</span><span class="n">rews</span><span class="o">.</span><span class="n">shape</span>
+        <span class="k">assert</span> <span class="n">real_rew</span> <span class="o">==</span> <span class="n">exp_rew</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;expected shape </span><span class="si">{</span><span class="n">exp_rew</span><span class="si">}</span><span class="s2">, got </span><span class="si">{</span><span class="n">real_rew</span><span class="si">}</span><span class="s2">&quot;</span>
+
+    <span class="k">return</span> <span class="n">trajectories</span></div>
+
+
+<div class="viewcode-block" id="transitions_collate_fn"><a class="viewcode-back" href="../../../../_autosummary/coopihczoo.teaching.scripts_to_sort.behavioral_cloning_original.transitions_collate_fn.html#coopihczoo.teaching.scripts_to_sort.behavioral_cloning_original.transitions_collate_fn">[docs]</a><span class="k">def</span> <span class="nf">transitions_collate_fn</span><span class="p">(</span>
+    <span class="n">batch</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]],</span>
+<span class="p">):</span>  <span class="c1"># -&gt; Mapping[str, Union[np.ndarray, th.Tensor]]:</span>
+    <span class="sd">&quot;&quot;&quot;Custom `torch.utils.data.DataLoader` collate_fn for `TransitionsMinimal`.</span>
+
+<span class="sd">    Use this as the `collate_fn` argument to `DataLoader` if using an instance of</span>
+<span class="sd">    `TransitionsMinimal` as the `dataset` argument.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        batch: The batch to collate.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        A collated batch. Uses Torch&#39;s default collate function for everything</span>
+<span class="sd">        except the &quot;infos&quot; key. For &quot;infos&quot;, we join all the info dicts into a</span>
+<span class="sd">        list of dicts. (The default behavior would recursively collate every</span>
+<span class="sd">        info dict into a single dict, which is incorrect.)</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">batch_no_infos</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="p">{</span><span class="n">k</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">v</span><span class="p">)</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">sample</span><span class="o">.</span><span class="n">items</span><span class="p">()</span> <span class="k">if</span> <span class="n">k</span> <span class="o">!=</span> <span class="s2">&quot;infos&quot;</span><span class="p">}</span> <span class="k">for</span> <span class="n">sample</span> <span class="ow">in</span> <span class="n">batch</span>
+    <span class="p">]</span>
+
+    <span class="n">result</span> <span class="o">=</span> <span class="n">th_data</span><span class="o">.</span><span class="n">dataloader</span><span class="o">.</span><span class="n">default_collate</span><span class="p">(</span><span class="n">batch_no_infos</span><span class="p">)</span>
+    <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">result</span><span class="p">,</span> <span class="nb">dict</span><span class="p">)</span>
+    <span class="n">result</span><span class="p">[</span><span class="s2">&quot;infos&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="n">sample</span><span class="p">[</span><span class="s2">&quot;infos&quot;</span><span class="p">]</span> <span class="k">for</span> <span class="n">sample</span> <span class="ow">in</span> <span class="n">batch</span><span class="p">]</span>
+    <span class="k">return</span> <span class="n">result</span></div>
+
+
+<div class="viewcode-block" id="make_min_episodes"><a class="viewcode-back" href="../../../../_autosummary/coopihczoo.teaching.scripts_to_sort.behavioral_cloning_original.make_min_episodes.html#coopihczoo.teaching.scripts_to_sort.behavioral_cloning_original.make_min_episodes">[docs]</a><span class="k">def</span> <span class="nf">make_min_episodes</span><span class="p">(</span><span class="n">n</span><span class="p">:</span> <span class="nb">int</span><span class="p">):</span>  <span class="c1"># -&gt; GenTrajTerminationFn:</span>
+    <span class="sd">&quot;&quot;&quot;Terminate after collecting n episodes of data.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        n: Minimum number of episodes of data to collect.</span>
+<span class="sd">            May overshoot if two episodes complete simultaneously (unlikely).</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        A function implementing this termination condition.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">assert</span> <span class="n">n</span> <span class="o">&gt;=</span> <span class="mi">1</span>
+    <span class="k">return</span> <span class="k">lambda</span> <span class="n">trajectories</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="n">trajectories</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="n">n</span></div>
+
+
+<div class="viewcode-block" id="EpochOrBatchIteratorWithProgress"><a class="viewcode-back" href="../../../../_autosummary/coopihczoo.teaching.scripts_to_sort.behavioral_cloning_original.EpochOrBatchIteratorWithProgress.html#coopihczoo.teaching.scripts_to_sort.behavioral_cloning_original.EpochOrBatchIteratorWithProgress">[docs]</a><span class="k">class</span> <span class="nc">EpochOrBatchIteratorWithProgress</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;Wraps DataLoader so that all BC batches can be processed in one for-loop.</span>
+
+<span class="sd">    Also uses `tqdm` to show progress in stdout.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">data_loader</span><span class="p">,</span> <span class="c1">#: Iterable[algo_base.TransitionMapping],</span>
+        <span class="n">n_epochs</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">n_batches</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">on_epoch_end</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Callable</span><span class="p">[[],</span> <span class="kc">None</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">on_batch_end</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Callable</span><span class="p">[[],</span> <span class="kc">None</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">progress_bar_visible</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+    <span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Builds EpochOrBatchIteratorWithProgress.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            data_loader: An iterable over data dicts, as used in `BC`.</span>
+<span class="sd">            n_epochs: The number of epochs to iterate through in one call to</span>
+<span class="sd">                __iter__. Exactly one of `n_epochs` and `n_batches` should be provided.</span>
+<span class="sd">            n_batches: The number of batches to iterate through in one call to</span>
+<span class="sd">                __iter__. Exactly one of `n_epochs` and `n_batches` should be provided.</span>
+<span class="sd">            on_epoch_end: A callback function without parameters to be called at the</span>
+<span class="sd">                end of every epoch.</span>
+<span class="sd">            on_batch_end: A callback function without parameters to be called at the</span>
+<span class="sd">                end of every batch.</span>
+<span class="sd">            progress_bar_visible: If True, then show a tqdm progress bar.</span>
+
+<span class="sd">        Raises:</span>
+<span class="sd">            ValueError: If neither or both of `n_epochs` and `n_batches` are non-None.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">n_epochs</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">n_batches</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">use_epochs</span> <span class="o">=</span> <span class="kc">True</span>
+        <span class="k">elif</span> <span class="n">n_epochs</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">n_batches</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">use_epochs</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="s2">&quot;Must provide exactly one of `n_epochs` and `n_batches` arguments.&quot;</span><span class="p">,</span>
+            <span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">data_loader</span> <span class="o">=</span> <span class="n">data_loader</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">n_epochs</span> <span class="o">=</span> <span class="n">n_epochs</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">n_batches</span> <span class="o">=</span> <span class="n">n_batches</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">on_epoch_end</span> <span class="o">=</span> <span class="n">on_epoch_end</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">on_batch_end</span> <span class="o">=</span> <span class="n">on_batch_end</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">progress_bar_visible</span> <span class="o">=</span> <span class="n">progress_bar_visible</span>
+
+    <span class="k">def</span> <span class="fm">__iter__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+    <span class="p">):</span> <span class="c1">#-&gt; Iterable[Tuple[algo_base.TransitionMapping, Mapping[str, Any]]]:</span>
+        <span class="sd">&quot;&quot;&quot;Yields batches while updating tqdm display to display progress.&quot;&quot;&quot;</span>
+        <span class="n">samples_so_far</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="n">epoch_num</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="n">batch_num</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="n">batch_suffix</span> <span class="o">=</span> <span class="n">epoch_suffix</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">progress_bar_visible</span><span class="p">:</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">use_epochs</span><span class="p">:</span>
+                <span class="n">display</span> <span class="o">=</span> <span class="n">tqdm</span><span class="o">.</span><span class="n">tqdm</span><span class="p">(</span><span class="n">total</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">n_epochs</span><span class="p">)</span>
+                <span class="n">epoch_suffix</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;/</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">n_epochs</span><span class="si">}</span><span class="s2">&quot;</span>
+            <span class="k">else</span><span class="p">:</span>  <span class="c1"># Use batches.</span>
+                <span class="n">display</span> <span class="o">=</span> <span class="n">tqdm</span><span class="o">.</span><span class="n">tqdm</span><span class="p">(</span><span class="n">total</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">n_batches</span><span class="p">)</span>
+                <span class="n">batch_suffix</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;/</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">n_batches</span><span class="si">}</span><span class="s2">&quot;</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">display</span> <span class="o">=</span> <span class="n">_NoopTqdm</span><span class="p">()</span>
+
+        <span class="k">def</span> <span class="nf">update_desc</span><span class="p">():</span>
+            <span class="n">display</span><span class="o">.</span><span class="n">set_description</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;batch: </span><span class="si">{</span><span class="n">batch_num</span><span class="si">}{</span><span class="n">batch_suffix</span><span class="si">}</span><span class="s2">  epoch: </span><span class="si">{</span><span class="n">epoch_num</span><span class="si">}{</span><span class="n">epoch_suffix</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+            <span class="p">)</span>
+
+        <span class="k">with</span> <span class="n">contextlib</span><span class="o">.</span><span class="n">closing</span><span class="p">(</span><span class="n">display</span><span class="p">):</span>
+            <span class="k">while</span> <span class="kc">True</span><span class="p">:</span>
+                <span class="n">update_desc</span><span class="p">()</span>
+                <span class="n">got_data_on_epoch</span> <span class="o">=</span> <span class="kc">False</span>
+                <span class="k">for</span> <span class="n">batch</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">data_loader</span><span class="p">:</span>
+                    <span class="n">got_data_on_epoch</span> <span class="o">=</span> <span class="kc">True</span>
+                    <span class="n">batch_num</span> <span class="o">+=</span> <span class="mi">1</span>
+                    <span class="n">batch_size</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">batch</span><span class="p">[</span><span class="s2">&quot;obs&quot;</span><span class="p">])</span>
+                    <span class="k">assert</span> <span class="n">batch_size</span> <span class="o">&gt;</span> <span class="mi">0</span>
+                    <span class="n">samples_so_far</span> <span class="o">+=</span> <span class="n">batch_size</span>
+                    <span class="n">stats</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span>
+                        <span class="n">epoch_num</span><span class="o">=</span><span class="n">epoch_num</span><span class="p">,</span>
+                        <span class="n">batch_num</span><span class="o">=</span><span class="n">batch_num</span><span class="p">,</span>
+                        <span class="n">samples_so_far</span><span class="o">=</span><span class="n">samples_so_far</span><span class="p">,</span>
+                    <span class="p">)</span>
+                    <span class="k">yield</span> <span class="n">batch</span><span class="p">,</span> <span class="n">stats</span>
+                    <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">on_batch_end</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">on_batch_end</span><span class="p">()</span>
+                    <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">use_epochs</span><span class="p">:</span>
+                        <span class="n">update_desc</span><span class="p">()</span>
+                        <span class="n">display</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+                        <span class="k">if</span> <span class="n">batch_num</span> <span class="o">&gt;=</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_batches</span><span class="p">:</span>
+                            <span class="k">return</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="n">got_data_on_epoch</span><span class="p">:</span>
+                    <span class="k">raise</span> <span class="ne">AssertionError</span><span class="p">(</span>
+                        <span class="sa">f</span><span class="s2">&quot;Data loader returned no data after &quot;</span>
+                        <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">batch_num</span><span class="si">}</span><span class="s2"> batches, during epoch &quot;</span>
+                        <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">epoch_num</span><span class="si">}</span><span class="s2"> -- did it reset correctly?&quot;</span><span class="p">,</span>
+                    <span class="p">)</span>
+                <span class="n">epoch_num</span> <span class="o">+=</span> <span class="mi">1</span>
+                <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">on_epoch_end</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">on_epoch_end</span><span class="p">()</span>
+
+                <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">use_epochs</span><span class="p">:</span>
+                    <span class="n">update_desc</span><span class="p">()</span>
+                    <span class="n">display</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+                    <span class="k">if</span> <span class="n">epoch_num</span> <span class="o">&gt;=</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_epochs</span><span class="p">:</span>
+                        <span class="k">return</span></div>
+
+
+<div class="viewcode-block" id="FeedForward32Policy"><a class="viewcode-back" href="../../../../_autosummary/coopihczoo.teaching.scripts_to_sort.behavioral_cloning_original.FeedForward32Policy.html#coopihczoo.teaching.scripts_to_sort.behavioral_cloning_original.FeedForward32Policy">[docs]</a><span class="k">class</span> <span class="nc">FeedForward32Policy</span><span class="p">(</span><span class="n">ActorCriticPolicy</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;A feed forward policy network with two hidden layers of 32 units.</span>
+
+<span class="sd">    This matches the IRL policies in the original AIRL paper.</span>
+
+<span class="sd">    Note: This differs from stable_baselines3 ActorCriticPolicy in two ways: by</span>
+<span class="sd">    having 32 rather than 64 units, and by having policy and value networks</span>
+<span class="sd">    share weights except at the final layer.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span> <span class="n">net_arch</span><span class="o">=</span><span class="p">[</span><span class="mi">32</span><span class="p">,</span> <span class="mi">32</span><span class="p">])</span></div>
+
+
+<div class="viewcode-block" id="ConstantLRSchedule"><a class="viewcode-back" href="../../../../_autosummary/coopihczoo.teaching.scripts_to_sort.behavioral_cloning_original.ConstantLRSchedule.html#coopihczoo.teaching.scripts_to_sort.behavioral_cloning_original.ConstantLRSchedule">[docs]</a><span class="k">class</span> <span class="nc">ConstantLRSchedule</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;A callable that returns a constant learning rate.&quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">lr</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1e-3</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Args:</span>
+<span class="sd">            lr: the constant learning rate that calls to this object will return.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">lr</span> <span class="o">=</span> <span class="n">lr</span>
+
+<div class="viewcode-block" id="ConstantLRSchedule.__call__"><a class="viewcode-back" href="../../../../_autosummary/coopihczoo.teaching.scripts_to_sort.behavioral_cloning_original.ConstantLRSchedule.html#coopihczoo.teaching.scripts_to_sort.behavioral_cloning_original.ConstantLRSchedule.__call__">[docs]</a>    <span class="k">def</span> <span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">_</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Returns the constant learning rate.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">lr</span></div></div>
+
+
+<div class="viewcode-block" id="BC"><a class="viewcode-back" href="../../../../_autosummary/coopihczoo.teaching.scripts_to_sort.behavioral_cloning_original.BC.html#coopihczoo.teaching.scripts_to_sort.behavioral_cloning_original.BC">[docs]</a><span class="k">class</span> <span class="nc">BC</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;Behavioral cloning (BC).</span>
+
+<span class="sd">    Recovers a policy via supervised learning from observation-action pairs.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="o">*</span><span class="p">,</span>
+        <span class="n">observation_space</span><span class="p">:</span> <span class="n">gym</span><span class="o">.</span><span class="n">Space</span><span class="p">,</span>
+        <span class="n">action_space</span><span class="p">:</span> <span class="n">gym</span><span class="o">.</span><span class="n">Space</span><span class="p">,</span>
+        <span class="n">policy</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">policies</span><span class="o">.</span><span class="n">ActorCriticPolicy</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">demonstrations</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>  <span class="c1"># Optional[algo_base.AnyTransitions] = None,</span>
+        <span class="n">batch_size</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">32</span><span class="p">,</span>
+        <span class="n">optimizer_cls</span><span class="p">:</span> <span class="n">Type</span><span class="p">[</span><span class="n">torch</span><span class="o">.</span><span class="n">optim</span><span class="o">.</span><span class="n">Optimizer</span><span class="p">]</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">optim</span><span class="o">.</span><span class="n">Adam</span><span class="p">,</span>
+        <span class="n">optimizer_kwargs</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">ent_weight</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1e-3</span><span class="p">,</span>
+        <span class="n">l2_weight</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.0</span><span class="p">,</span>
+        <span class="n">device</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">device</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;auto&quot;</span><span class="p">,</span>
+        <span class="c1"># custom_logger: Optional[logger.HierarchicalLogger] = None,</span>
+    <span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Builds BC.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            observation_space: the observation space of the environment.</span>
+<span class="sd">            action_space: the action space of the environment.</span>
+<span class="sd">            policy: a Stable Baselines3 policy; if unspecified,</span>
+<span class="sd">                defaults to `FeedForward32Policy`.</span>
+<span class="sd">            demonstrations: Demonstrations from an expert (optional). Transitions</span>
+<span class="sd">                expressed directly as a `types.TransitionsMinimal` object, a sequence</span>
+<span class="sd">                of trajectories, or an iterable of transition batches (mappings from</span>
+<span class="sd">                keywords to arrays containing observations, etc).</span>
+<span class="sd">            batch_size: The number of samples in each batch of expert data.</span>
+<span class="sd">            optimizer_cls: optimiser to use for supervised training.</span>
+<span class="sd">            optimizer_kwargs: keyword arguments, excluding learning rate and</span>
+<span class="sd">                weight decay, for optimiser construction.</span>
+<span class="sd">            ent_weight: scaling applied to the policy&#39;s entropy regularization.</span>
+<span class="sd">            l2_weight: scaling applied to the policy&#39;s L2 regularization.</span>
+<span class="sd">            device: name/identity of device to place policy on.</span>
+<span class="sd">            custom_logger: Where to log to; if None (default), creates a new logger.</span>
+
+<span class="sd">        Raises:</span>
+<span class="sd">            ValueError: If `weight_decay` is specified in `optimizer_kwargs` (use the</span>
+<span class="sd">                parameter `l2_weight` instead.)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_demo_data_loader</span> <span class="o">=</span> <span class="kc">None</span> <span class="c1"># Optional[Iterable[TransitionMapping]] = None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">batch_size</span> <span class="o">=</span> <span class="n">batch_size</span>
+        <span class="c1"># super().__init__(</span>
+        <span class="c1">#     demonstrations=demonstrations,</span>
+        <span class="c1">#     custom_logger=custom_logger,</span>
+        <span class="c1"># )</span>
+
+        <span class="k">if</span> <span class="n">demonstrations</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">set_demonstrations</span><span class="p">(</span><span class="n">demonstrations</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">optimizer_kwargs</span><span class="p">:</span>
+            <span class="k">if</span> <span class="s2">&quot;weight_decay&quot;</span> <span class="ow">in</span> <span class="n">optimizer_kwargs</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Use the parameter l2_weight instead of weight_decay.&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">tensorboard_step</span> <span class="o">=</span> <span class="mi">0</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">action_space</span> <span class="o">=</span> <span class="n">action_space</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">observation_space</span> <span class="o">=</span> <span class="n">observation_space</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">device</span> <span class="o">=</span> <span class="n">utils</span><span class="o">.</span><span class="n">get_device</span><span class="p">(</span><span class="n">device</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">policy</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">policy</span> <span class="o">=</span> <span class="n">FeedForward32Policy</span><span class="p">(</span>
+                <span class="n">observation_space</span><span class="o">=</span><span class="n">observation_space</span><span class="p">,</span>
+                <span class="n">action_space</span><span class="o">=</span><span class="n">action_space</span><span class="p">,</span>
+                <span class="c1"># Set lr_schedule to max value to force error if policy.optimizer</span>
+                <span class="c1"># is used by mistake (should use self.optimizer instead).</span>
+                <span class="n">lr_schedule</span><span class="o">=</span><span class="n">ConstantLRSchedule</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">finfo</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">float32</span><span class="p">)</span><span class="o">.</span><span class="n">max</span><span class="p">),</span>
+            <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_policy</span> <span class="o">=</span> <span class="n">policy</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">device</span><span class="p">)</span>
+        <span class="c1"># TODO(adam): make policy mandatory and delete observation/action space params?</span>
+        <span class="k">assert</span> <span class="bp">self</span><span class="o">.</span><span class="n">policy</span><span class="o">.</span><span class="n">observation_space</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">observation_space</span>
+        <span class="k">assert</span> <span class="bp">self</span><span class="o">.</span><span class="n">policy</span><span class="o">.</span><span class="n">action_space</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">action_space</span>
+
+        <span class="n">optimizer_kwargs</span> <span class="o">=</span> <span class="n">optimizer_kwargs</span> <span class="ow">or</span> <span class="p">{}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">optimizer</span> <span class="o">=</span> <span class="n">optimizer_cls</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">policy</span><span class="o">.</span><span class="n">parameters</span><span class="p">(),</span>
+            <span class="o">**</span><span class="n">optimizer_kwargs</span><span class="p">,</span>
+        <span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">ent_weight</span> <span class="o">=</span> <span class="n">ent_weight</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">l2_weight</span> <span class="o">=</span> <span class="n">l2_weight</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">policy</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">policies</span><span class="o">.</span><span class="n">ActorCriticPolicy</span><span class="p">:</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_policy</span>
+
+    <span class="k">def</span> <span class="nf">set_demonstrations</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">demonstrations</span><span class="p">):</span> <span class="c1"># algo_base.AnyTransitions) -&gt; None:</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_demo_data_loader</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">make_data_loader</span><span class="p">(</span>
+            <span class="n">demonstrations</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">batch_size</span><span class="p">,</span>
+        <span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_calculate_loss</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">obs</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">],</span>
+        <span class="n">acts</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">],</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]:</span>
+        <span class="sd">&quot;&quot;&quot;Calculate the supervised learning loss used to train the behavioral clone.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            obs: The observations seen by the expert. If this is a Tensor, then</span>
+<span class="sd">                gradients are detached first before loss is calculated.</span>
+<span class="sd">            acts: The actions taken by the expert. If this is a Tensor, then its</span>
+<span class="sd">                gradients are detached first before loss is calculated.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            loss: The supervised learning loss for the behavioral clone to optimize.</span>
+<span class="sd">            stats_dict: Statistics about the learning process to be logged.</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">obs</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">as_tensor</span><span class="p">(</span><span class="n">obs</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">device</span><span class="p">)</span><span class="o">.</span><span class="n">detach</span><span class="p">()</span>
+        <span class="n">acts</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">as_tensor</span><span class="p">(</span><span class="n">acts</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">device</span><span class="p">)</span><span class="o">.</span><span class="n">detach</span><span class="p">()</span>
+
+        <span class="n">_</span><span class="p">,</span> <span class="n">log_prob</span><span class="p">,</span> <span class="n">entropy</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">policy</span><span class="o">.</span><span class="n">evaluate_actions</span><span class="p">(</span><span class="n">obs</span><span class="p">,</span> <span class="n">acts</span><span class="p">)</span>
+        <span class="n">prob_true_act</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">log_prob</span><span class="p">)</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span>
+        <span class="n">log_prob</span> <span class="o">=</span> <span class="n">log_prob</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span>
+        <span class="n">entropy</span> <span class="o">=</span> <span class="n">entropy</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span>
+
+        <span class="n">l2_norms</span> <span class="o">=</span> <span class="p">[</span><span class="n">torch</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">square</span><span class="p">(</span><span class="n">w</span><span class="p">))</span> <span class="k">for</span> <span class="n">w</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">policy</span><span class="o">.</span><span class="n">parameters</span><span class="p">()]</span>
+        <span class="n">l2_norm</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="n">l2_norms</span><span class="p">)</span> <span class="o">/</span> <span class="mi">2</span>  <span class="c1"># divide by 2 to cancel with gradient of square</span>
+
+        <span class="n">ent_loss</span> <span class="o">=</span> <span class="o">-</span><span class="bp">self</span><span class="o">.</span><span class="n">ent_weight</span> <span class="o">*</span> <span class="n">entropy</span>
+        <span class="n">neglogp</span> <span class="o">=</span> <span class="o">-</span><span class="n">log_prob</span>
+        <span class="n">l2_loss</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">l2_weight</span> <span class="o">*</span> <span class="n">l2_norm</span>
+        <span class="n">loss</span> <span class="o">=</span> <span class="n">neglogp</span> <span class="o">+</span> <span class="n">ent_loss</span> <span class="o">+</span> <span class="n">l2_loss</span>
+
+        <span class="n">stats_dict</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span>
+            <span class="n">neglogp</span><span class="o">=</span><span class="n">neglogp</span><span class="o">.</span><span class="n">item</span><span class="p">(),</span>
+            <span class="n">loss</span><span class="o">=</span><span class="n">loss</span><span class="o">.</span><span class="n">item</span><span class="p">(),</span>
+            <span class="n">entropy</span><span class="o">=</span><span class="n">entropy</span><span class="o">.</span><span class="n">item</span><span class="p">(),</span>
+            <span class="n">ent_loss</span><span class="o">=</span><span class="n">ent_loss</span><span class="o">.</span><span class="n">item</span><span class="p">(),</span>
+            <span class="n">prob_true_act</span><span class="o">=</span><span class="n">prob_true_act</span><span class="o">.</span><span class="n">item</span><span class="p">(),</span>
+            <span class="n">l2_norm</span><span class="o">=</span><span class="n">l2_norm</span><span class="o">.</span><span class="n">item</span><span class="p">(),</span>
+            <span class="n">l2_loss</span><span class="o">=</span><span class="n">l2_loss</span><span class="o">.</span><span class="n">item</span><span class="p">(),</span>
+        <span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">loss</span><span class="p">,</span> <span class="n">stats_dict</span>
+
+<div class="viewcode-block" id="BC.train"><a class="viewcode-back" href="../../../../_autosummary/coopihczoo.teaching.scripts_to_sort.behavioral_cloning_original.BC.html#coopihczoo.teaching.scripts_to_sort.behavioral_cloning_original.BC.train">[docs]</a>    <span class="k">def</span> <span class="nf">train</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="o">*</span><span class="p">,</span>
+        <span class="n">n_epochs</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">n_batches</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">on_epoch_end</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Callable</span><span class="p">[[],</span> <span class="kc">None</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">on_batch_end</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Callable</span><span class="p">[[],</span> <span class="kc">None</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">log_interval</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">500</span><span class="p">,</span>
+        <span class="n">log_rollouts_venv</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">vec_env</span><span class="o">.</span><span class="n">VecEnv</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">log_rollouts_n_episodes</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">5</span><span class="p">,</span>
+        <span class="n">progress_bar</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+        <span class="n">reset_tensorboard</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+    <span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Train with supervised learning for some number of epochs.</span>
+
+<span class="sd">        Here an &#39;epoch&#39; is just a complete pass through the expert data loader,</span>
+<span class="sd">        as set by `self.set_expert_data_loader()`.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            n_epochs: Number of complete passes made through expert data before ending</span>
+<span class="sd">                training. Provide exactly one of `n_epochs` and `n_batches`.</span>
+<span class="sd">            n_batches: Number of batches loaded from dataset before ending training.</span>
+<span class="sd">                Provide exactly one of `n_epochs` and `n_batches`.</span>
+<span class="sd">            on_epoch_end: Optional callback with no parameters to run at the end of each</span>
+<span class="sd">                epoch.</span>
+<span class="sd">            on_batch_end: Optional callback with no parameters to run at the end of each</span>
+<span class="sd">                batch.</span>
+<span class="sd">            log_interval: Log stats after every log_interval batches.</span>
+<span class="sd">            log_rollouts_venv: If not None, then this VecEnv (whose observation and</span>
+<span class="sd">                actions spaces must match `self.observation_space` and</span>
+<span class="sd">                `self.action_space`) is used to generate rollout stats, including</span>
+<span class="sd">                average return and average episode length. If None, then no rollouts</span>
+<span class="sd">                are generated.</span>
+<span class="sd">            log_rollouts_n_episodes: Number of rollouts to generate when calculating</span>
+<span class="sd">                rollout stats. Non-positive number disables rollouts.</span>
+<span class="sd">            progress_bar: If True, then show a progress bar during training.</span>
+<span class="sd">            reset_tensorboard: If True, then start plotting to Tensorboard from x=0</span>
+<span class="sd">                even if `.train()` logged to Tensorboard previously. Has no practical</span>
+<span class="sd">                effect if `.train()` is being called for the first time.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">it</span> <span class="o">=</span> <span class="n">EpochOrBatchIteratorWithProgress</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_demo_data_loader</span><span class="p">,</span>
+            <span class="n">n_epochs</span><span class="o">=</span><span class="n">n_epochs</span><span class="p">,</span>
+            <span class="n">n_batches</span><span class="o">=</span><span class="n">n_batches</span><span class="p">,</span>
+            <span class="n">on_epoch_end</span><span class="o">=</span><span class="n">on_epoch_end</span><span class="p">,</span>
+            <span class="n">on_batch_end</span><span class="o">=</span><span class="n">on_batch_end</span><span class="p">,</span>
+            <span class="n">progress_bar_visible</span><span class="o">=</span><span class="n">progress_bar</span><span class="p">,</span>
+        <span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">reset_tensorboard</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">tensorboard_step</span> <span class="o">=</span> <span class="mi">0</span>
+
+        <span class="n">batch_num</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="k">for</span> <span class="n">batch</span><span class="p">,</span> <span class="n">stats_dict_it</span> <span class="ow">in</span> <span class="n">it</span><span class="p">:</span>
+            <span class="n">loss</span><span class="p">,</span> <span class="n">stats_dict_loss</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_calculate_loss</span><span class="p">(</span><span class="n">batch</span><span class="p">[</span><span class="s2">&quot;obs&quot;</span><span class="p">],</span> <span class="n">batch</span><span class="p">[</span><span class="s2">&quot;acts&quot;</span><span class="p">])</span>
+
+            <span class="bp">self</span><span class="o">.</span><span class="n">optimizer</span><span class="o">.</span><span class="n">zero_grad</span><span class="p">()</span>
+            <span class="n">loss</span><span class="o">.</span><span class="n">backward</span><span class="p">()</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">optimizer</span><span class="o">.</span><span class="n">step</span><span class="p">()</span>
+
+            <span class="c1"># if batch_num % log_interval == 0:</span>
+                <span class="c1"># for stats in [stats_dict_it, stats_dict_loss]:</span>
+                <span class="c1">#     for k, v in stats.items():</span>
+                <span class="c1">#         self.logger.record(f&quot;bc/{k}&quot;, v)</span>
+                <span class="c1"># TODO(shwang): Maybe instead use a callback that can be shared between</span>
+                <span class="c1">#   all algorithms&#39; `.train()` for generating rollout stats.</span>
+                <span class="c1">#   EvalCallback could be a good fit:</span>
+                <span class="c1">#   https://stable-baselines3.readthedocs.io/en/master/guide/callbacks.html#evalcallback</span>
+                <span class="c1"># if log_rollouts_venv is not None and log_rollouts_n_episodes &gt; 0:</span>
+                <span class="c1">#     trajs = generate_trajectories(</span>
+                <span class="c1">#         self.policy,</span>
+                <span class="c1">#         log_rollouts_venv,</span>
+                <span class="c1">#         make_min_episodes(log_rollouts_n_episodes),</span>
+                <span class="c1">#     )</span>
+                <span class="c1">#    stats = rollout_stats(trajs)</span>
+                <span class="c1">#     self.logger.record(&quot;batch_size&quot;, len(batch[&quot;obs&quot;]))</span>
+                <span class="c1">#     for k, v in stats.items():</span>
+                <span class="c1">#         if &quot;return&quot; in k and &quot;monitor&quot; not in k:</span>
+                <span class="c1">#             self.logger.record(&quot;rollout/&quot; + k, v)</span>
+                <span class="c1"># self.logger.dump(self.tensorboard_step)</span>
+            <span class="n">batch_num</span> <span class="o">+=</span> <span class="mi">1</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">tensorboard_step</span> <span class="o">+=</span> <span class="mi">1</span></div>
+
+<div class="viewcode-block" id="BC.save_policy"><a class="viewcode-back" href="../../../../_autosummary/coopihczoo.teaching.scripts_to_sort.behavioral_cloning_original.BC.html#coopihczoo.teaching.scripts_to_sort.behavioral_cloning_original.BC.save_policy">[docs]</a>    <span class="k">def</span> <span class="nf">save_policy</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">policy_path</span><span class="p">):</span>  <span class="c1"># : types.AnyPath) -&gt; None:</span>
+        <span class="sd">&quot;&quot;&quot;Save policy to a path. Can be reloaded by `.reconstruct_policy()`.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            policy_path: path to save policy to.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">torch</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">policy</span><span class="p">,</span> <span class="n">policy_path</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="BC.make_data_loader"><a class="viewcode-back" href="../../../../_autosummary/coopihczoo.teaching.scripts_to_sort.behavioral_cloning_original.BC.html#coopihczoo.teaching.scripts_to_sort.behavioral_cloning_original.BC.make_data_loader">[docs]</a>    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">make_data_loader</span><span class="p">(</span>
+            <span class="n">transitions</span><span class="p">,</span> <span class="c1">#: AnyTransitions,</span>
+            <span class="n">batch_size</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+            <span class="n">data_loader_kwargs</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">):</span> <span class="c1">#-&gt; Iterable[TransitionMapping]:</span>
+        <span class="sd">&quot;&quot;&quot;Converts demonstration data to Torch data loader.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            transitions: Transitions expressed directly as a `types.TransitionsMinimal`</span>
+<span class="sd">                object, a sequence of trajectories, or an iterable of transition</span>
+<span class="sd">                batches (mappings from keywords to arrays containing observations, etc).</span>
+<span class="sd">            batch_size: The size of the batch to create. Does not change the batch size</span>
+<span class="sd">                if `transitions` is already an iterable of transition batches.</span>
+<span class="sd">            data_loader_kwargs: Arguments to pass to `th_data.DataLoader`.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            An iterable of transition batches.</span>
+
+<span class="sd">        Raises:</span>
+<span class="sd">            ValueError: if `transitions` is an iterable over transition batches with batch</span>
+<span class="sd">                size not equal to `batch_size`; or if `transitions` is transitions or a</span>
+<span class="sd">                sequence of trajectories with total timesteps less than `batch_size`.</span>
+<span class="sd">            TypeError: if `transitions` is an unsupported type.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="k">if</span> <span class="n">batch_size</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;batch_size=</span><span class="si">{</span><span class="n">batch_size</span><span class="si">}</span><span class="s2"> must be positive.&quot;</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">transitions</span><span class="p">,</span> <span class="n">Iterable</span><span class="p">):</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">first_item</span> <span class="o">=</span> <span class="nb">next</span><span class="p">(</span><span class="nb">iter</span><span class="p">(</span><span class="n">transitions</span><span class="p">))</span>
+            <span class="k">except</span> <span class="ne">StopIteration</span><span class="p">:</span>
+                <span class="n">first_item</span> <span class="o">=</span> <span class="kc">None</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">first_item</span><span class="p">,</span> <span class="n">Trajectory</span><span class="p">):</span>
+                <span class="n">transitions</span> <span class="o">=</span> <span class="n">flatten_trajectories</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="n">transitions</span><span class="p">))</span>
+        <span class="c1"># from imitation.data import types</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">transitions</span><span class="p">,</span> <span class="n">TransitionsMinimal</span><span class="p">):</span>  <span class="c1"># or isinstance(transitions, types.TransitionsMinimal):</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">transitions</span><span class="p">)</span> <span class="o">&lt;</span> <span class="n">batch_size</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">&quot;Number of transitions in `demonstrations` </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">transitions</span><span class="p">)</span><span class="si">}</span><span class="s2"> &quot;</span>
+                    <span class="sa">f</span><span class="s2">&quot;is smaller than batch size </span><span class="si">{</span><span class="n">batch_size</span><span class="si">}</span><span class="s2">.&quot;</span><span class="p">,</span>
+                <span class="p">)</span>
+
+            <span class="n">extra_kwargs</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">shuffle</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">drop_last</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">data_loader_kwargs</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">extra_kwargs</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">data_loader_kwargs</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">th_data</span><span class="o">.</span><span class="n">DataLoader</span><span class="p">(</span>
+                <span class="n">transitions</span><span class="p">,</span>
+                <span class="n">batch_size</span><span class="o">=</span><span class="n">batch_size</span><span class="p">,</span>
+                <span class="n">collate_fn</span><span class="o">=</span><span class="n">transitions_collate_fn</span><span class="p">,</span>
+                <span class="o">**</span><span class="n">extra_kwargs</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">transitions</span><span class="p">,</span> <span class="n">Iterable</span><span class="p">):</span>
+            <span class="k">return</span> <span class="n">_WrappedDataLoader</span><span class="p">(</span><span class="n">transitions</span><span class="p">,</span> <span class="n">batch_size</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;`demonstrations` unexpected type </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">transitions</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span></div></div>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2021, Julien Gori.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

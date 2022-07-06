@@ -1,0 +1,35 @@
+coopihczoo.teaching.assistants.naive\_coopihc\_implementation
+=============================================================
+
+.. automodule:: coopihczoo.teaching.assistants.naive_coopihc_implementation
+
+   
+   
+   
+
+   
+   
+   
+
+   
+   
+   
+
+   
+   
+   
+
+
+
+.. autosummary::
+   :toctree:
+   :template: custom-module-template.rst
+   :recursive:
+
+   coopihczoo.teaching.assistants.naive_coopihc_implementation.conservative_sampling
+   coopihczoo.teaching.assistants.naive_coopihc_implementation.conservative_sampling_expert
+   coopihczoo.teaching.assistants.naive_coopihc_implementation.leitner
+   coopihczoo.teaching.assistants.naive_coopihc_implementation.myopic
+   coopihczoo.teaching.assistants.naive_coopihc_implementation.random
+   coopihczoo.teaching.assistants.naive_coopihc_implementation.rl
+

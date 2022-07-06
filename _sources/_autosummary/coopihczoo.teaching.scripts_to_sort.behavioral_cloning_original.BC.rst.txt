@@ -1,0 +1,34 @@
+coopihczoo.teaching.scripts\_to\_sort.behavioral\_cloning\_original.BC
+======================================================================
+
+.. currentmodule:: coopihczoo.teaching.scripts_to_sort.behavioral_cloning_original
+
+.. autoclass:: BC
+   :members:
+   :show-inheritance:
+   :inherited-members:
+   :special-members: __call__, __add__, __mul__
+
+   
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+      :nosignatures:
+   
+      ~BC.make_data_loader
+      ~BC.save_policy
+      ~BC.set_demonstrations
+      ~BC.train
+   
+   
+
+   
+   
+   .. rubric:: Attributes
+
+   .. autosummary::
+   
+      ~BC.policy
+   
+   

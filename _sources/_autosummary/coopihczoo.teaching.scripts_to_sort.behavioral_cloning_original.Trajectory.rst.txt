@@ -1,0 +1,33 @@
+coopihczoo.teaching.scripts\_to\_sort.behavioral\_cloning\_original.Trajectory
+==============================================================================
+
+.. currentmodule:: coopihczoo.teaching.scripts_to_sort.behavioral_cloning_original
+
+.. autoclass:: Trajectory
+   :members:
+   :show-inheritance:
+   :inherited-members:
+   :special-members: __call__, __add__, __mul__
+
+   
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+      :nosignatures:
+   
+   
+   
+
+   
+   
+   .. rubric:: Attributes
+
+   .. autosummary::
+   
+      ~Trajectory.obs
+      ~Trajectory.acts
+      ~Trajectory.infos
+      ~Trajectory.terminal
+   
+   

@@ -1,0 +1,30 @@
+coopihczoo.teaching.config
+==========================
+
+.. automodule:: coopihczoo.teaching.config
+
+   
+   
+   
+
+   
+   
+   
+
+   
+   
+   
+
+   
+   
+   
+
+
+
+.. autosummary::
+   :toctree:
+   :template: custom-module-template.rst
+   :recursive:
+
+   coopihczoo.teaching.config.config_example
+
