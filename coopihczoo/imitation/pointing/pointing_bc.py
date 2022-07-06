@@ -6,48 +6,41 @@ from gym.wrappers import FilterObservation, FlattenObservation
 
 from stable_baselines3.common.env_checker import check_env
 
-from stable_baselines3 import PPO
-from stable_baselines3.common.evaluation import evaluate_policy
-from stable_baselines3.common.monitor import Monitor
-
-from coopihc import Bundle, TrainGym
-
-from coopihczoo.imitation.core.behavioral_cloning import BC, sample_expert
+from coopihc import Bundle
 
 from coopihc.examples.simplepointing.users import CarefulPointer
 from coopihc.examples.simplepointing.envs import SimplePointingTask
 from coopihc.examples.simplepointing.assistants import BIGGain
 
-
-config_task = dict(gridsize=4, number_of_targets=1, mode="position")
-config_user = dict(error_rate=0.01)
-
-obs_keys = (
-    "assistant_state__beliefs",
-    "task_state__position",
-    "task_state__targets",
-    "user_action__action",
-)
+from coopihczoo.imitation.core.run import run_behavioral_cloning_ppo
 
 
-class AssistantActionWrapper(ActionWrapper):
-    def __init__(self, env):
-        super().__init__(env)
-        _as = env.action_space["assistant_action__action"]
-        self.action_space = Box(low=-1, high=1, shape=_as.shape, dtype=np.float32)
-        self.low, self.high = _as.low, _as.high
-        self.half_amp = (self.high - self.low) / 2
-        self.mean = (self.high + self.low) / 2
+def make_env(seed,
+             config_task,
+             config_user):
 
-    def action(self, action):
-        return {"assistant_action__action": int(action * self.half_amp + self.mean)}
+    class AssistantActionWrapper(ActionWrapper):
+        def __init__(self, env):
+            super().__init__(env)
+            _as = env.action_space["assistant_action__action"]
+            self.action_space = Box(low=-1, high=1, shape=_as.shape, dtype=np.float32)
+            self.low, self.high = _as.low, _as.high
+            self.half_amp = (self.high - self.low) / 2
+            self.mean = (self.high + self.low) / 2
 
-    def reverse_action(self, action):
-        raw = action["assistant_action__action"]
-        return (raw - self.mean) / self.half_amp
+        def action(self, action):
+            return {"assistant_action__action": int(action * self.half_amp + self.mean)}
 
+        def reverse_action(self, action):
+            raw = action["assistant_action__action"]
+            return (raw - self.mean) / self.half_amp
 
-def make_env(seed):
+    obs_keys = (
+        "assistant_state__beliefs",
+        "task_state__position",
+        "task_state__targets",
+        "user_action__action",
+    )
 
     task = SimplePointingTask(**config_task)
     user = CarefulPointer(**config_user)
@@ -75,47 +68,23 @@ def make_env(seed):
 def main():
 
     seed = 123
-    expert_sampling_n_episode = 1e4
+    sample_expert_n_episode = 1e4
+    expert_total_timesteps = 1e5
+
+    config_task = dict(gridsize=4, number_of_targets=1, mode="position")
+    config_user = dict(error_rate=0.01)
 
     expert_kwargs = dict(
         seed=seed,
         policy="MlpPolicy",
     )
 
-    env = make_env(seed=seed)
-    expert = PPO(env=env, **expert_kwargs)
-
-    reward, _ = evaluate_policy(expert.policy, Monitor(env), n_eval_episodes=50)
-    print(f"Reward expert before training: {reward}")
-
-    print("Training the expert...")
-    expert.learn(10000)  # Note: set to 100000 to train a proficient expert
-
-    reward, _ = evaluate_policy(expert.policy, Monitor(env), n_eval_episodes=50)
-    print(f"Reward expert after training: {reward}")
-
-    expert_data = sample_expert(
-        env=env, expert=expert, n_episode=expert_sampling_n_episode
-    )
-
-    env = make_env(seed=seed)
-    novice = PPO(env=env, **expert_kwargs)
-
-    reward, _ = evaluate_policy(novice.policy, Monitor(env), n_eval_episodes=50)
-    print(f"Reward novice before training: {reward}")
-
-    bc_trainer = BC(
-        observation_space=env.observation_space,
-        action_space=env.action_space,
-        demonstrations=expert_data,
-        policy=novice.policy,
-    )
-
-    print("Training the novice's policy using behavior cloning...")
-    bc_trainer.train()
-
-    reward, _ = evaluate_policy(novice.policy, Monitor(env), n_eval_episodes=50)
-    print(f"Reward novice after training: {reward}")
+    run_behavioral_cloning_ppo(
+        saving_path="tmp/pointing_bc",
+        make_env=lambda: make_env(seed=seed, config_task=config_task, config_user=config_user),
+        expert_total_timesteps=expert_total_timesteps,
+        sample_expert_n_episode=sample_expert_n_episode,
+        expert_kwargs=expert_kwargs)
 
 
 if __name__ == "__main__":

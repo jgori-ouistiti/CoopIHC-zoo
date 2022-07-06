@@ -29,14 +29,7 @@ def sample_expert(env, expert, n_episode=50, n_timestep=None, deterministic=Fals
     with torch.no_grad():
         while True:
 
-            if isinstance(expert, coopihc.BaseAgent):
-
-                _action, _reward = env.unwrapped.bundle.assistant.take_action(increment_turn=False)[0]
-                from coopihc.bundle.wrappers.Train import apply_wrappers
-                action = apply_wrappers(action, env)
-
-            else:
-                action, _states = expert.predict(obs, deterministic=deterministic)
+            action, _states = expert.predict(obs, deterministic=deterministic)
 
             new_obs, rewards, dones, info = env.step(action)
 
