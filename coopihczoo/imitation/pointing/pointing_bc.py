@@ -16,9 +16,14 @@ def main():
         policy="MlpPolicy",
     )
 
+    saving_path = "tmp/pointing_bc"
+
+    def make_pointing_env():
+        return make_env(seed=seed, config_task=config_task, config_user=config_user)
+
     run_behavioral_cloning_ppo(
-        saving_path="tmp/pointing_bc",
-        make_env=lambda: make_env(seed=seed, config_task=config_task, config_user=config_user),
+        saving_path=saving_path,
+        make_env=make_pointing_env,
         expert_total_timesteps=expert_total_timesteps,
         sample_expert_n_episode=sample_expert_n_episode,
         expert_kwargs=expert_kwargs)

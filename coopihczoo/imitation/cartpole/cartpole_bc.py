@@ -4,14 +4,10 @@ import warnings
 import gym
 from gym.wrappers import FlattenObservation
 
-from stable_baselines3 import PPO
-from stable_baselines3.common.evaluation import evaluate_policy
-from stable_baselines3.common.monitor import Monitor
-
 from coopihc import \
     InteractionTask, array_element, Bundle, TrainGym, BaseAgent
-from coopihczoo.imitation.core.behavioral_cloning import \
-    BC, sample_expert
+
+from coopihczoo.imitation.core.run import run_behavioral_cloning_ppo
 
 
 class CoopIHC_CartPole(InteractionTask):
@@ -82,6 +78,8 @@ def main():
     seed = 123
     expert_total_timesteps = 10000
 
+    sample_expert_n_episode = 5000
+
     expert_kwargs = dict(
             seed=seed,
             policy='MlpPolicy',
@@ -95,37 +93,14 @@ def main():
             clip_range=0.2
     )
 
-    env = make_env(seed=seed)
-    expert = PPO(env=env, **expert_kwargs)
+    saving_path = "tmp/cartpole_bc"
 
-    reward, _ = evaluate_policy(expert.policy, Monitor(env), n_eval_episodes=50)
-    print(f"Reward expert before training: {reward}")
-
-    print("Training the expert...")
-    expert.learn(expert_total_timesteps)  # Note: set to 100000 to train a proficient expert
-
-    reward, _ = evaluate_policy(expert.policy, Monitor(env), n_eval_episodes=50)
-    print(f"Reward expert after training: {reward}")
-
-    expert_data = sample_expert(env=env, expert=expert)
-
-    env = make_env(seed=seed)
-    novice = PPO(env=env, **expert_kwargs)
-
-    reward, _ = evaluate_policy(novice.policy, Monitor(env), n_eval_episodes=50)
-    print(f"Reward novice before training: {reward}")
-
-    bc_trainer = BC(
-        observation_space=env.observation_space,
-        action_space=env.action_space,
-        demonstrations=expert_data,
-        policy=novice.policy)
-
-    print("Training the novice's policy using behavior cloning...")
-    bc_trainer.train()
-
-    reward, _ = evaluate_policy(novice.policy, Monitor(env), n_eval_episodes=50)
-    print(f"Reward novice after training: {reward}")
+    run_behavioral_cloning_ppo(
+        saving_path=saving_path,
+        make_env=lambda: make_env(seed=seed),
+        expert_total_timesteps=expert_total_timesteps,
+        sample_expert_n_episode=sample_expert_n_episode,
+        expert_kwargs=expert_kwargs)
 
 
 if __name__ == "__main__":

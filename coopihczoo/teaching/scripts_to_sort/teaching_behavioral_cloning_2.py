@@ -18,7 +18,7 @@ from coopihczoo.teaching.assistants.conservative_sampling_expert import Conserva
 from coopihczoo.imitation.core.behavioral_cloning import BC
 
 
-from teaching_rl_example import make_env
+from teaching_rl_example_2 import make_env
 
 
 def sample_expert():
@@ -69,7 +69,7 @@ def main():
     torch.manual_seed(1234)
     np.random.seed(1234)
 
-    os.makedirs("tmp", exist_ok=True)
+    os.makedirs("../../../tmp", exist_ok=True)
 
     expert_data = sample_expert()
 

@@ -52,7 +52,7 @@ def make_env():
 
 def run_rl():
 
-    os.makedirs("tmp", exist_ok=True)
+    os.makedirs("../../../tmp", exist_ok=True)
 
     # make_env = Monitor(make_env, filename="tmp/log")
     env = make_env()

@@ -51,6 +51,7 @@ def train_novice_behavioral_cloning_ppo(
     env = make_env()
     novice = PPO(env=env, **novice_kwargs)
 
+    print("Evaluating the novice before training...")
     reward, _ = evaluate_policy(novice.policy, Monitor(env), n_eval_episodes=50)
     print(f"Reward novice before training: {reward}")
 
