@@ -1,9 +1,9 @@
 from stable_baselines3.common.evaluation import evaluate_policy
 from stable_baselines3.common.monitor import Monitor
 
-from coopihczoo.imitation.core.run import train_novice_dagger_ppo
+from coopihczoo.utils.imitation.run import train_novice_dagger_ppo
 
-from coopihczoo.imitation.pointing.make_env.make_env import make_env
+from coopihczoo.pointing.make_env.make_env import make_env
 
 
 def main():

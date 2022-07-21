@@ -1,10 +1,10 @@
 from stable_baselines3.common.evaluation import evaluate_policy
 from stable_baselines3.common.monitor import Monitor
 
-from coopihczoo.imitation.core.run import train_novice_behavioral_cloning_ppo
-from coopihczoo.imitation.core.behavioral_cloning import sample_expert
+from coopihczoo.utils.imitation.run import train_novice_behavioral_cloning_ppo
+from coopihczoo.utils.imitation.behavioral_cloning import sample_expert
 
-from coopihczoo.imitation.pointing.make_env.make_env import make_env
+from coopihczoo.pointing.make_env.make_env import make_env
 
 
 def main():

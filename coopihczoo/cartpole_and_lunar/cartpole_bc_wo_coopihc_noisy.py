@@ -1,12 +1,5 @@
-from stable_baselines3 import PPO
-from stable_baselines3.common.evaluation import evaluate_policy
-
-from stable_baselines3.common.monitor import Monitor
-
-from coopihczoo.imitation.core.behavioral_cloning import BC, sample_expert
-from coopihczoo.imitation.cartpole.environments.noisy_cartpole import NoisyCartPoleEnv
-
-from coopihczoo.imitation.core.run import run_behavioral_cloning_ppo
+from coopihczoo.utils.imitation.run  import run_behavioral_cloning_ppo
+from coopihczoo.cartpole_and_lunar.environments.noisy_cartpole import NoisyCartPoleEnv
 
 
 def main():

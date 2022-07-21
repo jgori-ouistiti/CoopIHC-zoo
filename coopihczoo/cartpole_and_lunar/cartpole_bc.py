@@ -7,7 +7,7 @@ from gym.wrappers import FlattenObservation
 from coopihc import \
     InteractionTask, array_element, Bundle, TrainGym, BaseAgent
 
-from coopihczoo.imitation.core.run import run_behavioral_cloning_ppo
+from coopihczoo.utils.imitation.run import run_behavioral_cloning_ppo
 
 
 class CoopIHC_CartPole(InteractionTask):

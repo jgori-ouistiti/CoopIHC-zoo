@@ -1,6 +1,6 @@
 from cartpole_bc_wo_coopihc import make_env, get_expert_config
 
-from coopihczoo.imitation.core.run import run_dagger_ppo
+from coopihczoo.utils.imitation.run import run_dagger_ppo
 
 
 def main():
@@ -11,7 +11,7 @@ def main():
 
     eval_expert = True
 
-    env_name = "LunarLander-v2"  # Can replace with cartpole
+    env_name = "LunarLander-v2"  # Can replace with cartpole_and_lunar
 
     expert_kwargs = get_expert_config(seed=seed, env_name=env_name)
 

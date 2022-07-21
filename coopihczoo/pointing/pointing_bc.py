@@ -1,5 +1,5 @@
-from coopihczoo.imitation.pointing.make_env.make_env import make_env
-from coopihczoo.imitation.core.run import run_behavioral_cloning_ppo
+from coopihczoo.pointing.make_env.make_env import make_env
+from coopihczoo.utils.imitation.run import run_behavioral_cloning_ppo
 
 
 def main():

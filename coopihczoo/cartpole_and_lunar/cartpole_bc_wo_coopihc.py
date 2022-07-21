@@ -1,6 +1,6 @@
 import gym
 
-from coopihczoo.imitation.core.run import run_behavioral_cloning_ppo
+from coopihczoo.utils.imitation.run import run_behavioral_cloning_ppo
 
 
 def make_env(seed, env_name):
@@ -51,7 +51,7 @@ def main():
     expert_total_timesteps = 1e5
     sample_expert_n_episode = 50
 
-    env_name = "LunarLander-v2"  # Can replace with cartpole
+    env_name = "LunarLander-v2"  # Can replace with cartpole_and_lunar
 
     expert_kwargs = get_expert_config(seed, env_name)
 
