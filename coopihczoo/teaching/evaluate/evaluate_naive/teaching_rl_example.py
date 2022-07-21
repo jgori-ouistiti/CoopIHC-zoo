@@ -5,13 +5,29 @@ from gym.wrappers import FilterObservation
 from stable_baselines3 import PPO
 from stable_baselines3.common.vec_env import SubprocVecEnv, VecMonitor
 
+from gym import ActionWrapper
+from gym.spaces import Discrete
+
 from coopihc import Bundle, TrainGym
 
-from coopihczoo.teaching.users import User
-from coopihczoo.teaching.envs import Task
-from coopihczoo.teaching.assistants.rl import Teacher
+from coopihczoo.teaching.users.users_naive_implementation import User
+from coopihczoo.teaching.envs.envs_naive_implementation import Task
+from coopihczoo.teaching.assistants.assistants_naive_implementation.rl import Teacher
 from coopihczoo.teaching.config import config_example
-from coopihczoo.teaching.action_wrapper.action_wrapper import AssistantActionWrapper
+
+
+class AssistantActionWrapper(ActionWrapper):
+
+    def __init__(self, env):
+        super().__init__(env)
+        print(env.action_space.keys())
+        self.action_space = Discrete(env.action_space["assistant_action__action"].n)
+
+    def action(self, action):
+        return {"assistant_action__action": int(action)}
+
+    def reverse_action(self, action):
+        return action["assistant_action__action"]
 
 
 def make_env():
@@ -34,7 +50,7 @@ def make_env():
 
     env = FilterObservation(
         env,
-        ("memory", "progress"))
+        ("assistant_state__memory", "assistant_state__progress"))
 
     env = AssistantActionWrapper(env)
     return env

@@ -1,19 +1,10 @@
-from coopihczoo.teaching.users import ExponentialUser
-from coopihczoo.teaching.envs import TeachingTask, TeachingOrchestrator
-from coopihczoo.teaching.config import config_example
+from coopihczoo.teaching.users.users import ExponentialUser
+from coopihczoo.teaching.envs.envs import TeachingTask, TeachingOrchestrator
 from coopihczoo.teaching.assistants.conservative_sampling import ConservativeSampling
-from coopihczoo.teaching.assistants.myopic import Myopic, MyopicPolicy
 
 from coopihczoo.teaching.config import config_example
 
-from coopihc import (
-    Bundle,
-    State,
-    BufferNotFilledError,
-    Simulator,
-    discrete_array_element,
-    cat_element,
-)
+from coopihc import Bundle
 
 import copy
 
@@ -50,7 +41,7 @@ def run_conservative():
     orchestrator.reset(start_after=2, go_to=3)
     j = 0
     while True:
-        print(j)
+        print("Step", j)
         j += 1
         state, rewards, is_done = orchestrator.step()
         if is_done:

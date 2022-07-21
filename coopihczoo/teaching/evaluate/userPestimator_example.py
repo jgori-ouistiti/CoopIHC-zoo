@@ -1,6 +1,5 @@
-from coopihczoo.teaching.users import ExponentialUser
-from coopihczoo.teaching.envs import TeachingTask, TeachingOrchestrator
-from coopihczoo.teaching.config import config_example
+from coopihczoo.teaching.users.users import ExponentialUser
+from coopihczoo.teaching.envs.envs import TeachingTask, TeachingOrchestrator
 from coopihczoo.teaching.assistants.userPestimator import UserPEstimator
 
 from coopihczoo.teaching.config import config_example
@@ -15,7 +14,6 @@ def run_userpestimator():
     task = TeachingTask(**config_example.task_kwargs)
     # Define a user
     user = ExponentialUser(**config_example.user_per_item_kwargs)
-    user_model = ExponentialUser(**config_example.user_per_item_kwargs)
     # Define an assistant
     assistant = UserPEstimator(
         task_class=TeachingTask,
@@ -49,7 +47,6 @@ def run_userpestimator_mismatch():
     task = TeachingTask(**config_example.task_kwargs)
     # Define a user
     user = ExponentialUser(**config_example.user_per_item_kwargs)
-    user_model = ExponentialUser(**config_example.user_per_item_kwargs)
     # Define an assistant
 
     mismatch = copy.deepcopy(config_example.user_per_item_kwargs)

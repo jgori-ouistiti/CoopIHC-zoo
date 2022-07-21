@@ -1,8 +1,8 @@
 from coopihc import Bundle
 
-from coopihczoo.teaching.users import User
-from coopihczoo.teaching.envs import Task
-from coopihczoo.teaching.assistants.myopic import Myopic
+from coopihczoo.teaching.users.users_naive_implementation import User
+from coopihczoo.teaching.envs.envs_naive_implementation import Task
+from coopihczoo.teaching.assistants.assistants_naive_implementation.myopic import Myopic
 
 from coopihczoo.teaching.config import config_example
 
@@ -32,6 +32,7 @@ def run_myopic():
             break
 
     print("Final reward", rewards['first_task_reward'])
+    print(bundle.state)
 
 
 if __name__ == "__main__":

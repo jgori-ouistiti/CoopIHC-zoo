@@ -1,8 +1,8 @@
 from coopihc import Bundle
 
-from coopihczoo.teaching.users import User
-from coopihczoo.teaching.envs import Task
-from coopihczoo.teaching.assistants.random import RandomTeacher
+from coopihczoo.teaching.users.users_naive_implementation import User
+from coopihczoo.teaching.envs.envs_naive_implementation import Task
+from coopihczoo.teaching.assistants.assistants_naive_implementation.random import RandomTeacher
 
 from coopihczoo.teaching.config import config_example
 
