@@ -4,9 +4,9 @@ from stable_baselines3 import PPO
 from stable_baselines3.common.evaluation import evaluate_policy
 from stable_baselines3.common.monitor import Monitor
 
-from coopihczoo.imitation.core.dagger import DAgger
-from coopihczoo.imitation.core.behavioral_cloning import BC
-from coopihczoo.imitation.core.behavioral_cloning import sample_expert
+from coopihczoo.utils.imitation.dagger import DAgger
+from coopihczoo.utils.imitation.behavioral_cloning import BC
+from coopihczoo.utils.imitation.behavioral_cloning import sample_expert
 
 
 def _get_expert(saving_path,

@@ -1,7 +1,7 @@
 import numpy as np
 import torch
 
-from coopihczoo.imitation.core.behavioral_cloning import BC
+from coopihczoo.utils.imitation.behavioral_cloning import BC
 
 
 class LinearBetaSchedule:
