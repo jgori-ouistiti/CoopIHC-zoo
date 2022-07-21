@@ -140,6 +140,7 @@ Pipfile.lock
 
 # Pycharm
 .idea
+
 /saved_model.zip
 /tb/
 
