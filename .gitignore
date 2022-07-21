@@ -145,3 +145,6 @@ Pipfile.lock
 
 /coopihczoo/*/tmp/
 /coopihczoo/*/tmp/*
+/tmp/
+
+*/.DS_Store

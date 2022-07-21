@@ -1,22 +1,17 @@
-from cgitb import reset
 from coopihc import (
-    BaseAgent,
     State,
     cat_element,
     BasePolicy,
-    BaseInferenceEngine,
-    DualInferenceEngine,
     Simulator,
     array_element,
     BufferNotFilledError,
-    DualPolicy,
     discrete_array_element,
 )
 import numpy as np
 
 from coopihczoo.teaching.assistants.myopic import MyopicPolicy, Myopic
 from coopihczoo.teaching.assistants.userPestimator import UserPEstimator
-from coopihczoo.teaching.envs import TeachingOrchestrator
+from coopihczoo.teaching.envs.envs import TeachingOrchestrator
 
 import copy
 
@@ -27,10 +22,15 @@ class ConservativeSampling(UserPEstimator):
         task_class,
         user_class,
         teaching_orchestrator_kwargs,
-        task_kwargs={},
-        user_kwargs={},
+        task_kwargs=None,
+        user_kwargs=None,
         **kwargs,
     ):
+        if task_kwargs is None:
+            task_kwargs = {}
+        if user_kwargs is None:
+            user_kwargs = {}
+
         super().__init__(
             task_class,
             user_class,
@@ -75,10 +75,15 @@ class ConservativeSamplingPolicy(BasePolicy):
         task_class,
         user_class,
         action_state,
-        task_class_kwargs={},
-        user_class_kwargs={},
+        task_class_kwargs=None,
+        user_class_kwargs=None,
         **kwargs,
     ):
+        if task_class_kwargs is None:
+            task_class_kwargs = {}
+        if user_class_kwargs is None:
+            user_class_kwargs = {}
+
         super().__init__(action_state=action_state, **kwargs)
         self.task_class = task_class
         self.user_class = user_class
@@ -94,7 +99,13 @@ class ConservativeSamplingPolicy(BasePolicy):
         )
         return n_item, reset_dic, task_args, user_args
 
-    def _reduce_models(self, indices_keep, n_item, task_args={}, user_args={}):
+    def _reduce_models(self, indices_keep, n_item, task_args=None, user_args=None):
+
+        if task_args is None:
+            task_kwargs = {}
+        if user_args is None:
+            user_kwargs = {}
+
         # reduce the input arguments for the task and user classes
         n_item = len(indices_keep)
         task_args["n_item"] = n_item

@@ -3,16 +3,22 @@ import numpy
 
 n_item = 20
 
+# Some arguments are only for the evaluate_naive implementation
 task_kwargs = dict(
     n_item=20,
     inter_trial=3,
     n_iter_per_ss=100,
     break_length=60 * 15,  # 4000,  # 24*60**2 - inter_trial*n_iter_per_ss
-    time_before_exam=60 * 60,  # 4000,
+    time_before_exam=0.,  # 60 * 60,  # 4000,
     is_item_specific=False,
     n_session=2,
     thr=0.9,
 )
+
+# Only for evaluate_naive implementation
+user_kwargs = {
+    "param": (0.01, 0.2)
+}
 
 
 user_per_item_kwargs = dict(

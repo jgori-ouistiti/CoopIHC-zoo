@@ -8,7 +8,7 @@ from coopihc import (
     cat_element,
     BufferNotFilledError,
 )
-from coopihczoo.teaching.memory_models import ExponentialDecayMemory
+from coopihczoo.teaching.memory_models.memory_models import ExponentialDecayMemory
 import numpy as np
 
 

@@ -1,10 +1,9 @@
-from cgitb import reset
 import numpy as np
 import copy
 
 from coopihc import InteractionTask, discrete_array_element, Bundle
 
-from coopihczoo.teaching.memory_models import ExponentialDecayMemory
+from coopihczoo.teaching.memory_models.memory_models import ExponentialDecayMemory
 
 
 class TeachingOrchestrator:

@@ -4,15 +4,6 @@ from coopihc import BaseAgent, State, \
 import numpy as np
 
 
-class MyopicInferenceEngine(BaseInferenceEngine):
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-
-    def infer(self, user_state=None):
-        return super().infer(user_state=user_state)
-
-
 class MyopicPolicy(BasePolicy):
 
     def __init__(self, action_state, *args, **kwargs):
@@ -67,7 +58,7 @@ class MyopicPolicy(BasePolicy):
         logp_recall = - forget_rate * delta
         return logp_recall
 
-    def sample(self, observation=None):
+    def sample(self, agent_observation=None, agent_state=None):
 
         is_item_specific = bool(self.observation.task_state.is_item_specific)
 
@@ -96,16 +87,12 @@ class MyopicPolicy(BasePolicy):
 
         _action_value = first_item
 
-        new_action = self.new_action
-        new_action[:] = _action_value
-
         reward = 0
-        return new_action, reward
+        return _action_value, reward
 
     def reset(self, random=True):
 
-        _action_value = 0
-        self.action_state["action"][:] = _action_value
+        self.action_state["action"] = 0
 
 
 class Myopic(BaseAgent):
@@ -115,24 +102,24 @@ class Myopic(BaseAgent):
 
     def finit(self, *args, **kwargs):
 
-        n_item = int(self.bundle.task.state["n_item"][0, 0])
+        n_item = int(self.bundle.task.state["n_item"])
 
         # Call the policy defined above
         action_state = State()
-        action_state["action"] = cat_element(min=0, max=n_item)
+        action_state["action"] = cat_element(N=n_item)
 
         agent_policy = MyopicPolicy(action_state=action_state)
 
         # Inference engine
-        inference_engine = MyopicInferenceEngine()
+        inference_engine = None  # Use default
 
         # Use default observation engine
         observation_engine = RuleObservationEngine(
             deterministic_specification=oracle_engine_specification)
 
-        self.attach_policy(agent_policy)
-        self.attach_observation_engine(observation_engine)
-        self.attach_inference_engine(inference_engine)
+        self._attach_policy(agent_policy)
+        self._attach_observation_engine(observation_engine)
+        self._attach_inference_engine(inference_engine)
 
     def reset(self, dic=None):
         """reset
