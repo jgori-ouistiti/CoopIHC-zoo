@@ -141,5 +141,5 @@ Pipfile.lock
 # Pycharm
 .idea
 /saved_model.zip
-/tmp/
+coopihczoo/imitation/pointing/tmp/*
 /tb/
