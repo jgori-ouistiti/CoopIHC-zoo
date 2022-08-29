@@ -12,7 +12,8 @@ from coopihczoo.teaching.imitation.teaching_bc import make_env
 
 def main():
 
-    evaluate_expert = False
+    evaluate_novice = True
+    evaluate_expert = True
     total_timesteps = 5000
 
     torch.manual_seed(1234)
@@ -42,7 +43,8 @@ def main():
         novice_kwargs=novice_kwargs,
         expert=expert,
         make_env=make_env,
-        total_timesteps=total_timesteps
+        total_timesteps=total_timesteps,
+        evaluate_novice=evaluate_novice
     )
 
 

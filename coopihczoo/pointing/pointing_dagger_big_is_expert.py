@@ -8,6 +8,8 @@ from coopihczoo.pointing.make_env.make_env import make_env
 
 def main():
 
+    evaluate_expert = False
+
     seed = 123
     dagger_total_timesteps = 1e5
 
@@ -28,12 +30,18 @@ def main():
     env = make_pointing_env()
     expert = env.unwrapped.bundle.assistant  # BigGain Expert
 
-    print("Evaluating expert...")
-    reward, _ = evaluate_policy(expert, Monitor(env), n_eval_episodes=50)
-    print(f"Reward expert after training: {reward}")
+    if evaluate_expert:
+        print("Evaluating expert...")
+        reward, _ = evaluate_policy(expert, Monitor(env), n_eval_episodes=50)
+        print(f"Reward expert after training: {reward}")
 
     train_novice_dagger_ppo(
         expert=expert,
         make_env=make_pointing_env,
         total_timesteps=dagger_total_timesteps,
         novice_kwargs=novice_kwargs)
+
+
+if __name__ == "__main__":
+    main()
+

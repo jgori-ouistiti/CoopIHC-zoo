@@ -108,13 +108,15 @@ def train_novice_dagger_ppo(
         total_timesteps,
         make_env,
         novice_kwargs,
-        expert):
+        expert,
+        evaluate_novice=True):
 
     env = make_env()
     novice = PPO(env=env, **novice_kwargs)
 
-    reward, _ = evaluate_policy(novice.policy, Monitor(env), n_eval_episodes=50)
-    print(f"Reward novice before training: {reward}")
+    if evaluate_novice:
+        reward, _ = evaluate_policy(novice.policy, Monitor(env), n_eval_episodes=50)
+        print(f"Reward novice before training: {reward}")
 
     dagger_trainer = DAgger(
         env=env,
@@ -124,8 +126,9 @@ def train_novice_dagger_ppo(
     print("Training the novice's policy using dagger...")
     dagger_trainer.train(total_timesteps=total_timesteps)
 
-    reward, _ = evaluate_policy(novice.policy, Monitor(env), n_eval_episodes=50)
-    print(f"Reward novice after training: {reward}")
+    if evaluate_novice:
+        reward, _ = evaluate_policy(novice.policy, Monitor(env), n_eval_episodes=50)
+        print(f"Reward novice after training: {reward}")
 
     return novice
 

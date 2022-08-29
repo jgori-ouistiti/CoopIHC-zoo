@@ -31,7 +31,7 @@ def sample_expert(env, expert, n_episode=50, n_timestep=None, deterministic=Fals
         with torch.no_grad():
             while True:
 
-                action, _states = expert.predict(obs, deterministic=deterministic)
+                action, _state = expert.predict(obs, deterministic=deterministic)
 
                 new_obs, reward, done, info = env.step(action)
 
@@ -39,9 +39,6 @@ def sample_expert(env, expert, n_episode=50, n_timestep=None, deterministic=Fals
 
                 expert_data[-1].append({"acts": action, "obs": obs})
 
-                # Handle timeout by bootstraping with value function
-                # see GitHub issue #633
-                # for idx, done in enumerate(dones):
                 if done:
                     ep += 1
                     expert_data.append([])
@@ -74,6 +71,7 @@ def sample_expert(env, expert, n_episode=50, n_timestep=None, deterministic=Fals
             flatten_expert_data.append(e)
 
     expert_data = flatten_expert_data
+    print(expert_data)
 
     return expert_data
 

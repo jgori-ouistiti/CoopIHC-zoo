@@ -26,6 +26,7 @@ from coopihczoo.teaching.config import config_example
 from coopihczoo.utils.imitation.run import train_novice_behavioral_cloning_ppo
 from coopihczoo.utils.imitation.behavioral_cloning import sample_expert
 
+import numpy as np
 
 class AssistantActionWrapper(ActionWrapper, WrapperReferencer):
 
@@ -40,7 +41,7 @@ class AssistantActionWrapper(ActionWrapper, WrapperReferencer):
         return {"assistant_action__action": int(action)}
 
     def reverse_action(self, action):
-        return action["assistant_action__action"]
+        return int(action["assistant_action__action"])
 
 
 def make_env(seed=123):
@@ -72,7 +73,9 @@ def make_env(seed=123):
 
 def main():
 
-    evaluate_expert = True
+    force_sampling = True
+    evaluate_expert = False
+
     sample_expert_n_episode = 10
     sample_expert_n_timestep = None
 
@@ -95,7 +98,7 @@ def main():
 
     expert = env.unwrapped.assistant
 
-    if not os.path.exists(samples_backup_file):
+    if not os.path.exists(samples_backup_file) or force_sampling:
 
         print("Sampling expert...")
 

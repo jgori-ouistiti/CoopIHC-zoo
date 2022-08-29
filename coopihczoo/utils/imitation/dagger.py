@@ -146,46 +146,33 @@ class DAgger:
 
                 if np.random.random() > beta:
                     # Student takes the decision
-                    # expert_chose = False
-                    action, _states = self.bc_trainer.policy.predict(obs, deterministic=deterministic)
+                    action, _state = self.bc_trainer.policy.predict(obs, deterministic=deterministic)
+                    # if isinstance(action, (int, np.int32, np.int64)):
+                    #     action = np.array([action, ])
 
                 else:
-                    # Expert takes the decision
-                    # expert_chose = True
-                    # if isinstance(expert, coopihc.BaseAgent):
-                    #
-                    #     _action, _reward = make_env.unwrapped.bundle.assistant.take_action(agent_observation=None,
-                    #                                                                   agent_state=None,
-                    #                                                                   increment_turn=False)
-                    #
-                    #     # Collect action_wrappers.action
-                    #     # Should be a gym-compatible action with wrappers applied
-                    #
-                    #     print(type(_action))
-                    #     action = _action
-                    # else:
                     action, _state = expert.predict(obs, deterministic=deterministic)
 
                 new_obs, reward, done, info = env.step(action)
 
                 n_steps += 1
 
-                # if expert_chose:
                 expert_data[-1].append({"acts": action, "obs": obs})
 
                 if done:
-                    env.reset()
-
                     ep += 1
                     expert_data.append([])
+                    new_obs = env.reset()
 
                 obs = new_obs
 
-                if n_episode is not None and ep < n_episode:
-                    continue
+                if n_episode is not None:
+                    if ep < n_episode:
+                        continue
 
-                if n_timesteps is not None and n_steps < n_timesteps:
-                    continue
+                if n_timesteps is not None:
+                    if n_steps < n_timesteps:
+                        continue
 
                 break
 
