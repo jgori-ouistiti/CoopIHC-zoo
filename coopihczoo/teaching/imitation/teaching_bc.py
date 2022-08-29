@@ -73,10 +73,11 @@ def make_env(seed=123):
 def main():
 
     evaluate_expert = True
-    sample_expert_n_episode = 10000
+    sample_expert_n_episode = 10
     sample_expert_n_timestep = None
 
-    bkp_folder = './tmp'
+    bkp_folder = './tmp/'
+    os.makedirs(bkp_folder, exist_ok=True)
     samples_backup_file = f"{bkp_folder}/expert_samples.p"
 
     env = make_env()

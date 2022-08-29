@@ -1,13 +1,10 @@
 import numpy as np
 
-from stable_baselines3 import A2C
 from stable_baselines3.common.monitor import Monitor
 
 import torch
 
 from stable_baselines3.common.evaluation import evaluate_policy
-
-from coopihczoo.utils.imitation.dagger import DAgger
 from coopihczoo.utils.imitation.run import train_novice_dagger_ppo
 
 from coopihczoo.teaching.imitation.teaching_bc import make_env
