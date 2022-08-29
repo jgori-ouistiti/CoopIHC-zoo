@@ -140,6 +140,23 @@ Pipfile.lock
 
 # Pycharm
 .idea
-/saved_model.zip
-/tmp/
-/tb/
+
+# Mac
+.DS_Store
+*/.DS_Store
+*/*/.DS_Store
+*/*/*/.DS_Store
+
+*/tb/
+tb/
+
+/coopihczoo/*/tmp/
+/coopihczoo/*/tmp/*
+/coopihczoo/*/*/tmp/
+/coopihczoo/*/*/*/tmp/
+
+*/tmp/
+tmp/
+
+/coopihczoo/teaching/evaluate/evaluate_naive_evaluation/tb/
+/coopihczoo/teaching/imitation/tmp/

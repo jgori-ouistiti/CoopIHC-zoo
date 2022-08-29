@@ -6,6 +6,7 @@ from coopihc import (
     BaseInferenceEngine,
     array_element,
     cat_element,
+    discrete_array_element,
 )
 from coopihc.observation.utils import base_user_engine_specification
 import numpy as np
@@ -17,17 +18,14 @@ class UserInferenceEngine(BaseInferenceEngine):
 
     def infer(self, agent_observation=None):
 
-        print(agent_observation)
-        print(self.observation)
-
-        item = int(self.observation["task_state"]["item"][0, 0])
+        item = int(self.observation["task_state"]["item"])
         timestamp = self.observation["task_state"]["timestamp"]
 
-        self.state["last_pres_before_obs"][0, 0] = self.state["last_pres"][item, 0]
-        self.state["n_pres_before_obs"][0, 0] = self.state["n_pres"][item, 0]
+        self.state["last_pres_before_obs"] = self.state["last_pres"][item]
+        self.state["n_pres_before_obs"] = self.state["n_pres"][item]
 
-        self.state["last_pres"][item, 0] = timestamp
-        self.state["n_pres"][item, 0] += 1
+        self.state["last_pres"][item] = timestamp
+        self.state["n_pres"][item] += 1
 
         reward = 0
 
@@ -63,14 +61,8 @@ class UserPolicy(BasePolicy):
         item = int(self.observation["task_state"]["item"])
         timestamp = float(self.observation["task_state"]["timestamp"])
 
-        n_pres = self.observation["user_state"]["n_pres_before_obs"].view(np.ndarray)[
-            0, 0
-        ]  # old and unique!!
-        last_pres = self.observation["user_state"]["last_pres_before_obs"].view(
-            np.ndarray
-        )[
-            0, 0
-        ]  # old and unique!!
+        n_pres = int(self.observation["user_state"]["n_pres_before_obs"])
+        last_pres = int(self.observation["user_state"]["last_pres_before_obs"])
 
         reward = 0
         _action_value = 0
@@ -101,10 +93,7 @@ class UserPolicy(BasePolicy):
             pass
             # print("p", "item not seen!")
 
-        new_action = self.new_action
-        new_action[:] = _action_value
-
-        return new_action, reward
+        return _action_value, reward
 
     def reset(self, random=True):
 
@@ -113,7 +102,6 @@ class UserPolicy(BasePolicy):
 
 
 class User(BaseAgent):
-    """ """
 
     def __init__(self, param, *args, **kwargs):
 
@@ -123,15 +111,15 @@ class User(BaseAgent):
 
     def finit(self):
 
-        n_item = int(self.bundle.task.state["n_item"][0, 0])
-        is_item_specific = bool(self.bundle.task.state["is_item_specific"][0, 0])
+        n_item = int(self.bundle.task.state["n_item"])
+        is_item_specific = bool(self.bundle.task.state["is_item_specific"])
         param = self.param
 
-        self.state["n_pres"] = array_element(shape=(n_item,), low=-1, high=np.inf)
-        self.state["last_pres"] = array_element(shape=(n_item,), low=-1, high=np.inf)
+        self.state["n_pres"] = discrete_array_element(shape=(n_item,), low=-1, high=np.inf)
+        self.state["last_pres"] = discrete_array_element(shape=(n_item,), low=-1, high=np.inf)
 
-        self.state["n_pres_before_obs"] = array_element(shape=(1, ), low=-1, high=np.inf)
-        self.state["last_pres_before_obs"] = array_element(shape=(1, ), low=-1, high=np.inf)
+        self.state["n_pres_before_obs"] = discrete_array_element(low=-1, high=np.inf)
+        self.state["last_pres_before_obs"] = discrete_array_element(low=-np.inf, high=np.inf)
 
         self.state["param"] = array_element(shape=param.shape, low=-np.inf, high=np.inf, init=param.reshape(-1, 1))
 
@@ -150,52 +138,9 @@ class User(BaseAgent):
 
     def reset(self, dic=None):
 
-        n_item = int(self.bundle.task.state["n_item"][0, 0])
+        n_item = int(self.bundle.task.state["n_item"])
 
-        self.state["n_pres"][:] = np.zeros(n_item)
-        self.state["last_pres"][:] = np.zeros(n_item)
-        self.state["n_pres_before_obs"][:] = 0
-        self.state["last_pres_before_obs"][:] = 0
-#
-#
-# class RLUserInferenceEngine(UserInferenceEngine):
-#
-#     def __init__(self, *args, **kwargs):
-#         super().__init__(*args, **kwargs)
-#
-#     def infer(self, user_state=None):
-#         item = int(self.observation["task_state"]["item"])
-#         timestamp = self.observation["task_state"]["timestamp"]
-#
-#         self.state["last_pres_before_obs"][0, 0] = self.state["last_pres"][item, 0]
-#         self.state["n_pres_before_obs"][0, 0] = self.state["n_pres"][item, 0]
-#
-#         self.state["last_pres"][item, 0] = timestamp
-#         self.state["n_pres"][item, 0] += 1
-#
-#
-#
-#         reward = 0
-#
-#         return self.state, reward
-#
-#
-# class RLUser(User):
-#
-#     def __init__(self, *args, **kwargs):
-#         super().__init__(*args, **kwargs)
-#
-#     def finit(self):
-#
-#         super().finit()
-#         n_item = int(self.bundle.task.state["n_item"][0, 0])
-#
-#         self.state["progress"] = array_element(shape=1, low=0, high=np.inf, init=0.0)
-#         self.state["memory"] = array_element(shape=(n_item, 2), low=0, high=np.inf)
-#
-#         inf_engine = RLUserInferenceEngine
-#         self.attach_inference_engine(inf_engine)
-#
-
-
-
+        self.state["n_pres"] = np.zeros(n_item)
+        self.state["last_pres"] = np.zeros(n_item)
+        self.state["n_pres_before_obs"] = 0
+        self.state["last_pres_before_obs"] = 0

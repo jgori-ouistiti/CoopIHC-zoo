@@ -3,14 +3,21 @@ import numpy as np
 import torch
 import torch.utils.data as th_data
 import gym
+from tqdm import tqdm
+
 from stable_baselines3.common.policies import ActorCriticPolicy
 from stable_baselines3.common import policies, utils
-from stable_baselines3.common.vec_env import VecMonitor, DummyVecEnv
+from stable_baselines3.common.monitor import Monitor
+# from stable_baselines3.common.vec_env import VecMonitor, DummyVecEnv
 
 
-def sample_expert(env, expert, n_episode=50, n_timesteps=None, deterministic=False):
+def sample_expert(env, expert, n_episode=50, n_timestep=None, deterministic=False):
 
-    env = VecMonitor(DummyVecEnv([lambda: env]))
+    if isinstance(env.observation_space, gym.spaces.Dict):
+        raise ValueError("Gym observation space should NOT be a dictionary "
+                         "(use the filter 'FlattenObservation' from Gym)")
+
+    env = Monitor(env)  # VecMonitor(DummyVecEnv([lambda: env]))
 
     obs = env.reset()
 
@@ -19,33 +26,42 @@ def sample_expert(env, expert, n_episode=50, n_timesteps=None, deterministic=Fal
 
     expert_data = [[], ]
 
-    with torch.no_grad():
-        while True:
+    with tqdm(total=n_episode if n_episode is not None else n_timestep) as pbar:
 
-            action, _states = expert.predict(obs, deterministic=deterministic)
+        with torch.no_grad():
+            while True:
 
-            new_obs, rewards, dones, info = env.step(action)
+                action, _states = expert.predict(obs, deterministic=deterministic)
 
-            n_steps += 1
+                new_obs, reward, done, info = env.step(action)
 
-            expert_data[-1].append({"acts": action.squeeze(), "obs": obs.squeeze()})
+                n_steps += 1
 
-            # Handle timeout by bootstraping with value function
-            # see GitHub issue #633
-            for idx, done in enumerate(dones):
+                expert_data[-1].append({"acts": action, "obs": obs})
+
+                # Handle timeout by bootstraping with value function
+                # see GitHub issue #633
+                # for idx, done in enumerate(dones):
                 if done:
                     ep += 1
                     expert_data.append([])
+                    new_obs = env.reset()
 
-            obs = new_obs
+                    if n_episode is not None:
+                        pbar.update(1)
 
-            if n_episode is not None and ep < n_episode:
-                continue
+                obs = new_obs
 
-            if n_timesteps is not None and n_steps < n_timesteps:
-                continue
+                if n_episode is not None:
+                    if ep < n_episode:
+                        continue
 
-            break
+                if n_timestep is not None:
+                    pbar.update(1)
+                    if n_steps < n_timestep:
+                        continue
+
+                break
 
     expert_data = expert_data[:-1]
 
@@ -176,7 +192,7 @@ class BC:
         self._demo_data_loader = th_data.DataLoader(
             demonstrations,
             batch_size=self.batch_size,
-            shuffle=True,
+            shuffle=shuffle,
             drop_last=True)
 
     def _calculate_loss(

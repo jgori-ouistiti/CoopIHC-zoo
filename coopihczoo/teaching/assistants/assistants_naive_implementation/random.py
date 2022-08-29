@@ -8,7 +8,7 @@ class RandomTeacher(BaseAgent):
 
     def finit(self):
 
-        n_item = int(self.bundle.game_state.task_state.n_item[0, 0])
+        n_item = int(self.bundle.game_state.task_state.n_item)
 
         # Call the policy defined above
         action_state = State()

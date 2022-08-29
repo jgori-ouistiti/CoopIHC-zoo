@@ -1,8 +1,7 @@
 import numpy as np
 import torch
 
-from stable_baselines3.common.vec_env import DummyVecEnv, VecMonitor
-import coopihc
+from coopihczoo.utils.imitation.behavioral_cloning import BC
 
 
 class LinearBetaSchedule:
@@ -40,18 +39,18 @@ class DAgger:
         self,
         env,
         expert,
-        policy,
-        batch_size,
+        policy=None,
+        batch_size: int = 32,
         expert_trajs=None,
         beta_schedule=None
     ):
         self.env = env
         self.expert = expert
-        # if expert.observation_space != self.env.observation_space:
+        # if expert.observation_space != self.make_env.observation_space:
         #     raise ValueError(
         #         "Mismatched observation space between expert_policy and venv",
         #     )
-        # if expert.action_space != self.env.action_space:
+        # if expert.action_space != self.make_env.action_space:
         #     raise ValueError("Mismatched action space between expert_policy and venv")
 
         if expert_trajs is None:
@@ -68,7 +67,7 @@ class DAgger:
             observation_space=env.observation_space,
             action_space=env.action_space,
             policy=policy,
-            batch_size=total_n_iter)
+            batch_size=batch_size)
 
         self.round_num = 0
         self._last_loaded_round = -1
@@ -133,7 +132,7 @@ class DAgger:
 
         beta = self.beta_schedule(self.round_num)
 
-        # env = VecMonitor(DummyVecEnv([lambda: env]))
+        # make_env = VecMonitor(DummyVecEnv([lambda: make_env]))
 
         obs = env.reset()
 
@@ -153,33 +152,26 @@ class DAgger:
                 else:
                     # Expert takes the decision
                     # expert_chose = True
-                    if isinstance(expert, coopihc.BaseAgent):
-                        action, _reward = env.unwrapped.bundle.assistant._take_action()
-                        action = int(action)
-                    else:
-                        action, _state = expert.predict(obs, deterministic=deterministic)
+                    # if isinstance(expert, coopihc.BaseAgent):
+                    #
+                    #     _action, _reward = make_env.unwrapped.bundle.assistant.take_action(agent_observation=None,
+                    #                                                                   agent_state=None,
+                    #                                                                   increment_turn=False)
+                    #
+                    #     # Collect action_wrappers.action
+                    #     # Should be a gym-compatible action with wrappers applied
+                    #
+                    #     print(type(_action))
+                    #     action = _action
+                    # else:
+                    action, _state = expert.predict(obs, deterministic=deterministic)
 
                 new_obs, reward, done, info = env.step(action)
 
                 n_steps += 1
 
-                # action = action.squeeze()
-
-                # if isinstance(obs, torch.Tensor) or isinstance(obs, np.ndarray):
-                #     obs = obs.squeeze()
-                # else:
-                #     for k, v in obs.items():
-                #         if len(v.squeeze().shape):
-                #             obs[k] = v.squeeze()
-                #         else:
-                #             obs[k] = v.squeeze(-1).squeeze(-1)
-                            # print(v.squeeze(-1).squeeze(-1).shape)
-
                 # if expert_chose:
                 expert_data[-1].append({"acts": action, "obs": obs})
-
-                # Handle timeout by bootstraping with value function
-                # see GitHub issue #633
 
                 if done:
                     env.reset()
@@ -210,3 +202,7 @@ class DAgger:
         expert_data = flatten_expert_data
 
         return expert_data
+
+    @property
+    def policy(self):
+        return self.bc_trainer.policy

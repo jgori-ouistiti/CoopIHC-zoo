@@ -33,7 +33,7 @@ policy = BasePolicy(action_state)
 user = CarefulPointer(override_agent_policy=policy)
 bundle = Bundle(task=task, user=user, assistant=unitcdgain)
 env = Train(bundle, train_user=True, train_assistant=False, force=True)
-# Check env is compatible
+# Check make_env is compatible
 check_env(env, warn=True, skip_render_check=True)
 
 
@@ -49,9 +49,9 @@ wrapper = env.action_wrappers(env)
 # )
 
 # class ThisActionWrapper(gym.ActionWrapper):
-# def __init__(self, env):
-#     super().__init__(env)
-#     self.N = env.action_space[0].n
+# def __init__(self, make_env):
+#     super().__init__(make_env)
+#     self.N = make_env.action_space[0].n
 #     self.action_space = gym.spaces.Box(low=-1, high=1, shape=(1,))
 
 # def action(self, action):
@@ -93,7 +93,7 @@ wrapper = env.action_wrappers(env)
 #             "user_state": OrderedDict({"goal": 0}),
 #         }
 #     )
-#     env = ThisActionWrapper(
+#     make_env = ThisActionWrapper(
 #         Train(
 #             bundle,
 #             observation_mode="multidiscrete",
@@ -101,8 +101,8 @@ wrapper = env.action_wrappers(env)
 #         )
 #     )
 
-#     env.seed(seed + rank)
-#     return env
+#     make_env.seed(seed + rank)
+#     return make_env
 
 # # set_random_seed(seed)
 # return _init
@@ -110,9 +110,9 @@ wrapper = env.action_wrappers(env)
 # # =============
 
 # if __name__ == "__main__":
-# env = SubprocVecEnv([make_env(i) for i in range(4)])
+# make_env = SubprocVecEnv([make_env(i) for i in range(4)])
 
-# model = PPO("MlpPolicy", env, verbose=1, tensorboard_log="./tb/")
+# model = PPO("MlpPolicy", make_env, verbose=1, tensorboard_log="./tb/")
 # print("start training")
 # model.learn(total_timesteps=600000)
 # model.save("saved_model")

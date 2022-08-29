@@ -1,7 +1,5 @@
-from coopihczoo.pointing.envs import SimplePointingTask
-from coopihczoo.pointing.users import CarefulPointer
-from coopihczoo.pointing.assistants import ConstantCDGain
-from coopihc.bundle.Bundle import Bundle
+from coopihc import SimplePointingTask, CarefulPointer, ConstantCDGain
+from coopihc import Bundle
 
 
 task = SimplePointingTask(gridsize=31, number_of_targets=8)
@@ -16,6 +14,7 @@ while True:
     game_state, rewards_dic, is_done = bundle.step(
         user_action=None, assistant_action=None
     )
+    print(rewards_dic)
     bundle.render("plotext")
     if is_done:
         bundle.close()

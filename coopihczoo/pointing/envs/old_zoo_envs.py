@@ -168,7 +168,7 @@ class DiscretePointingTask(InteractionTask):
             super().reset(dic=dic)
 
     def is_done_user(self):
-        # env ends when user inputs action 0 or when too many turns have been played
+        # make_env ends when user inputs action 0 or when too many turns have been played
         if self.turn > 50:
             return True
         if self.user_action["values"][0] == 0:

@@ -1,38 +1,36 @@
+import numpy as np
 from coopihc import (
     BaseAgent,
     State,
     cat_element,
     BasePolicy,
     BaseInferenceEngine,
-    array_element,
+    discrete_array_element
 )
-import numpy as np
 
 
 class LeitnerInferenceEngine(BaseInferenceEngine):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-    def infer(self, user_state=None):
+    def infer(self, agent_observation=None):
 
         last_item = int(self.observation["task_state"]["item"])
-        last_time_reply = self.observation["task_state"]["timestamp"]
-        last_was_success = self.observation["user_action"]["action"][0]
+        last_time_reply = int(self.observation["task_state"]["timestamp"])
+        last_was_success = int(self.observation["user_action"]["action"])
 
         if self.observation["task_state"]["iteration"] > 0:
 
             if last_was_success:
-                self.state["box"][last_item, 0] += 1
+                self.state["box"][last_item] += 1
             else:
-                self.state["box"][last_item, 0] = max(
-                    0, self.state["box"][last_item, 0] - 1
+                self.state["box"][last_item] = max(
+                    0, self.state["box"][last_item] - 1
                 )
 
-            delay = self.host.delay_factor ** self.state["box"][last_item, 0].view(
-                np.ndarray
-            )
+            delay = self.host.delay_factor ** self.state["box"][last_item]
             # Delay is 1, 2, 4, 8, 16, 32, 64, 128, 256, 512 ...
-            self.state["due"][last_item, 0] = (
+            self.state["due"][last_item] = (
                 last_time_reply + self.host.delay_min * delay
             )
 
@@ -45,12 +43,13 @@ class LeitnerPolicy(BasePolicy):
     def __init__(self, action_state, *args, **kwargs):
         super().__init__(action_state=action_state, *args, **kwargs)
 
-    def sample(self, observation=None):
+    @BasePolicy.default_value
+    def sample(self, agent_observation=None, agent_state=None):
 
-        box = self.state["box"].view(np.ndarray).flatten()
-        due = self.state["due"].view(np.ndarray).flatten()
+        box = self.state["box"]
+        due = self.state["due"]
 
-        n_item = int(self.host.bundle.task.state["n_item"][0, 0])
+        n_item = int(self.host.bundle.task.state["n_item"])
 
         now = self.observation["task_state"]["timestamp"]
 
@@ -76,15 +75,11 @@ class LeitnerPolicy(BasePolicy):
                     _action_value = box.argmin()  # pickup new
 
         reward = 0
-        new_action = self.new_action
-        new_action[:] = _action_value
-
-        return new_action, reward
+        return _action_value, reward
 
     def reset(self, random=True):
 
-        _action_value = 0
-        self.action_state["action"][:] = _action_value
+        self.action_state["action"] = 0
 
 
 class Leitner(BaseAgent):
@@ -99,12 +94,12 @@ class Leitner(BaseAgent):
 
         n_item = int(self.bundle.task.state["n_item"][0, 0])
 
-        self.state["box"] = array_element(shape=n_item, low=0, high=np.inf, init=0)
-        self.state["due"] = array_element(shape=n_item, low=0, high=np.inf, init=0)
+        self.state["box"] = discrete_array_element(shape=(n_item, ), low=0, high=np.inf, init=0)
+        self.state["due"] = discrete_array_element(shape=(n_item, ), low=0, high=np.inf, init=0)
 
         # Call the policy defined above
         action_state = State()
-        action_state["action"] = cat_element(n=n_item)
+        action_state["action"] = cat_element(N=n_item)
         agent_policy = LeitnerPolicy(action_state)
 
         # Inference engine
@@ -113,9 +108,9 @@ class Leitner(BaseAgent):
         # Use default observation engine
         observation_engine = None
 
-        self.attach_policy(agent_policy)
-        self.attach_observation_engine(observation_engine)
-        self.attach_inference_engine(inference_engine)
+        self._attach_policy(agent_policy)
+        self._attach_observation_engine(observation_engine)
+        self._attach_inference_engine(inference_engine)
 
     def reset(self, dic=None):
         """reset
@@ -125,7 +120,7 @@ class Leitner(BaseAgent):
         :meta public:
         """
 
-        n_item = int(self.bundle.task.state["n_item"][0, 0])
+        n_item = int(self.bundle.task.state["n_item"])
 
-        self.state["box"][:] = np.zeros(n_item)
-        self.state["due"][:] = np.zeros(n_item)
+        self.state["box"] = np.zeros(n_item)
+        self.state["due"] = np.zeros(n_item)
