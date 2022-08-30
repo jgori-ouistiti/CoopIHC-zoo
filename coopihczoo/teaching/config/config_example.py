@@ -3,7 +3,7 @@ import numpy
 
 n_item = 20
 
-# Some arguments are only for the evaluate_naive_evaluation implementation
+# Some arguments are only for the evaluate_naive_implementation implementation
 task_kwargs = dict(
     n_item=20,
     inter_trial=3,
@@ -15,7 +15,7 @@ task_kwargs = dict(
     thr=0.9,
 )
 
-# Only for evaluate_naive_evaluation implementation
+# Only for evaluate_naive_implementation implementation
 user_kwargs = {
     "param": (0.01, 0.2)
 }

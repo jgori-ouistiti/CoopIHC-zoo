@@ -26,7 +26,6 @@ from coopihczoo.teaching.config import config_example
 from coopihczoo.utils.imitation.run import train_novice_behavioral_cloning_ppo
 from coopihczoo.utils.imitation.behavioral_cloning import sample_expert
 
-import numpy as np
 
 class AssistantActionWrapper(ActionWrapper, WrapperReferencer):
 
