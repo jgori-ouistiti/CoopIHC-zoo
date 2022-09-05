@@ -4,8 +4,9 @@
 are running but don't give satisfactory results 
 (reward from the novice way lower than reward from the expert)
 
+- `test_predict_one_step` not passing since new predict vectorized method [05-09-22]
+
 # Todo
 
 - Check the efficiency of the Conservative Sampling teacher in normal context 
-and in BC context  
-- `test_predict_one_step` not passing since new predict vectorized method
+and in BC context

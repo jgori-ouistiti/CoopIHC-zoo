@@ -22,6 +22,7 @@ bundle = Bundle(task=task, user=user, assistant=assistant, random_reset=False,
 ## 3 : after assistant observation + assitant inference
 
 bundle.reset()
+i = 0
 while True:
     # turn-index 3
     _state, _rewards, _is_done = bundle.quarter_step()
@@ -34,8 +35,10 @@ while True:
     state, rewards, is_done = bundle.quarter_step()   # Give user_action = X if you want to force the action
 
     # state, rewards, is_done = bundle.step()
-    if is_done:
+    if is_done or i == 10:
         break
+
+    i += 1
 
 # print("Final reward", rewards['first_task_reward'])
 # print(bundle.state)

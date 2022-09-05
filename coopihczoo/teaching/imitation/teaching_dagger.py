@@ -12,14 +12,16 @@ from coopihczoo.teaching.imitation.teaching_bc import make_env
 
 def main():
 
+    seed = 1030
+
     evaluate_novice = True
-    evaluate_expert = True
+    evaluate_expert = False
     total_timesteps = 5000
 
-    torch.manual_seed(1234)
-    np.random.seed(1234)
+    torch.manual_seed(seed)
+    np.random.seed(seed)
 
-    env = make_env()
+    env = make_env(seed)
 
     expert = env.unwrapped.bundle.assistant
 
@@ -44,7 +46,8 @@ def main():
         expert=expert,
         make_env=make_env,
         total_timesteps=total_timesteps,
-        evaluate_novice=evaluate_novice
+        evaluate_novice=evaluate_novice,
+        batch_size=total_n_iter,
     )
 
 

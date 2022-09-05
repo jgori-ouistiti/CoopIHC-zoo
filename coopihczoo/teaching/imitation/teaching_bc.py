@@ -1,6 +1,7 @@
 import os
 
-# import numpy as np
+import numpy as np
+import torch
 
 import pickle
 from gym.wrappers import FilterObservation, FlattenObservation
@@ -72,17 +73,22 @@ def make_env(seed=123):
 
 def main():
 
+    seed = 1030
+
+    torch.manual_seed(seed)
+    np.random.seed(seed)
+
     force_sampling = True
     evaluate_expert = False
 
-    sample_expert_n_episode = 10
+    sample_expert_n_episode = 1000
     sample_expert_n_timestep = None
 
     bkp_folder = './tmp/'
     os.makedirs(bkp_folder, exist_ok=True)
     samples_backup_file = f"{bkp_folder}/expert_samples.p"
 
-    env = make_env()
+    env = make_env(seed)
 
     total_n_iter = int(
             env.bundle.task.state["n_iter_per_ss"]
@@ -118,10 +124,12 @@ def main():
         reward, _ = evaluate_policy(expert, Monitor(env), n_eval_episodes=50)
         print(f"Reward expert: {reward}")
 
-    _ = train_novice_behavioral_cloning_ppo(
+    novice = train_novice_behavioral_cloning_ppo(
         make_env=make_env,
         novice_kwargs=novice_kwargs,
         expert_data=expert_data)
+
+    novice.save(f"{bkp_folder}/model_{sample_expert_n_episode}ep")
 
 
 if __name__ == "__main__":
