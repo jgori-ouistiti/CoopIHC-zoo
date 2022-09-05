@@ -32,6 +32,7 @@ def sample_expert(env, expert, n_episode=50, n_timestep=None, deterministic=Fals
             while True:
 
                 action, _state = expert.predict(obs, deterministic=deterministic)
+                print("expert action", action)
 
                 new_obs, reward, done, info = env.step(action)
 

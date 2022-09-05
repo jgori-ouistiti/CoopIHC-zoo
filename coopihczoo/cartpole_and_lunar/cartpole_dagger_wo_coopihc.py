@@ -17,12 +17,9 @@ def main():
 
     saving_path = f"tmp/{env_name}_dagger_wo_coopihc"
 
-    def make_env_no_args():
-        return make_env(seed=seed, env_name=env_name)
-
     run_dagger_ppo(
         saving_path=saving_path,
-        make_env=make_env_no_args,
+        env=make_env(seed=seed, env_name=env_name),
         expert_total_timesteps=expert_total_timesteps,
         dagger_total_timesteps=dagger_total_timesteps,
         expert_kwargs=expert_kwargs,

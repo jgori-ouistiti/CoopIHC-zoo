@@ -37,7 +37,7 @@ def main():
 
     train_novice_dagger_ppo(
         expert=expert,
-        make_env=make_pointing_env,
+        env=env,
         total_timesteps=dagger_total_timesteps,
         novice_kwargs=novice_kwargs)
 

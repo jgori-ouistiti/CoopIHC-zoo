@@ -10,12 +10,10 @@ from coopihczoo.utils.imitation.behavioral_cloning import sample_expert
 
 
 def _get_expert(saving_path,
-                make_env,
+                env,
                 expert_kwargs,
                 expert_total_timesteps,
                 eval_expert):
-
-    env = make_env()
 
     if os.path.exists(f"{saving_path}.zip"):
 
@@ -44,11 +42,10 @@ def _get_expert(saving_path,
 
 
 def train_novice_behavioral_cloning_ppo(
-        make_env,
+        env,
         expert_data,
         novice_kwargs):
 
-    env = make_env()
     novice = PPO(env=env, **novice_kwargs)
 
     print("Evaluating the novice before training...")
@@ -106,13 +103,12 @@ def run_behavioral_cloning_ppo(
 
 def train_novice_dagger_ppo(
         total_timesteps,
-        make_env,
+        env,
         novice_kwargs,
         expert,
         evaluate_novice=True,
         batch_size=32):
 
-    env = make_env()
     novice = PPO(env=env, **novice_kwargs)
 
     if evaluate_novice:
@@ -139,7 +135,7 @@ def train_novice_dagger_ppo(
 
 def run_dagger_ppo(
         saving_path,
-        make_env,
+        env,
         eval_expert=True,
         expert_total_timesteps=100000,
         dagger_total_timesteps=5000,
@@ -151,7 +147,7 @@ def run_dagger_ppo(
 
     expert = _get_expert(
         saving_path=saving_path,
-        make_env=make_env,
+        env=env,
         expert_kwargs=expert_kwargs,
         expert_total_timesteps=expert_total_timesteps,
         eval_expert=eval_expert)
@@ -160,6 +156,6 @@ def run_dagger_ppo(
         total_timesteps=dagger_total_timesteps,
         expert=expert,
         novice_kwargs=novice_kwargs,
-        make_env=make_env)
+        env=env)
 
     return novice

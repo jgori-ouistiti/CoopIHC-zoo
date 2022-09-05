@@ -21,9 +21,9 @@ def main():
     run_dagger_ppo(
         saving_path=saving_path,
         expert_kwargs=expert_kwargs,
-        make_env=lambda: make_env(config_task=config_task,
-                                  config_user=config_user,
-                                  seed=seed),
+        env=make_env(config_task=config_task,
+                      config_user=config_user,
+                      seed=seed),
         dagger_total_timesteps=dagger_total_timesteps,
         expert_total_timesteps=expert_total_timesteps
     )

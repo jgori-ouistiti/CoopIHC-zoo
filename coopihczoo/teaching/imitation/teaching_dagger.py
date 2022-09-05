@@ -30,6 +30,10 @@ def main():
         reward, _ = evaluate_policy(expert, Monitor(env), n_eval_episodes=50)
         print(f"Reward expert: {reward}")
 
+    env = make_env(seed)
+
+    expert = env.bundle.assistant
+
     total_n_iter = int(
         env.bundle.task.state["n_iter_per_ss"]
         * env.bundle.task.state["n_session"]
@@ -44,7 +48,7 @@ def main():
     train_novice_dagger_ppo(
         novice_kwargs=novice_kwargs,
         expert=expert,
-        make_env=make_env,
+        env=env,
         total_timesteps=total_timesteps,
         evaluate_novice=evaluate_novice,
         batch_size=total_n_iter,

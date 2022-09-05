@@ -2,6 +2,9 @@ import numpy as np
 import torch
 
 from coopihczoo.utils.imitation.behavioral_cloning import BC
+from coopihc import BaseAgent
+
+from . behavioral_cloning import sample_expert
 
 
 class LinearBetaSchedule:
@@ -136,6 +139,9 @@ class DAgger:
 
         obs = env.reset()
 
+        # if isinstance(expert, BaseAgent):
+        #     expert.bundle.env.reset(dic=env.bundle.state)
+
         n_steps = 0
         ep = 0
 
@@ -149,11 +155,19 @@ class DAgger:
                     action, _state = self.bc_trainer.policy.predict(obs, deterministic=deterministic)
                     # if isinstance(action, (int, np.int32, np.int64)):
                     #     action = np.array([action, ])
+                    # print("NOVICE action", action)
 
                 else:
+                    # print(expert.bundle.state)
+                    # raise Exception
                     action, _state = expert.predict(obs, deterministic=deterministic)
 
                 new_obs, reward, done, info = env.step(action)
+                # print(expert.bundle.state)
+                # raise Exception
+
+                # if isinstance(expert, BaseAgent):
+                #     expert.bundle.env.reset(dic=env.bundle.state)
 
                 n_steps += 1
 

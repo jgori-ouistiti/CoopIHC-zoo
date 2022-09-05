@@ -6,7 +6,16 @@ are running but don't give satisfactory results
 
 - `test_predict_one_step` not passing since new predict vectorized method [05-09-22]
 
+- Check the efficiency of the Conservative Sampling teacher in normal context 
+and in BC context [05-09-22]
+
+- Tried dagger on teaching [05-09-22]
+
 # Todo
 
-- Check the efficiency of the Conservative Sampling teacher in normal context 
-and in BC context
+- Solve bug of "double" environments: expert not working as expected 
+if created with in a different environment than the one used to do steps in
+
+- Test not passing (@Julien)
+
+- Check with other environments that nothing is breaking when using dagger
