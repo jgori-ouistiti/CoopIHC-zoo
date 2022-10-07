@@ -8,11 +8,9 @@ from coopihc import (
     Simulator,
     array_element,
     BufferNotFilledError,
-    DualPolicy,
 )
 import numpy as np
 
-from coopihczoo.teaching.assistants.myopic import MyopicPolicy
 import copy
 
 

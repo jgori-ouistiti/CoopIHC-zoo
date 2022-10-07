@@ -2,9 +2,7 @@ import numpy
 import math
 import copy
 
-from coopihc.interactiontask.InteractionTask import InteractionTask
-from coopihc.space.StateElement import StateElement
-from coopihc.space.Space import Space
+from coopihc import InteractionTask, array_element
 
 
 # import eye.noise
@@ -38,28 +36,16 @@ class ChenEyePointingTask(InteractionTask):
         self.fitts_D = fitts_D
         self.dimension = dimension
         self.parity = 1
+        self.max_iter = 15
 
-        self.state["target"] = StateElement(
-            numpy.array([0 for i in range(dimension)]).reshape(-1, 1),
-            Space(
-                [
-                    -numpy.ones((dimension, 1), dtype=numpy.float32),
-                    numpy.ones((dimension, 1), dtype=numpy.float32),
-                ],
-                "continuous",
-            ),
-            out_of_bounds_mode="clip",
+        self.state["target"] = array_element(
+            low=-numpy.ones((dimension, 1), dtype=numpy.float32),
+            high=numpy.ones((dimension, 1), dtype=numpy.float32),
         )
 
-        self.state["fixation"] = StateElement(
-            numpy.array([0 for i in range(dimension)]),
-            Space(
-                [
-                    -numpy.ones((dimension, 1), dtype=numpy.float32),
-                    numpy.ones((dimension, 1), dtype=numpy.float32),
-                ],
-                "continuous",
-            ),
+        self.state["fixation"] = array_element(
+            low=-numpy.ones((dimension, 1), dtype=numpy.float32),
+            high=numpy.ones((dimension, 1), dtype=numpy.float32),
             out_of_bounds_mode="clip",
         )
 
@@ -90,10 +76,13 @@ class ChenEyePointingTask(InteractionTask):
         :param dic: reset_dic (see the documentation of the reset mechanism in CoopIHC), defaults to None
         :type dic: dictionnary, optional
         """
-        self.state["target"][:] = numpy.array([self.get_new_target(self.fitts_D)])
-        self.state["fixation"][:] = numpy.array([0 for i in range(self.dimension)])
+        self.state["target"] = self.get_new_target(self.fitts_D)
+        self.state["fixation"] = numpy.array([0 for i in range(self.dimension)])
 
     def _is_done_user(self):
+        if self.round_number > 15:
+            return True
+
         if (
             numpy.sqrt(numpy.sum((self.state["fixation"] - self.state["target"]) ** 2))
             - self.fitts_W / 2
@@ -104,7 +93,7 @@ class ChenEyePointingTask(InteractionTask):
             is_done = False
         return is_done
 
-    def user_step(self, user_action):
+    def on_user_action(self, user_action):
         """Task transition function on user action
 
         Move the focal point of the eye to the received action.
@@ -114,16 +103,18 @@ class ChenEyePointingTask(InteractionTask):
         :return: tuple(task state, reward, isdone_flag, empty dictionnary)
         :rtype: tuple(coopihc.space.state, float, boolean)
         """
-        self.state["fixation"][:] = user_action[:]
+        self.state["fixation"] = user_action
 
         reward = -1
 
         return self.state, reward, self._is_done_user()
 
-    def assistant_step(self, assistant_action):
+    def on_assistant_action(self, assistant_action):
         return self.state, 0, False
 
-    def render(self, *args, mode="text", **kwargs):
+    def render(
+        self, mode="text", ax_task=None, ax_user=None, ax_assistant=None, **kwargs
+    ):
         """Renders the task.
 
         If 'text' is in mode, then simply print out target and fixation positions.
@@ -144,23 +135,14 @@ class ChenEyePointingTask(InteractionTask):
             print(fx)
 
         if "plot" in mode:
-            try:
-                axtask, axuser, axassistant = args[:3]
-            except ValueError:
-                raise ValueError(
-                    "You have to provide the three axes (task, user, assistant) to render in plot mode."
-                )
-            if self.ax is not None:
-                pass
-            else:
-                self.ax = axtask
-                self.ax.set_xlim([-1.3, 1.3])
-                self.ax.set_ylim([-1.3, 1.3])
-                self.ax.set_aspect("equal")
+            self.ax = ax_task
+            self.ax.set_xlim([-1.3, 1.3])
+            self.ax.set_ylim([-1.3, 1.3])
+            self.ax.set_aspect("equal")
 
-                axuser.set_xlim([-1.3, 1.3])
-                axuser.set_ylim([-1.3, 1.3])
-                axuser.set_aspect("equal")
+            ax_user.set_xlim([-1.3, 1.3])
+            ax_user.set_ylim([-1.3, 1.3])
+            ax_user.set_aspect("equal")
 
             if self.dimension == 1:
                 goal = [goal, 0]

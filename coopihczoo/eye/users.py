@@ -1,13 +1,10 @@
-from coopihc.agents.BaseAgent import BaseAgent
+from coopihc import BaseAgent, array_element, State
 
 from coopihc.observation.RuleObservationEngine import RuleObservationEngine
 from coopihc.observation.utils import base_user_engine_specification
 
 from coopihc.policy.LinearFeedback import LinearFeedback
 
-from coopihc.space.State import State
-from coopihc.space.StateElement import StateElement
-from coopihc.space.Space import Space
 
 from coopihc.inference.LinearGaussianContinuous import LinearGaussianContinuous
 from coopihc.inference.BaseInferenceEngine import BaseInferenceEngine
@@ -43,8 +40,6 @@ class ChenEye(BaseAgent):
         noise = numpy.random.multivariate_normal(
             numpy.zeros(shape=target.reshape(-1).shape), Sigma
         ).reshape(-1, 1)
-        print("\n============ here")
-        print(noise, target)
         return _obs + noise  # noise clipped automatically by StateElement behavior
 
     def __init__(self, perceptualnoise, oculomotornoise, dimension=2, *args, **kwargs):
@@ -54,16 +49,9 @@ class ChenEye(BaseAgent):
 
         # ============= Define Policy
         action_state = State()
-        action_state["action"] = StateElement(
-            numpy.zeros((dimension, 1), dtype=numpy.float32),
-            Space(
-                [
-                    -numpy.ones((dimension, 1), dtype=numpy.float32),
-                    numpy.ones((dimension, 1), dtype=numpy.float32),
-                ],
-                "continuous",
-            ),
-            out_of_bounds_mode="warning",
+        action_state["action"] = array_element(
+            low=-numpy.ones((dimension, 1), dtype=numpy.float32),
+            high=numpy.ones((dimension, 1), dtype=numpy.float32),
         )
 
         def noise_function(action, observation, oculomotornoise):
@@ -72,6 +60,7 @@ class ChenEye(BaseAgent):
             noise_obs["task_state"]["target"] = action
             noise_obs["task_state"]["fixation"] = observation["task_state"]["fixation"]
             noise = self.eccentric_motor_noise(action, noise_obs, oculomotornoise)[0]
+
             return action + noise.reshape((-1, 1))
 
         agent_policy = LinearFeedback(
@@ -80,7 +69,6 @@ class ChenEye(BaseAgent):
             noise_function=noise_function,
             noise_func_args=(self.oculomotornoise,),
         )
-
         # ============ Define observation Engine
         extraprobabilisticrules = {
             ("task_state", "target"): (
@@ -103,29 +91,17 @@ class ChenEye(BaseAgent):
         )
 
         # ============= Define State
-        belief_mu = StateElement(
-            numpy.zeros((self.dimension, 1)),
-            Space(
-                [
-                    -numpy.ones((self.dimension, 1), dtype=numpy.float32),
-                    numpy.ones((self.dimension, 1), dtype=numpy.float32),
-                ],
-                "continuous",
-            ),
-            out_of_bounds_mode="warning",
+        belief_mu = array_element(
+            low=-numpy.ones((dimension, 1), dtype=numpy.float32),
+            high=numpy.ones((dimension, 1), dtype=numpy.float32),
         )
-        belief_sigma = StateElement(
-            numpy.full((self.dimension, self.dimension), numpy.inf),
-            Space(
-                [
-                    -numpy.inf
-                    * numpy.ones((self.dimension, self.dimension), dtype=numpy.float32),
-                    numpy.inf
-                    * numpy.ones((self.dimension, self.dimension), dtype=numpy.float32),
-                ],
-                "continuous",
-            ),
-            out_of_bounds_mode="warning",
+
+        belief_sigma = array_element(
+            low=-numpy.inf
+            * numpy.ones((self.dimension, self.dimension), dtype=numpy.float32),
+            high=numpy.inf
+            * numpy.ones((self.dimension, self.dimension), dtype=numpy.float32),
+            init=numpy.full((self.dimension, self.dimension), numpy.inf),
         )
 
         state = State()
@@ -158,17 +134,7 @@ class ChenEye(BaseAgent):
         observation["task_state"]["fixation"] = self.bundle.task.state["fixation"]
         # Initialize with a huge Gaussian noise so that the first observation massively outweights the prior. Put more weight on the pure variance components to ensure that it will behave well.
         Sigma = toeplitz([1000] + [100 for i in range(self.dimension - 1)])
-        self.state["belief-mu"][:] = numpy.array([0 for i in range(self.dimension)])
-        self.state["belief-sigma"][:, :] = Sigma
-        self.state["y"][:] = numpy.array([0 for i in range(self.dimension)])
-        self.state["Sigma_0"][:] = Sigma
-
-    def render(self, *args, **kwargs):
-        mode = kwargs.get("mode")
-        if mode is None:
-            mode = "text"
-        try:
-            axtask, axuser, axassistant = args
-            self.inference_engine.render(axtask, axuser, axassistant, mode=mode)
-        except ValueError:
-            self.inference_engine.render(mode=mode)
+        self.state["belief-mu"] = numpy.array([0 for i in range(self.dimension)])
+        self.state["belief-sigma"] = Sigma
+        self.state["y"] = numpy.array([0 for i in range(self.dimension)])
+        self.state["Sigma_0"] = Sigma

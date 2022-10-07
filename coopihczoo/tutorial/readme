@@ -1,0 +1,7 @@
+high_level_point.py: high level code snippet to show how to instantiate a bundle
+explicit_policy.py: eye model in coopihczoo/eye explained
+fitting_data.py: fitting eye model to empirical data to determine motor noise level
+__rl_sb3.py: train pointing model with Stable baselines 3 workflow
+__exploit_rlnet.py: wrap trained policy in RL policy and plug back into coopihc
+evluate_ensemble: take 4 teachers and plug against same user with different decay rate
+viz_data_eval.py: plot data from evaluate enemble

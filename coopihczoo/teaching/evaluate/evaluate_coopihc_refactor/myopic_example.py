@@ -1,7 +1,10 @@
-from coopihczoo.teaching.assistants.myopic import Myopic
+from coopihczoo.teaching.assistants.assistants_coopihc_refactor.myopic import Myopic
 
 from coopihczoo.teaching.users.users import ExponentialUser
-from coopihczoo.teaching.envs.envs import TeachingTask, TeachingOrchestrator
+from coopihczoo.teaching.envs.envs import (
+    TeachingTask,
+    TeachingOrchestrator,
+)
 from coopihczoo.teaching.config import config_example
 
 from coopihc import Bundle

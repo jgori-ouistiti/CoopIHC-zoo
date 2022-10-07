@@ -9,23 +9,25 @@ class ProvideLikelihoodInferenceEngine(BaseInferenceEngine):
     def __init__(self, noise_level, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.noise_level = noise_level
-        self.render_tag = []
 
-    def infer(self, user_state=None):
-        if user_state is None:
-            if self.host.role == "user":
-                user_state = self.observation["user_state"]
-            else:
-                user_state = self.observation["assistant_state"]
+    @BaseInferenceEngine.default_value
+    def infer(self, agent_observation=None):
+        if self.host.role == "user":
+            user_state = agent_observation["user_state"]
+        else:
+            user_state = agent_observation["assistant_state"]
 
         target, position = (
-            self.observation["task_state"]["target"],
-            self.observation["task_state"]["fixation"],
+            agent_observation["task_state"]["target"],
+            agent_observation["task_state"]["fixation"],
         )
 
-        user_state["y"][:] = self.observation["task_state"]["target"][:]
-        user_state["Sigma_0"][:] = eccentric_noise(target, position, self.noise_level)
+        user_state["y"][...] = agent_observation["task_state"]["target"][...]
+        user_state["Sigma_0"] = eccentric_noise(target, position, self.noise_level)
         return user_state, 0
+
+    def render(self, mode="text", ax_user=None, ax_assistant=None, ax_task=None):
+        pass
 
 
 def eccentric_noise(target, position, sdn_level):
@@ -44,11 +46,7 @@ def eccentric_noise(target, position, sdn_level):
 
     :meta public:
     """
-    target, position = (
-        target.view(numpy.ndarray).squeeze(),
-        position.view(numpy.ndarray).squeeze(),
-    )
-
+    target, position = target.squeeze(), position.squeeze()
     if target.shape == (2,):
         eccentricity = numpy.sqrt(numpy.sum((target - position) ** 2))
         cosalpha = (target - position)[0] / eccentricity
