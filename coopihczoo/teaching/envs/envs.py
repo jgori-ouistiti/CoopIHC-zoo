@@ -127,9 +127,7 @@ class TeachingOrchestrator:
 class TeachingTask(InteractionTask):
     """ """
 
-    def __init__(
-        self, thr=None, n_item=None, inter_trial=None, is_item_specific=None, **kwargs
-    ):
+    def __init__(self, thr=None, n_item=None, inter_trial=None, **kwargs):
 
         super().__init__(**kwargs)
 
@@ -138,7 +136,6 @@ class TeachingTask(InteractionTask):
             {
                 "n_item": n_item,
                 "inter_trial": inter_trial,
-                "is_item_specific": is_item_specific,  # should be in user?
                 "log_thr": np.log(thr),
             }
         )

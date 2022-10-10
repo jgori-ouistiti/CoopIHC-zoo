@@ -1,3 +1,12 @@
+---
+title: "CoopIHC userPestimator"
+format:
+  html:
+    code-fold: true
+jupyter: python3
+---
+
+``` {python}
 from coopihczoo.teaching.users.users import ExponentialUser
 from coopihczoo.teaching.envs.envs import TeachingTask, TeachingOrchestrator
 from coopihczoo.teaching.assistants.userPestimator import UserPEstimator
@@ -78,7 +87,4 @@ def run_userpestimator_mismatch():
     print(f"reward: {int(numpy.sum(list(rewards.values())))}")
     print(state)
 
-
-if __name__ == "__main__":
-    run_userpestimator()
-    run_userpestimator_mismatch()
+```
