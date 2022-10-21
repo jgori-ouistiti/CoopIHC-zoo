@@ -11,8 +11,6 @@ from coopihc import (
     DualPolicy,
 )
 import numpy as np
-
-from coopihczoo.teaching.assistants.myopic import MyopicPolicy
 import copy
 
 

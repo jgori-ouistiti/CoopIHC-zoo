@@ -1,6 +1,6 @@
 from coopihczoo.teaching.assistants.myopic import Myopic
 
-from coopihczoo.teaching.users.users import ExponentialUser
+from coopihczoo.teaching.users.policy import ExponentialUser
 from coopihczoo.teaching.envs.envs import TeachingTask, TeachingOrchestrator
 from coopihczoo.teaching.config import config_example
 

@@ -1,4 +1,4 @@
-from coopihczoo.teaching.users.users import ExponentialUser
+from coopihczoo.teaching.users.policy import ExponentialUser
 from coopihczoo.teaching.envs.envs import TeachingTask, TeachingOrchestrator
 from coopihczoo.teaching.assistants.conservative_sampling import ConservativeSampling
 

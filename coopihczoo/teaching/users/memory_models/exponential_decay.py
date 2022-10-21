@@ -1,18 +1,16 @@
+import numpy as np
+
 from coopihc import (
     BaseAgent,
     State,
-    BasePolicy,
     BaseInferenceEngine,
     array_element,
     discrete_array_element,
     cat_element,
     BufferNotFilledError,
 )
-from coopihczoo.teaching.memory_models.memory_models import ExponentialDecayMemory
-import numpy as np
 
-
-# ============== Soft Refactor
+EPS = np.finfo(np.float).eps
 
 
 class ExponentialMemoryInferenceEngine(BaseInferenceEngine):
@@ -21,8 +19,26 @@ class ExponentialMemoryInferenceEngine(BaseInferenceEngine):
 
     @BaseInferenceEngine.default_value
     def infer(self, agent_observation=None):
+
         item = agent_observation["task_state"]["item"]
         timestamp = agent_observation["task_state"]["timestamp"]
+
+        self.udpate(item)
+
+        last_pres = agent_observation["task_state"]["last_pres"]
+        n_pres = agent_observation["task_state"]["n_pres"]
+
+        # cast to float to handle infinities
+        self.state["recall_probabilities"] = self.recall_probabilities(
+            delta_time=(timestamp - last_pres.astype(np.float64)),
+            times_presented=n_pres - 1,
+            log=False,
+        )
+
+        reward = 0
+        return self.state, reward
+
+    def update(self, item):
 
         try:
             self.state["last_pres_before_obs"] = self.buffer[-2]["task_state"][
@@ -35,46 +51,25 @@ class ExponentialMemoryInferenceEngine(BaseInferenceEngine):
             self.state["last_pres_before_obs"] = 0
             self.state["n_pres_before_obs"] = 0
 
-        last_pres = agent_observation["task_state"]["last_pres"]
-        n_pres = agent_observation["task_state"]["n_pres"]
+    def recall_probabilities(
+        self,
+        delta_time,
+        times_presented,
+        log=False,
+    ):
 
-        # cast to float to handle infinites
-        self.state["recall_probabilities"] = ExponentialDecayMemory.decay(
-            delta_time=(timestamp - last_pres.astype(np.float64)),
-            times_presented=n_pres - 1,
-            initial_forgetting_rate=self.retention_params[:, 0],
-            repetition_effect=self.retention_params[:, 1],
-            log=False,
+        initial_forgetting_rate = self.retention_params[:, 0]
+        repetition_effect = self.retention_params[:, 1]
+
+        forget_rate = initial_forgetting_rate * (1 - repetition_effect) ** (
+            times_presented
         )
 
-        reward = 0
-        return self.state, reward
-
-
-class UserPolicy(BasePolicy):
-    def __init__(self, action_state, *args, **kwargs):
-        super().__init__(action_state=action_state, *args, **kwargs)
-
-    @BasePolicy.default_value
-    def sample(self, agent_observation=None, agent_state=None):
-
-        item = agent_observation["task_state"]["item"]
-        n_pres = agent_observation["user_state"]["n_pres_before_obs"]
-
-        reward = 0
-
-        if n_pres > 0:  # If item seen before
-            _action_value = int(
-                self.state.recall_probabilities[int(item)] > self.get_rng().random()
-            )
-
-        else:  # If item never seen before
-            _action_value = 0
-
-        return _action_value, reward
-
-    def reset(self, random=True):
-        self.action_state["action"] = 0
+        if log:
+            return -forget_rate * delta_time
+        else:
+            with np.errstate(divide="ignore", over="ignore"):
+                return np.exp(-forget_rate * delta_time)
 
 
 class ExponentialUser(BaseAgent):
@@ -116,6 +111,7 @@ class ExponentialUser(BaseAgent):
         action_state["action"] = cat_element(N=2)
 
         # Set User Policy
+        from coopihczoo.teaching.users.policy import UserPolicy
         agent_policy = UserPolicy(action_state=action_state)
 
         self._attach_policy(agent_policy)
