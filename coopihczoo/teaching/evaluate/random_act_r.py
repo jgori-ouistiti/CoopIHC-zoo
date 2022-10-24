@@ -4,7 +4,7 @@ from coopihc import Bundle
 
 from coopihczoo.teaching.users.memory_models.act_r import ActRUser
 from coopihczoo.teaching.envs.envs import TeachingTask, TeachingOrchestrator
-from coopihczoo.teaching.assistants.assistants_coopihc_refactor.random import (
+from coopihczoo.teaching.assistants.random import (
     RandomTeacher,
 )
 from coopihczoo.teaching.config import config_example

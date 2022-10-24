@@ -61,13 +61,10 @@ class ActRUser(BaseAgent):
         self._attach_policy(agent_policy)
 
     def reset(self, dic=None):
-
-        n_iter = 2048  # Thank you, Julien
-
         n_item = self.parameters["n_item"]
 
-        self.state.ts = np.full(shape=n_iter, fill_value=-1, dtype=np.int)
-        self.state.hist = np.full(shape=n_iter, fill_value=-1, dtype=np.int)
+        self.state.ts = np.full(shape=self.n_iter, fill_value=-1, dtype=np.int)
+        self.state.hist = np.full(shape=self.n_iter, fill_value=-1, dtype=np.int)
 
         self.state.recall_probabilities = np.zeros(n_item)
 
