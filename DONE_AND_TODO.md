@@ -14,8 +14,16 @@ and in BC context [05-09-22]
 # Todo
 
 - Solve bug of "double" environments: expert not working as expected 
-if created with in a different environment than the one used to do steps in
+if created with in a different environment than the one used to do steps in [?]
 
-- Test not passing (@Julien)
+- Test not passing (@Julien) [21-10-22]
 
-- Check with other environments that nothing is breaking when using dagger
+
+- Check with other environments that nothing is breaking when using dagger [?]
+
+
+- Check the computation of the probability of recall (which timestep is considered) 
+  => separate update of internal parameters (eg `delta_time`) and query of the recall probabilities
+
+- SILENT BUG: __setattr__ state
+

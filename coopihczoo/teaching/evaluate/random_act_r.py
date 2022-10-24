@@ -2,16 +2,16 @@ import numpy
 
 from coopihc import Bundle
 
-from coopihczoo.teaching.users.policy import ExponentialUser
+from coopihczoo.teaching.users.memory_models.act_r import ActRUser
 from coopihczoo.teaching.envs.envs import TeachingTask, TeachingOrchestrator
-from coopihczoo.teaching.assistants.random import RandomTeacher
+from coopihczoo.teaching.assistants.assistants_coopihc_refactor.random import RandomTeacher
 from coopihczoo.teaching.config import config_example
 
 
 def run_random():
 
     task = TeachingTask(**config_example.task_kwargs)
-    user = ExponentialUser(**config_example.user_per_item_kwargs)
+    user = ActRUser(**config_example.user_act_r_kwargs)
     assistant = RandomTeacher()
 
     orchestrator = TeachingOrchestrator(

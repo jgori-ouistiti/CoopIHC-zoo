@@ -10,7 +10,6 @@ from coopihc import (
     BufferNotFilledError,
 )
 import numpy as np
-
 import copy
 
 

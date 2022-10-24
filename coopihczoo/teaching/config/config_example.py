@@ -27,6 +27,10 @@ user_per_item_kwargs = dict(
     )
 )
 
+user_act_r_kwargs=dict(
+    param=[19, 2, 34, 2.09]  # tau, s, c, a
+)
+
 teaching_orchestrator_kwargs = dict(
     n_iter_per_ss=[100, 100],
     breaks=[30],

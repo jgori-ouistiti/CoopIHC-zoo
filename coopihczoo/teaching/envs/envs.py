@@ -3,7 +3,7 @@ import copy
 
 from coopihc import InteractionTask, discrete_array_element, Bundle
 
-from coopihczoo.teaching.memory_models.memory_models import ExponentialDecayMemory
+# from coopihczoo.teaching.users.memory_models.exponential_decay import ExponentialDecayMemory
 
 
 class TeachingOrchestrator:

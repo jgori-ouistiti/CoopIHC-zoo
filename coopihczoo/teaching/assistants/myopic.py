@@ -6,7 +6,7 @@ from coopihc import (
 )
 import numpy as np
 
-from coopihczoo.teaching.memory_models.memory_models import ExponentialDecayMemory
+from coopihczoo.teaching.memory_models.exponential_decay import ExponentialDecayMemory
 
 
 class MyopicPolicy(BasePolicy):
