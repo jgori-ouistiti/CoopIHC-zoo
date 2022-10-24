@@ -4,7 +4,9 @@ from coopihc import Bundle
 
 from coopihczoo.teaching.users.memory_models.act_r import ActRUser
 from coopihczoo.teaching.envs.envs import TeachingTask, TeachingOrchestrator
-from coopihczoo.teaching.assistants.assistants_coopihc_refactor.random import RandomTeacher
+from coopihczoo.teaching.assistants.assistants_coopihc_refactor.random import (
+    RandomTeacher,
+)
 from coopihczoo.teaching.config import config_example
 
 
@@ -36,4 +38,17 @@ def run_random():
 
 
 if __name__ == "__main__":
-    run_random()
+    task = TeachingTask(**config_example.task_kwargs)
+    user = ActRUser(**config_example.user_act_r_kwargs)
+    assistant = RandomTeacher()
+
+    bundle = Bundle(
+        task=task,
+        user=user,
+        assistant=assistant,
+        random_reset=False,
+        seed=1234,
+    )
+    bundle.reset(start_after=2, go_to=3)
+
+    # run_random()

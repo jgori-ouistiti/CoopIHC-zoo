@@ -15,13 +15,13 @@ EPS = np.finfo(np.float).eps
 class ActRUser(BaseAgent):
     """ """
 
-    def __init__(self, param, *args, **kwargs):
+    def __init__(self, param, *args, n_iter=2048, **kwargs):
 
         self.param = np.asarray(param)
 
         inference_engine = ActRInferenceEngine()
         observation_engine = None  # use default
-
+        self.n_iter = n_iter
         super().__init__(
             "user",
             agent_observation_engine=observation_engine,
@@ -35,12 +35,15 @@ class ActRUser(BaseAgent):
 
         # get params --------------
         n_item = self.n_item
-        n_iter = 2048  # Thank you, Julien
 
         # Set user state -------------
-        self.state["seen"] = discrete_array_element(shape=(n_item, ), dtype=np.bool, low=0, high=1)
-        self.state["ts"] = discrete_array_element(shape=(n_iter, ), init=-1, dtype=np.int, low=0)  # timestamp
-        self.state["hist"] = discrete_array_element(shape=(n_iter, ), init=-1, dtype=np.int, low=0, high=n_item)
+
+        self.state["ts"] = discrete_array_element(
+            shape=(self.n_iter,), init=-1, dtype=np.int
+        )  # timestamp
+        self.state["hist"] = discrete_array_element(
+            shape=(self.n_iter,), init=-1, dtype=np.int, low=-1, high=n_item
+        )
 
         self.state["recall_probabilities"] = array_element(
             low=0, high=1, shape=(n_item,), dtype=np.float64
@@ -52,6 +55,7 @@ class ActRUser(BaseAgent):
 
         # Set User Policy
         from coopihczoo.teaching.users.policy import UserPolicy
+
         agent_policy = UserPolicy(action_state=action_state)
 
         self._attach_policy(agent_policy)
@@ -62,7 +66,6 @@ class ActRUser(BaseAgent):
 
         n_item = self.parameters["n_item"]
 
-        self.state.seen = np.full(shape=n_item, fill_value=-1, dtype=np.bool)
         self.state.ts = np.full(shape=n_iter, fill_value=-1, dtype=np.int)
         self.state.hist = np.full(shape=n_iter, fill_value=-1, dtype=np.int)
 
@@ -70,7 +73,6 @@ class ActRUser(BaseAgent):
 
 
 class ActRInferenceEngine(BaseInferenceEngine):
-
     @BaseInferenceEngine.default_value
     def infer(self, agent_observation=None):
 
@@ -86,7 +88,6 @@ class ActRInferenceEngine(BaseInferenceEngine):
             now=now,
             log=False,
         )
-
         self.state["recall_probabilities"] = rp
 
         reward = 0
@@ -96,8 +97,8 @@ class ActRInferenceEngine(BaseInferenceEngine):
 
         tau, s, c, a = param
 
-        hist = self.host.state.hist
-        ts = self.host.state.ts
+        hist = self.state.hist
+        ts = self.state.ts
 
         b = hist == item
         rep = ts[b]
@@ -123,26 +124,14 @@ class ActRInferenceEngine(BaseInferenceEngine):
     def update(self, item, timestamp):
 
         i = self.bundle.round_number
-        seen = self.host.state.seen
-        hist = self.host.state.hist
-        ts = self.host.state.ts
 
-        seen[item] = True
-        hist[i] = item
-        ts[i] = timestamp
-
-    @property
-    def n_seen(self):
-        return np.sum(self.seen)
-
-    @property
-    def seen_item(self):
-        return np.flatnonzero(self.seen)
+        self.state.hist[i - 1] = item
+        self.state.ts[i - 1] = timestamp
 
     def recall_probabilities(
-            self,
-            now,
-            log=False,
+        self,
+        now,
+        log=False,
     ):
 
         param = self.host.param
