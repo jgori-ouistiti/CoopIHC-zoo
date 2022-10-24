@@ -7,7 +7,7 @@ from coopihc.inference.GoalInferenceWithUserPolicyGiven import (
 from coopihc.base.Space import Space
 from coopihc.base.StateElement import StateElement
 from coopihc.base.elements import discrete_array_element, array_element, cat_element
-from coopihc import BasePolicy
+from coopihc import BasePolicy, State
 import numpy
 import copy
 
@@ -42,14 +42,15 @@ class BIGGain(BaseAgent):
         super().__init__(
             "assistant",
             agent_inference_engine=GoalInferenceWithUserPolicyGiven(),
-            agent_policy=BasePolicy()
+            agent_policy=BasePolicy(),
         )
 
         self.end_init = False
 
     def finit(self):
 
-        action_state = self.policy.action_state
+        # action_state = self.policy.action_state
+        action_state = State()
         action_state["action"] = discrete_array_element(
             init=0, low=0, high=self.bundle.task.gridsize, out_of_bounds_mode="error"
         )
@@ -98,16 +99,11 @@ class BIGGain(BaseAgent):
 
         self.policy.attach_transition_function(transition_function)
 
-    def render(self,
-               ax_task=None,
-               ax_user=None,
-               ax_assistant=None,
-               mode="text"):
+    def render(self, ax_task=None, ax_user=None, ax_assistant=None, mode="text"):
 
         try:
-            self.inference_engine.render(ax_assistant=ax_assistant,
-                                         ax_task=ax_task,
-                                         ax_user=ax_user,
-                                         mode=mode)
+            self.inference_engine.render(
+                ax_assistant=ax_assistant, ax_task=ax_task, ax_user=ax_user, mode=mode
+            )
         except Exception:
             self.inference_engine.render(mode=mode)

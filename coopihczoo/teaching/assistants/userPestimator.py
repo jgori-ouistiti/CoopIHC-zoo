@@ -52,21 +52,10 @@ class UserPEstimator(BaseAgent):
         )
 
         # ================= Policy ============
-
-        # Call the policy defined above
         action_state = State()
         action_state["action"] = cat_element(N=n_item)
 
         agent_policy = BasePolicy(action_state=action_state)
-
-        # agent_policy = DualPolicy(
-        #     primary_policy=ConservativeSamplingPolicy(
-        #         self.task_class, self.user_class, action_state
-        #     ),
-        #     dual_policy=MyopicPolicy(copy.deepcopy(action_state)),
-        # )
-
-        # ================= Inference Engine =========
 
         self._attach_policy(agent_policy)
 

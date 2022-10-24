@@ -44,6 +44,8 @@ def run_conservative():
         print("Step", j)
         j += 1
         state, rewards, is_done = orchestrator.step()
+        print( state)
+        exit()
         if is_done:
             break
 

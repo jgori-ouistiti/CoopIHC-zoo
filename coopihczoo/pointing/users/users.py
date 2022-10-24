@@ -8,6 +8,8 @@ from coopihc.base.elements import discrete_array_element
 
 from coopihc.policy.ELLDiscretePolicy import ELLDiscretePolicy
 
+from coopihc import ClassicControlTask, IHCT_LQGController, Bundle
+
 import numpy
 
 
@@ -49,7 +51,7 @@ class CarefulPointer(BaseAgent):
             **ELLD_dic,
         )
 
-            # Attach likelihood function to the policy
+        # Attach likelihood function to the policy
 
         agent_policy.attach_likelihood_function(self.compute_likelihood)
 
@@ -114,3 +116,172 @@ class CarefulPointer(BaseAgent):
             low=self.targets.space[index].low,
             high=self.targets.space[index].high - 1,
         )
+
+
+class LQGPointer(BaseAgent):
+    def __init__(
+        self,
+        timestep=0.01,
+        I=0.25,
+        b=0.2,
+        ta=0.03,
+        te=0.04,
+        F=numpy.diag([0, 0, 0, 0.001]),
+        G=0.03 * numpy.diag([1, 1, 0, 0]),
+        C=numpy.array([[1, 0, 0, 0], [0, 1, 0, 0], [0, 0, 1, 0], [0, 0, 0, 0]]),
+        Gamma=numpy.array(0.08),
+        D=numpy.array(
+            [[0.01, 0, 0, 0], [0, 0.01, 0, 0], [0, 0, 0.05, 0], [0, 0, 0, 0]]
+        ),
+        Q=numpy.diag([1, 0.01, 0, 0]),
+        R=numpy.array([[1e-4]]),
+        U=numpy.diag([1, 0.1, 0.01, 0]),
+        *args,
+        **kwargs
+    ):
+
+        self.timestep = timestep
+        self.I = I
+        self.b = b
+        self.ta = ta
+        self.te = te
+        a1 = b / (ta * te * I)
+        a2 = 1 / (ta * te) + (1 / ta + 1 / te) * b / I
+        a3 = b / I + 1 / ta + 1 / te
+        bu = 1 / (ta * te * I)
+        Ac = numpy.array([[0, 1, 0, 0], [0, 0, 1, 0], [0, 0, 0, 1], [0, -a1, -a2, -a3]])
+        Bc = numpy.array([[0, 0, 0, bu]]).reshape((-1, 1))
+
+        # Define the bundle with LQG control
+        action_task = ClassicControlTask(
+            timestep, Ac, Bc, F=F, G=G, discrete_dynamics=False, noise="off"
+        )
+        action_user = IHCT_LQGController(
+            "user", timestep, Q, R, U, C, Gamma, D, noise="on"
+        )
+        # Used to be this, below not tested
+        # action_bundle = SinglePlayUserAuto(
+        action_bundle = Bundle(
+            action_task,
+            action_user,
+            onreset_deterministic_first_half_step=True,
+            start_at_action=True,
+        )
+
+        # Wrap it up in the LQGPointerPolicy
+        class LQGPointerPolicy(WrapAsPolicy):
+            def __init__(self, action_bundle, *args, **kwargs):
+                action_state = State()
+                action_state["action"] = StateElement(
+                    values=[None],
+                    spaces=[
+                        gym.spaces.Box(low=-numpy.inf, high=numpy.inf, shape=(1, 1))
+                    ],
+                )
+                super().__init__(action_bundle, action_state, *args, **kwargs)
+
+            def sample(self):
+                cursor = copy.copy(self.observation["task_state"]["position"])
+                target = copy.copy(self.observation["user_state"]["goal"])
+                # allow temporarily
+                cursor.clipping_mode = "warning"
+                target.clipping_mode = "warning"
+
+                tmp_box = StateElement(
+                    values=[None],
+                    spaces=gym.spaces.Box(
+                        -self.host.bundle.task.gridsize + 1,
+                        self.host.bundle.task.gridsize - 1,
+                        shape=(1,),
+                    ),
+                    possible_values=[[None]],
+                    clipping_mode="warning",
+                )
+
+                cursor_box = StateElement(
+                    values=[None],
+                    spaces=gym.spaces.Box(-0.5, 0.5, shape=(1,)),
+                    possible_values=[[None]],
+                    clipping_mode="warning",
+                )
+
+                tmp_box["values"] = [
+                    numpy.array(v) for v in (target - cursor)["values"]
+                ]
+                init_dist = tmp_box.cast(cursor_box)["values"][0]
+
+                _reset_x = self.xmemory
+                _reset_x[0] = init_dist
+                _reset_x_hat = self.xhatmemory
+                _reset_x_hat[0] = init_dist
+                action_bundle.reset(
+                    dic={
+                        "task_state": {"x": _reset_x},
+                        "user_state": {"xhat": _reset_x_hat},
+                    }
+                )
+
+                total_reward = 0
+                N = int(self.host.bundle.task.timestep / self.host.timestep)
+
+                for i in range(N):
+                    observation, sum_rewards, is_done, rewards = self.step()
+                    total_reward += sum_rewards
+                    if is_done:
+                        break
+
+                # Store state for next usage
+                self.xmemory = observation["task_state"]["x"]["values"][0]
+                self.xhatmemory = observation["user_state"]["xhat"]["values"][0]
+
+                # Cast as delta in correct units
+                cursor_box["values"] = -self.xmemory[0] + init_dist
+                delta = cursor_box.cast(tmp_box)
+                possible_values = [-30 + i for i in range(61)]
+                value = possible_values.index(int(numpy.round(delta["values"][0])))
+                action = StateElement(
+                    values=value,
+                    spaces=coopihc.space.Discrete(61),
+                    possible_values=[possible_values],
+                )
+
+                return action, total_reward
+
+            def reset(self):
+                self.xmemory = numpy.array([[0.0], [0.0], [0.0], [0.0]])
+                self.xhatmemory = numpy.array([[0.0], [0.0], [0.0], [0.0]])
+
+        agent_policy = kwargs.get("agent_policy")
+        if agent_policy is None:
+            agent_policy = LQGPointerPolicy(action_bundle)
+
+        observation_engine = kwargs.get("observation_engine")
+        if observation_engine is None:
+            observation_engine = RuleObservationEngine(base_user_engine_specification)
+            # give observation engine
+
+        super().__init__(
+            "user",
+            policy=agent_policy,
+            observation_engine=observation_engine,
+        )
+
+    def finit(self):
+        self.target_values = self.bundle.task.state["targets"]["values"]
+        target_spaces = self.bundle.task.state["targets"]["spaces"]
+
+        self.state["goal"] = StateElement(
+            values=[None],
+            spaces=[coopihc.space.Discrete(self.bundle.task.gridsize)],
+            possible_values=[[None]],
+        )
+
+    def reset(self, dic=None):
+        if dic is None:
+            super().reset()
+
+        self.target_values = self.bundle.task.state["targets"]["values"]
+        self.state["goal"]["values"] = numpy.random.choice(self.target_values)
+
+        if dic is not None:
+            super().reset(dic=dic)

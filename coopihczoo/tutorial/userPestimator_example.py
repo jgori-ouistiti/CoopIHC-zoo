@@ -34,8 +34,6 @@ teaching_orchestrator_kwargs = dict(
 )
 
 
-
-
 def run_userpestimator():
 
     task = TeachingTask(**task_kwargs)
@@ -109,24 +107,3 @@ def run_userpestimator_mismatch():
 if __name__ == "__main__":
     run_userpestimator()
     run_userpestimator_mismatch()
-
-    task = TeachingTask(**task_kwargs)
-    # Define a user
-    user = ExponentialUser(**user_per_item_kwargs)
-    # Define an assistant
-    assistant = UserPEstimator(
-        task_class=TeachingTask,
-        user_class=ExponentialUser,
-        task_kwargs=task_kwargs,
-        user_kwargs=user_per_item_kwargs,
-    )
-    # Bundle them together
-    bundle = Bundle(
-        task=task,
-        user=user,
-        assistant=assistant,
-        random_reset=False,
-        seed=1234,
-    )
-    bundle.reset(start_after = 2, go_to = 3)
-    bundle.step()

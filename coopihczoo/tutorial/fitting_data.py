@@ -32,8 +32,8 @@ def evaluate_saccade_number_per_id(motor_noise_std, IDlvls, n=100):
         D = target_size * 2 ** (_id - 1)
         bundle = create_and_sample_bundle(motor_noise_std, D)
         data = bundle.sample(n_turns=n)
-        _mean, _std = numpy.mean([len(i[0]) for i in data]), numpy.std(
-            [len(i[0]) for i in data]
+        _mean, _std = numpy.mean([len(i[0]) for i in data[0]]), numpy.std(
+            [len(i[0]) for i in data[0]]
         )
         container.append((_id, _mean, _std))
     return container
@@ -55,19 +55,21 @@ def objective(motor_noise_std):
     return cost(container)
 
 
-# simple grid search with 10 steps
+target_size = 4e-2
+target_distance = 0.8
+perceptual_noise_std = 0.09
 
+# simple grid search with 10 steps
+results = []
 for motor_noise in numpy.linspace(0.01, 0.1, 10):
     results.append((motor_noise, objective(motor_noise)))
 
 motor_noise = sorted(results, key=lambda x: x[1])[0][0]
 
+motor_noise_std = motor_noise
 
 # simulate resulting behavior
-target_size = 4e-2
-target_distance = 0.8
-motor_noise_std = motor_noise
-perceptual_noise_std = 0.09
+
 task = ChenEyePointingTask(target_size, target_distance)
 user = ChenEye(perceptual_noise_std, motor_noise_std)
 bundle = Bundle(task=task, user=user)
