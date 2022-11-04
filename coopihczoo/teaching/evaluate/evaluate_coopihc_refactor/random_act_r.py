@@ -51,4 +51,4 @@ if __name__ == "__main__":
     )
     bundle.reset(start_after=2, go_to=3)
 
-    # run_random()
+    run_random()

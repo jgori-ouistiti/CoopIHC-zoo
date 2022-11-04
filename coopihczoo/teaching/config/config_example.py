@@ -27,8 +27,9 @@ user_per_item_kwargs = dict(
     )
 )
 
-user_act_r_kwargs=dict(
-    param=[19, 2, 34, 2.09]  # tau, s, c, a
+user_act_r_kwargs = dict(
+    param=[-0.704, 0.255, 0.217, 0.177]  # tau, s, c, a
+    # https://onlinelibrary.wiley.com/doi/epdf/10.1207/s15516709cog0000_14
 )
 
 teaching_orchestrator_kwargs = dict(
