@@ -33,6 +33,13 @@ class SimplePointingTask(InteractionTask):
     def assistant_action(self):
         return super().assistant_action[0]
 
+    def finit(self):
+        if not hasattr(self.bundle.user.state, "goal"):
+            raise AttributeError(
+                "You must pair this task with a user that has a 'goal' state"
+            )
+        super().finit()
+
     def __init__(self, gridsize=31, number_of_targets=10, mode="gain"):
         super().__init__()
         self.gridsize = gridsize
@@ -109,17 +116,18 @@ class SimplePointingTask(InteractionTask):
         if self.mode == "position":
             self.state["position"][...] = self.assistant_action
         elif self.mode == "gain":
-
             position = self.state["position"]
 
-            self.state["position"][...] = numpy.round(
-                position + self.user_action * self.assistant_action
+            # self.state["position"][...] = numpy.round(
+            #     position + self.user_action * self.assistant_action
+            # )
+            self.state["position"] = numpy.round(
+                position + self.user_action * assistant_action
             )
 
         return self.state, 0, False
 
-    def render(self, ax_task=None, ax_user=None, ax_assistant=None,
-               mode="text"):
+    def render(self, ax_task=None, ax_user=None, ax_assistant=None, mode="text"):
         """Render the task.
 
         Plot or print the grid, with cursor and target positions.
