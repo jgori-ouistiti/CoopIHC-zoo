@@ -14,6 +14,51 @@ from coopihc.helpers import sort_two_lists
 import functools
 
 
+class DiscretePointingTaskPipeWrapper(PipeTaskWrapper):
+    def __init__(self, task, pipe):
+        init_message = {
+            "number_of_targets": task.number_of_targets,
+            "gridsize": task.gridsize,
+            "goal": int(task.bundle.user.state.goal),
+        }
+        super().__init__(task, pipe, init_message)
+
+    def update_task_state(self, state):
+        # print(f"===============\n updating state, {state} \n old state {self.state}")
+        for key in self.state:
+            try:
+                value = state.pop(key)
+                if key == "position":
+                    self.state[key] = numpy.array(value)
+                elif key == "targets":
+                    self.state[key] = [numpy.array(v) for v in value]
+            except KeyError:
+                raise KeyError(
+                    'Key "{}" defined in task state was not found in the received data'.format(
+                        key
+                    )
+                )
+        if state:
+            print(
+                "warning: the received data has not been consumed. {} does not match any current task state".format(
+                    str(state)
+                )
+            )
+        # print(f"now: {self.state}")
+
+    def update_user_state(self, state):
+        for key in state:
+            try:
+                self.bundle.user.state[key]
+            except KeyError:
+                raise KeyError(
+                    'Key "{}" sent in received data was not found in user state'.format(
+                        key
+                    )
+                )
+            self.bundle.user.state[key] = state[key]
+
+
 class SimplePointingTask(InteractionTask):
     """A 1D pointing task.
 
@@ -33,12 +78,11 @@ class SimplePointingTask(InteractionTask):
     def assistant_action(self):
         return super().assistant_action[0]
 
-    def finit(self):
+    def on_bundle_constraints(self):
         if not hasattr(self.bundle.user.state, "goal"):
             raise AttributeError(
                 "You must pair this task with a user that has a 'goal' state"
             )
-        super().finit()
 
     def __init__(self, gridsize=31, number_of_targets=10, mode="gain"):
         super().__init__()
