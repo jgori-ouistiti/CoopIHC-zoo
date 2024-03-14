@@ -79,7 +79,7 @@ class BIGGain(BaseAgent):
         set_theta = [
             {
                 ("user_state", "goal"): discrete_array_element(
-                    init=t, low=0, high=self.bundle.task.numGrid
+                    init=t, low=0, high=self.bundle.task.gridsize
                 )
             }
             for t in self.bundle.task.state["targets"]
@@ -98,3 +98,12 @@ class BIGGain(BaseAgent):
             return observation
 
         self.policy.attach_transition_function(transition_function)
+
+    def render(self, ax_task=None, ax_user=None, ax_assistant=None, mode="text"):
+
+        try:
+            self.inference_engine.render(
+                ax_assistant=ax_assistant, ax_task=ax_task, ax_user=ax_user, mode=mode
+            )
+        except Exception:
+            self.inference_engine.render(mode=mode)

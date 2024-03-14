@@ -46,11 +46,14 @@ class CarefulPointer(BaseAgent):
 
         self.error_rate = error_rate
 
-        agent_policy = None
+        agent_policy = ELLDiscretePolicy(
+            action_state=action_state,
+            **ELLD_dic,
+        )
 
         # Attach likelihood function to the policy
 
-        # agent_policy.attach_likelihood_function(self.compute_likelihood)
+        agent_policy.attach_likelihood_function(self.compute_likelihood)
 
         # ---------- Observation engine ------------
         observation_engine = RuleObservationEngine(
