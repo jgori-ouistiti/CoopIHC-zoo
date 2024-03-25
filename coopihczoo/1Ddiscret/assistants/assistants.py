@@ -8,6 +8,7 @@ from coopihc.base.Space import Space
 from coopihc.base.StateElement import StateElement
 from coopihc.base.elements import discrete_array_element, array_element, cat_element
 from coopihc import BasePolicy, State
+from coopihc.policy.ELLDiscretePolicy import ELLDiscretePolicy
 import numpy
 import copy
 
@@ -56,6 +57,44 @@ class BIGGain(BaseAgent):
         )
 
         user_policy_model = copy.deepcopy(self.bundle.user.policy)
+        # user_policy_model = ELLDiscretePolicy(State(action=discrete_array_element(low=-1, high=1, init=0)))
+        def compute_likelihood(self, action, observation):
+            # convert actions and observations
+
+            action = action
+            goal = observation["user_state"]["goal"]
+            position = observation["task_state"]["position"]
+            print("goal "+ goal)
+            print("GPA")
+            print(goal, position, action)
+
+            # Write down all possible cases (5)
+            # (1) Goal to the right, positive action
+            if goal > position and action > 0:
+                return 0.99
+            # (2) Goal to the right, negative action
+            elif goal > position and action <= 0:
+                return 0.005
+            # (3) Goal to the left, positive action
+            if goal < position and action >= 0:
+                return 0.005
+            # (4) Goal to the left, negative action
+            elif goal < position and action < 0:
+                return 0.99
+            elif goal == position and action == 0:
+                return 1
+            elif goal == position and action != 0:
+                return 0
+            else:
+                print(goal, position, action)
+                raise RunTimeError(
+                    "warning, unable to compute likelihood. You may have not covered all cases in the likelihood definition"
+                )
+
+
+        # Attach likelihood function to the policy
+        user_policy_model.attach_likelihood_function(compute_likelihood)
+
         agent_policy = BIGDiscretePolicy(action_state, user_policy_model)
         self._attach_policy(agent_policy)
         self.inference_engine._attach_policy(user_policy_model)
@@ -79,7 +118,7 @@ class BIGGain(BaseAgent):
         set_theta = [
             {
                 ("user_state", "goal"): discrete_array_element(
-                    init=t, low=0, high=self.bundle.task.numGrid
+                    init=t, low=0, high=self.bundle.task.number_of_targets
                 )
             }
             for t in self.bundle.task.state["targets"]

@@ -59,16 +59,45 @@ class DiscretePointingTaskPipeWrapper(PipeTaskWrapper):
                 )
             self.bundle.user.state[key] = state[key]
 
+    def on_user_action(self, *args, **kwargs):
+        """on_user_action
+        override on_user_action to provide a user who can recive the user action from brownser
 
-class cell:
-    def __init__(self, x, y) -> None:
-        self.x = x
-        self.y = y
+        
+        1. Wait for pipe message
+        2. Transform dictionnary into user action with appropriate interface
+        3. Update state and return
+
+        :return: (task state, task reward, is_done flag, {})
+        :rtype: tuple(:py:class:`State<coopihc.base.State.State>`, float, boolean, dictionnary)
+        """
+        user_action_msg = {
+            "type": "user_action",
+            "value": "",
+        }
+        self.pipe.send(user_action_msg)
+        print("wait user action")
+        self.pipe.poll(None)
+        received_dic = self.pipe.recv()
+        if received_dic["type"] == "user_action":
+            if received_dic["value"] != None:
+                self.bundle.game_state["user_action"]["action"] = received_dic["value"]
+        received_state = received_dic["state"]
+        self.update_state(received_state)
+        return self.state, received_dic["reward"], received_dic["is_done"]
+
+
+class Cell:
+    gridSize = (10,10)
+    def __init__(self, i, j) -> None:
+        self.i = i
+        self.j = j
+        self.index = i*Cell.gridSize(0)+j
     
     def toString(self):
-        return "({}, {})".format(x, y)
+        return "({}, {}, number {})".format(self.i, self.j, self.index)
 
-class twoDPointingTask(InteractionTask):
+class TwoDPointingTask(InteractionTask):
     """A 2D pointing task.
 
     A 2D grid of size 'Gridsize'. The cursor is at a certain 'position' and there are several potential 'targets' on the grid. The user action is modulated by the assistant.
@@ -175,8 +204,9 @@ class twoDPointingTask(InteractionTask):
             # self.state["position"][...] = numpy.round(
             #     position + self.user_action * self.assistant_action
             # )
+            cell = Cell(self.user_action)
             self.state["position"] = numpy.round(
-                position + self.user_action * assistant_action
+                cell.index * assistant_action
             )
 
         return self.state, 0, False

@@ -3,7 +3,7 @@ from coopihczoo.pointing.envs.envs import (
     SimplePointingTask,
 )
 from coopihczoo.pointing.users.users import CarefulPointer
-from coopihczoo.pointing.assistants.assistants import ConstantCDGain
+from coopihczoo.pointing.assistants.assistants import ConstantCDGain, BIGGain
 
 from coopihc import discrete_array_element, State
 from coopihc.policy.ELLDiscretePolicy import ELLDiscretePolicy
@@ -57,7 +57,8 @@ policy.attach_likelihood_function(compute_likelihood)
 
 # Define a user model defined elsewhere, but plug policy described just above inside to be used instead
 user = CarefulPointer(override_policy=(policy, {}))
-assistant = ConstantCDGain(1)
+# assistant = ConstantCDGain(1)
+assistant = BIGGain()
 bundle = Bundle(task=task, user=user, assistant=assistant)
 server = WsServer(
     bundle, DiscretePointingTaskPipeWrapper, address="localhost", port=4000

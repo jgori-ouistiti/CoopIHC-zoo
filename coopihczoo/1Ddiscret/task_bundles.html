@@ -3,51 +3,56 @@
 
 <head>
     <meta charset="utf-8" />
-    <title>WebSocket 1D</title>
+    <title>WebSocket Bundles Demo</title>
     <style type="text/css">
         body {
             font-family: "Courier New", sans-serif;
             text-align: center;
-            cursor: default;
         }
 
-        .grid {
+        .buttons {
+            font-size: 4em;
             display: flex;
             justify-content: center;
-            gap: 1px;
-            margin-top: 20px;
         }
 
-        .cell {
-            width: 40px;
-            height: 40px;
-            border: 1px solid black;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            cursor: default;
-
+        .button,
+        .value {
+            line-height: 1;
+            padding: 2rem;
+            margin: 2rem;
+            border: medium solid;
+            min-height: 1em;
+            min-width: 1em;
         }
 
-        .cell.target {
-            background-color: lightblue;
+        .button {
             cursor: pointer;
+            user-select: none;
         }
 
-        .cell.current {
-            background-color: lightgreen;
+        .minus {
+            color: red;
+        }
+
+        .plus {
+            color: green;
+        }
+
+        .value {
+            min-width: 2em;
         }
 
         .indicators {
-            font-size: 1em;
-        }
-
-        .position {
-            color: blue;
+            font-size: 1em
         }
 
         .targets {
             color: purple;
+        }
+
+        .position {
+            color: blue;
         }
 
         .goal {
@@ -61,29 +66,19 @@
         .state {
             font-size: 2em;
         }
-        .custom-cursor {
-            position: fixed;
-            z-index: 9999;
-        }
-
-        .custom-cursor img {
-            width: 20px; 
-            height: 20px;
-            display: block;
-        }
     </style>
 </head>
 
 <body>
-    <div class="grid" id="grid"></div>
-    <div class="custom-cursor">
-        <img src="https://static.vecteezy.com/system/resources/thumbnails/017/178/335/small/mouse-cursor-symbol-on-transparent-background-free-png.png" alt="Cursor Image">
+    <div class="buttons">
+        <div class="minus button">-</div>
+        <div class="plus button">+</div>
     </div>
     <div class="indicators">
-        Position:
-        <div class="position">unknown</div>
         Targets:
         <div class="targets">unknown</div>
+        Position:
+        <div class="position">unknown</div>
         Goal:
         <div class="goal">Determined by User inside Bundle</div>
         Parameters:
@@ -92,14 +87,13 @@
 
     <div class='actions'>
         User Action:
-        <div class='user_action'>None Received</div>
+        <div class='user_action'>Not done</div>
         Assistant Action:
         <div class='assistant_action'>None Received</div>
 
         <div class="state">
             <span class="users">?</span> online
         </div>
-    </div>
         <script>
 
             // ========================== functions and classes def =============
@@ -199,65 +193,19 @@
 
 
             function send_msg(msg) {
-                console.log('sent: ', JSON.stringify(msg));
-                websocket.send(JSON.stringify(msg));
+                console.log('sent: ', JSON.stringify(msg))
+                websocket.send(JSON.stringify(msg))
             }
 
             function update_state(received_dic) {
                 for (const [key, value] of Object.entries(received_dic)) {
                     document.querySelector('.' + key).textContent = value;
                 }
-                
+
             }
-            
+
             var pointing_task_parameters = new PointingTaskParameters();
             var pointing_task_manager = new PointingTaskManager();
-            var gridContainer = document.getElementById('grid');
-            
-            function createGrid(numberOfCells) {
-                //console.log(numberOfCells)
-                for (let i = 0; i < numberOfCells; i++) {
-                    const cell = document.createElement('div');
-                    cell.classList.add('cell');
-                    cell.textContent = i;
-                    gridContainer.appendChild(cell);
-                }
-            }
-            
-            function cellClicked(position) {
-                if(canDoUserAction){
-                    pointing_task_manager.user_action = position - pointing_task_manager.position;
-                    //pointing_task_manager.position = position;
-                    updateCurrentPosition(position);
-                    send_msg(({"type":"user_action", "value": pointing_task_manager.user_action, "state": pointing_task_manager.state, "reward": -.5, "is_done": false}));
-                    canDoUserAction = false;
-                }
-            }
-            
-            function setTargets(targetPositions) {
-                const cells = gridContainer.querySelectorAll('.cell');
-                cells.forEach((cell, index) => {
-                    if (targetPositions.includes(index)) {
-                        cell.classList.add('target');
-                        cell.addEventListener('click', () => {
-                        cellClicked(index);
-                    });
-                    }
-                });
-            }
-            
-            function updateCurrentPosition(position) {
-                const cells = gridContainer.querySelectorAll('.cell');
-                cells.forEach((cell, index) => {
-                    if (index === position) {
-                        cell.classList.add('current');
-                    } else {
-                        cell.classList.remove('current');
-                    }
-                });
-            }
-            
-
 
             function on_init(received_dic) {
                 let params = received_dic['init_message'];
@@ -273,19 +221,12 @@
                 pointing_task_manager.position = _position;
                 pointing_task_manager.targets = _targets;
                 pointing_task_manager.goal = _goal
-
                 send_msg(pointing_task_manager.state);
             }
 
             function on_reset(received_dic) {
                 if (received_dic['reset_dic'] == null) {
                     self_reset()
-                    
-                    createGrid(pointing_task_parameters.gridsize);
-                    
-                    setTargets(pointing_task_manager.targets);
-                    
-                    //updateCurrentPosition(0);
 
                 }
                 else {
@@ -323,60 +264,17 @@
                 return action_array;
             }
 
-            /*
-            function on_user_action(received_dic) {
-
+            function on_user_action(action_value) {
                 var is_done = false;
-
-                // convert action
-                action = unpack_actions(received_dic);
-                console.log("user_action", action);
-                pointing_task_manager.user_action = action;
-                if (action == 0) {
+                if (action_value == 0) {
                     is_done = true;
                 }
-                return_dic = { "state": pointing_task_manager.state, "reward": -.5, "is_done": is_done };
+                console.log("user_action", action_value);
+                pointing_task_manager.user_action = action_value;
+                
+                return_dic = {"type" : "user_action", "value": action_value,  "state": pointing_task_manager.state, "reward": -.5, "is_done": is_done};
                 send_msg(return_dic);
-
             }
-            */
-
-            function moveCustomCursorToPosition(position) {
-                const cells = gridContainer.querySelectorAll('.cell');
-                const targetCell = cells[position];
-                const customCursor = document.querySelector('.custom-cursor');
-                customCursor.style.display = "block";
-                if (targetCell && customCursor) {
-                    const targetRect = targetCell.getBoundingClientRect();
-                    
-                    customCursor.style.left = targetRect.left + targetRect.width / 2 + 'px';
-                    customCursor.style.top = targetRect.top + targetRect.height / 2 + 'px';
-                }
-                setTimeout(() => {
-                    customCursor.style.display = "none";
-                }, 2000);            
-            }
-
-            function hideRealCursor() {
-                document.body.style.cursor = "none";
-                const cells = document.querySelectorAll('.cell');
-                cells.forEach(cell => {
-                    cell.style.cursor = "none";
-                });
-            }
-
-            function showRealCursor() {
-                document.body.style.cursor = "default";
-                const cells = document.querySelectorAll('.cell');
-                cells.forEach(cell => {
-                    if (cell.classList.contains('target')) {
-                        cell.style.cursor = "pointer";
-                    } else {
-                        cell.style.cursor = "default";
-                    }
-                });
-            }
-
 
             function on_assistant_action(received_dic) {
 
@@ -387,35 +285,22 @@
 
                 pointing_task_manager.assistant_action = action;
                 console.log("task  dynamics", pointing_task_manager.position, pointing_task_manager.user_action, pointing_task_manager.assistant_action);
-                //           $hideRealCursor();
-                //moveCustomCursorToPosition(action[0]);
-                updateCurrentPosition(action);
-                
-                //showRealCursor();
-                setTimeout(showRealCursor, 2000);
-
                 if ((pointing_task_manager.position + pointing_task_manager.user_action * pointing_task_manager.assistant_action>=0) && 
                         (pointing_task_manager.position + pointing_task_manager.user_action * pointing_task_manager.assistant_action<=pointing_task_parameters.gridsize)){
                     pointing_task_manager.position += pointing_task_manager.user_action * pointing_task_manager.assistant_action;
-                        if(pointing_task_manager.position == pointing_task_manager.goal){
-                            pointing_task_manager.assistant_action = 0;
-                        }
-                
                 }else{
                     pointing_task_manager.assistant_action = 0;
                 }
-                return_dic = { "state": pointing_task_manager.state, "reward": -.5, "is_done": false, "goal": pointing_task_manager.goal };
+                return_dic = { "state": pointing_task_manager.state, "reward": -.5, "is_done": false };
                 send_msg(return_dic);
-
             }
 
 
 
-            // ========================== Start ========================    
+            // ========================== Start ========================
 
-            
-            // var minus = document.querySelector('.minus'),
-            //     plus = document.querySelector('.plus'),
+            var minus = document.querySelector('.minus'),
+                plus = document.querySelector('.plus'),
                 users = document.querySelector('.users'),
                 // targets = document.querySelector('.targets'),
                 // position = document.querySelector('.position'),
@@ -423,20 +308,38 @@
                 parameters = document.querySelector('.param'),
                 websocket = new WebSocket("ws://localhost:4000/");
 
-
+            var canDoUserAction = false;
             var users_actions = {};
             var iter = 0;
 
-            var canDoUserAction = false;
-
-            // minus.onclick = function (event) {
-            //     users_actions['action' + iter.toString()] = { 'action': 'minus', 'timestamp': Date.now() };
-            //     send_msg(({action: -1}));
-            // }
-            // plus.onclick = function (event) {
-            //     users_actions['action' + iter.toString()] = { 'action': 'plus', 'timestamp': Date.now() };
-            //     send_msg(({action: 1}));
-            // }
+            minus.onclick = function (event) {
+                var is_done = false;
+                if (pointing_task_manager.position == pointing_task_manager.goal) {
+                    is_done = true;
+                }
+                if (!is_done){
+                    users_actions['action' + iter.toString()] = { 'action': 'minus', 'timestamp': Date.now() };
+                // websocket.send(JSON.stringify({action: 'minus'}));
+                on_user_action(-1);
+                }else{
+                    on_user_action(0)
+                }
+                canDoUserAction = false;
+            }
+            plus.onclick = function (event) {
+                var is_done = false;
+                if (pointing_task_manager.position == pointing_task_manager.goal) {
+                    is_done = true;
+                }
+                if (!is_done){
+                    users_actions['action' + iter.toString()] = { 'action': 'plus', 'timestamp': Date.now() };
+                    // websocket.send(JSON.stringify({action: 'plus'}));
+                    on_user_action(1);
+                }else{
+                    on_user_action(0)
+                }
+                canDoUserAction = false;
+            }
             websocket.onmessage = function (event) {
                 console.log(event)
                 let dic_received = JSON.parse(event.data);
@@ -453,7 +356,7 @@
                         canDoUserAction = true;
                         break;
                     case 'assistant_action':
-                        on_assistant_action(dic_received)
+                        on_assistant_action(dic_received);
                         break;
                     case 'state':
                         update_state(dic_received);
@@ -466,9 +369,7 @@
                             "unsupported event", data);
                 }
             };
-
-    
-    </script>
+        </script>
 </body>
 
 </html>

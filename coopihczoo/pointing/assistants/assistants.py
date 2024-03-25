@@ -79,7 +79,7 @@ class BIGGain(BaseAgent):
         set_theta = [
             {
                 ("user_state", "goal"): discrete_array_element(
-                    init=t, low=0, high=self.bundle.task.numGrid
+                    init=t, low=0, high=self.bundle.task.number_of_targets
                 )
             }
             for t in self.bundle.task.state["targets"]

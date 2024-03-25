@@ -8,6 +8,8 @@ from coopihc.base.elements import discrete_array_element
 
 import numpy
 
+from coopihc.policy import BasePolicy
+
 
 class User(BaseAgent):
     """A user that do nothing.
@@ -36,7 +38,9 @@ class User(BaseAgent):
 
         action_state = State()
         action_state["action"] = discrete_array_element(low=-1, high=1)
+        state = State()
 
+        #agent_policy = State(action=discrete_array_element(low=-1, high=1, init=0))
         agent_policy = None
 
         # ---------- Observation engine ------------

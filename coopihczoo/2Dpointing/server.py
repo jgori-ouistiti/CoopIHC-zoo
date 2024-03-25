@@ -1,8 +1,8 @@
 from envs.envs import (
     DiscretePointingTaskPipeWrapper,
-    SimplePointingTask,
+    TwoDPointingTask,
 )
-from users.users import User
+from user.users import User
 from assistants.assistants import ConstantCDGain, BIGGain
 
 from coopihc import discrete_array_element, State
@@ -12,7 +12,7 @@ from coopihc.bundle.WsServer import WsServer
 
 
 # Start task
-task = SimplePointingTask(gridsize=20, number_of_targets=5)
+task = TwoDPointingTask(gridsize=(10,10), number_of_targets=25)
 
 # Define a user model defined elsewhere, but plug policy described just above inside to be used instead
 # policy=BasePolicy(State(numpy.ARRAY([-1,1])))

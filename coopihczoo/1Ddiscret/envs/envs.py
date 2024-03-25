@@ -58,6 +58,38 @@ class DiscretePointingTaskPipeWrapper(PipeTaskWrapper):
                 )
             self.bundle.user.state[key] = state[key]
 
+    def on_user_action(self, *args, **kwargs):
+        """on_user_action
+        override on_user_action to provide a user who can recive the user action from brownser
+
+        
+        1. Wait for pipe message
+        2. Transform dictionnary into user action with appropriate interface
+        3. Update state and return
+
+        :return: (task state, task reward, is_done flag, {})
+        :rtype: tuple(:py:class:`State<coopihc.base.State.State>`, float, boolean, dictionnary)
+        """
+        user_action_msg = {
+            "type": "user_action",
+            "value": "",
+        }
+        self.pipe.send(user_action_msg)
+        print("wait user action")
+        self.pipe.poll(None)
+        received_dic = self.pipe.recv()
+
+        if received_dic["type"] == "user_action":
+            if received_dic["value"] != None:
+                self.bundle.game_state["user_action"]["action"] = received_dic["value"]
+        received_state = received_dic["state"]
+        self.update_state(received_state)
+        return self.state, received_dic["reward"], received_dic["is_done"]
+    
+    def on_assistant_action(self, *args, **kwargs):
+        print(f"user  action{self.user_action}")
+        return super().on_assistant_action(*args, **kwargs)
+
 
 class SimplePointingTask(InteractionTask):
     """A 1D pointing task.
@@ -151,8 +183,7 @@ class SimplePointingTask(InteractionTask):
 
         :meta public:
         """
-        is_done = False
-
+        is_done = Fals
         # Stopping condition if too many turns
         if int(self.round_number) >= 50:
             return self.state, 0, True
@@ -165,10 +196,12 @@ class SimplePointingTask(InteractionTask):
             # self.state["position"][...] = numpy.round(
             #     position + self.user_action * self.assistant_action
             # )
-            self.state["position"] = numpy.round(
-                position + self.user_action * assistant_action
-            )
-
+            if(position + self.user_action * assistant_action > 0 and position + self.user_action * assistant_action < self.gridsize):
+                self.state["position"] = numpy.round(
+                    position + self.user_action * assistant_action
+                )
+            else:
+                print("out of index error")
         return self.state, 0, False
 
     def render(self, ax_task=None, ax_user=None, ax_assistant=None, mode="text"):
